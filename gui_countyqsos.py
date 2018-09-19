@@ -9,15 +9,24 @@ def NewFile():
     
 def OpenFile():
     name = askopenfilename(title = "Select input log file:",
-                           filetypes=[("LOG Files","*.log"),
+                           filetypes=[("log Files","*.log"),
+                                      ("LOG Files","*.LOG"),
                                       ("CSV files","*.csv"),
                                       ("Text files","*.txt"),
                                       ("All Files","*.*")])
     print('File name selected: %s'%(name))
     if os.path.isfile(name):
         with open(name,'r') as f:
-            logtext = f.read()
-        LogText.insert(END, logtext)
+            logtext = f.readlines()
+        for line in logtext:
+            LogText.insert(END, line)
+        app = countyqsos.theApp(logtext)
+        LogText.insert(END,'==== Summary ====\n')
+        for line in app.summary:
+            LogText.insert(END, line)
+       
+def sum():
+    print "Function sum() called..."
        
     
 def About():
@@ -40,6 +49,7 @@ menu.add_cascade(label="File", menu=filemenu)
 filemenu.add_command(label="New", command=NewFile)
 filemenu.add_command(label="Open...", command=OpenFile)
 filemenu.add_separator()
+filemenu.add_command(label="Summary", command=sum)
 filemenu.add_command(label="Exit", command=root.quit)
 
 helpmenu = Menu(menu)

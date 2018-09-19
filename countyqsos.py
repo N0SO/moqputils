@@ -7,7 +7,7 @@ import datetime
 import argparse
 from CabrilloUtils import *
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 COUNTYLIST = 'Countylist.csv'
 ARGS = None
 
@@ -24,8 +24,12 @@ class get_args():
         return parser.parse_args()
 
 class theApp():
-   def __init__(self):
-      self.main()
+   def __init__(self, data=None):
+      if __name__ == '__main__':
+          self.main(data)
+      if (data != None):
+          print "Calling sum method"
+          self.summary = self.sum(data)
       
    def readFile(self, filename):
        """Read and return data from a file"""
@@ -45,11 +49,9 @@ class theApp():
              countylist.append(nextent)
        return countylist
       
-   def main(self, logdata = None):
-      if ( logdata == None):
-          args = get_args()
-          cab = CabrilloUtils()
-          logdata = self.readFile(args.args.inputfile)
+   def sum(self, logdata = None):
+      summary = ""
+      cab = CabrilloUtils()
       countydata = self.readCountylist()
       cw = 0
       ph = 0
@@ -61,6 +63,7 @@ class theApp():
       dx = 0
       for line in logdata:
          line = cab.packLine(line)
+         #print line
          if 'QSO:' in line.upper():
             line = line.upper()
             qsoparts = line.split(' ')
@@ -85,8 +88,9 @@ class theApp():
       if (mults > 0):
          ci = 0;
          for county in countydata:
-            print('%s, (%s), %d'%(county[1], county[0], county[2]))
+            #print('%s, (%s), %d'%(county[1], county[0], county[2]))
             if (county[2] > 0):
+               summary += ('%s, (%s), %d\n'%(county[1], county[0], county[2]))
                if (ci<115): # End of counties list
                   counties += 1
                elif (ci < 174): #End of states / US territories
@@ -96,10 +100,19 @@ class theApp():
                elif (ci <184): #End of DX list
                   dx += county[2]
             ci += 1
-        
-      print('MULTS worked:')
-      print('Counties, %d\nStates,%d\nCanadian Provs, %d\nDX, %d'%(counties, states, provs, dx))
-      print('CW QSOs:, %d\nPH QSOs:, %d\nDIGI QSOs:, %d\nTotal QSOs:, %d'%(cw, ph, dg, cw+ph+dg))
+      #print('MULTS worked:')
+      #print('Counties, %d\nStates,%d\nCanadian Provs, %d\nDX, %d\n'%(counties, states, provs, dx))
+      summary += ('Counties, %d\nStates,%d\nCanadian Provs, %d\nDX, %d\n'%(counties, states, provs, dx))
+      #print('CW QSOs:, %d\nPH QSOs:, %d\nDIGI QSOs:, %d\nTotal QSOs:, %d'%(cw, ph, dg, cw+ph+dg))
+      summary += ('CW QSOs:, %d\nPH QSOs:, %d\nDIGI QSOs:, %d\nTotal QSOs:, %d\n'%(cw, ph, dg, cw+ph+dg))
+      return summary
+      
+   def main(self, logdata = None):
+      if ( logdata == None):
+          args = get_args()
+          logdata = self.readFile(args.args.inputfile)
+      sumdata = self.sum(logdata)
+      print sumdata
             
 if __name__ == '__main__':
    app=theApp()
