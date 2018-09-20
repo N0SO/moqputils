@@ -7,7 +7,7 @@ import datetime
 import argparse
 from CabrilloUtils import *
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 COUNTYLIST = 'Countylist.csv'
 ARGS = None
 
@@ -28,8 +28,25 @@ class theApp():
       if __name__ == '__main__':
           self.main(data)
       if (data != None):
-          print "Calling sum method"
-          self.summary = self.sum(data)
+          #print "Calling sum method"
+          summary, counties, states, provs, dx, cw, ph, dg = self.sum(data)
+          self.summary = summary
+          self.counties = counties
+          self.states = states
+          self.provs = provs
+          self.dx = dx
+          self.cw = cw
+          self.ph = ph
+          self.dg = dg
+      else:
+          self.summary = None
+          self.counties = 0
+          self.states = 0
+          self.provs = 0
+          self.dx = 0
+          self.cw = 0
+          self.ph = 0
+          self.dg = 0
       
    def readFile(self, filename):
        """Read and return data from a file"""
@@ -100,19 +117,16 @@ class theApp():
                elif (ci <184): #End of DX list
                   dx += county[2]
             ci += 1
-      #print('MULTS worked:')
-      #print('Counties, %d\nStates,%d\nCanadian Provs, %d\nDX, %d\n'%(counties, states, provs, dx))
-      summary += ('Counties, %d\nStates,%d\nCanadian Provs, %d\nDX, %d\n'%(counties, states, provs, dx))
-      #print('CW QSOs:, %d\nPH QSOs:, %d\nDIGI QSOs:, %d\nTotal QSOs:, %d'%(cw, ph, dg, cw+ph+dg))
-      summary += ('CW QSOs:, %d\nPH QSOs:, %d\nDIGI QSOs:, %d\nTotal QSOs:, %d\n'%(cw, ph, dg, cw+ph+dg))
-      return summary
+      return summary, counties, states, provs, dx, cw, ph, dg
       
    def main(self, logdata = None):
       if ( logdata == None):
           args = get_args()
           logdata = self.readFile(args.args.inputfile)
-      sumdata = self.sum(logdata)
-      print sumdata
+      summary, counties, states, provs, dx, cw, ph, dg = self.sum(logdata)
+      print ('QSO Summary:\n%d CW QSOs + %d PHONE QSOs + %d DIGITAL QSOs = %d Total QSOS\n'%(cw, ph, dg,cw+ph+dg))
+      print ('MULT Summary:\nCounties worked:%d\nUS States worked:%d\nCanada worked:%d\nDX worked:%d\n'%(counties, states, provs, dx))
+      print ('List of MULTS:\n %s\n'%(summary))
             
 if __name__ == '__main__':
    app=theApp()
