@@ -7,7 +7,7 @@ import datetime
 import argparse
 from CabrilloUtils import *
 
-VERSION = '1.0.2'
+VERSION = '1.0.3'
 COUNTYLIST = 'Countylist.csv'
 ARGS = None
 
@@ -38,6 +38,7 @@ class theApp():
           self.cw = cw
           self.ph = ph
           self.dg = dg
+          self.score = self.totalscore(counties, states, provs, dx, cw, ph, dg)
       else:
           self.summary = None
           self.counties = 0
@@ -47,6 +48,7 @@ class theApp():
           self.cw = 0
           self.ph = 0
           self.dg = 0
+          self.score = 0
       
    def readFile(self, filename):
        """Read and return data from a file"""
@@ -118,7 +120,13 @@ class theApp():
                   dx += county[2]
             ci += 1
       return summary, counties, states, provs, dx, cw, ph, dg
-      
+    
+   def totalscore(self, mo, states, provs, dx, cw, ph, dg):
+      mults = mo+states+provs+dx
+      qsopoints = ((cw+dg)*2) + ph
+      score = qsopoints * mults
+      return score
+
    def main(self, logdata = None):
       if ( logdata == None):
           args = get_args()
@@ -127,6 +135,7 @@ class theApp():
       print ('QSO Summary:\n%d CW QSOs + %d PHONE QSOs + %d DIGITAL QSOs = %d Total QSOS\n'%(cw, ph, dg,cw+ph+dg))
       print ('MULT Summary:\nCounties worked:%d\nUS States worked:%d\nCanada worked:%d\nDX worked:%d\n'%(counties, states, provs, dx))
       print ('List of MULTS:\n %s\n'%(summary))
+      print ('Score = %d'%(self.totalscore(counties, states, provs, dx, cw, ph, dg)))
             
 if __name__ == '__main__':
    app=theApp()

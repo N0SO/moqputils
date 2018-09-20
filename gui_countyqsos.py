@@ -4,7 +4,7 @@ from tkFileDialog   import askopenfilename
 import os.path
 import countyqsos
 
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 
 
 def NewFile():
@@ -38,6 +38,7 @@ def ShowSum(app):
                                                                                                                     app.provs, 
                                                                                                                     app.dx
                                                                                                                     )))
+    LogText.insert(END,('\nTotal Score: %d\n'%(app.totalscore(app.counties, app.states, app.provs, app.dx, app.cw, app.ph, app.dg))))
     LogText.insert(END,('List of MULTS:\n %s\n'%(app.summary)))
 
       
