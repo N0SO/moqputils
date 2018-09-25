@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
 fillinopdata.py - Read the awards.csv file and fill in
 the missing name, address, e-mail address from the
@@ -9,7 +11,7 @@ import argparse
 from os import walk
 from CabrilloUtils import *
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 COUNTYLIST = 'Countylist.csv'
 ARGS = None
 
@@ -30,26 +32,20 @@ class get_args():
         return parser.parse_args()
 
 class theApp():
-   def __init__(self):
-      self.main()
+   def __init__(self, csvlist=None, logdir=None):
+      self.return_data = []
+      if __name__ == '__main__':
+          self.main()
+      else:
+          if (csvlist and logdir):
+              self.return_data = self.processOps(csvlist, logdir)
+              
       
    def readFile(self, filename):
        """Read and return data from a file"""
        with open(filename, 'r') as thisfile:
           data = thisfile.readlines()
        return data
-       
-   def readCountylist(self, filename=COUNTYLIST):
-       """Read list of counties"""
-       data = self.readFile(filename)
-       countylist = []
-       for line in data:
-          #print('===> %s'%(line))
-          if (line[0:1] != '#'):
-             nextent = line.split(',')
-             nextent = [nextent[1].strip(), nextent[0].strip(), 0]
-             countylist.append(nextent)
-       return countylist
        
    def getHeaderField(self, tag, hdata):
       retdata = 'y'
@@ -68,36 +64,34 @@ class theApp():
       #print('tag = %s, temp = %s data = %s\nhdata = %s'%(tag, tempdata, retdata, hdata))
       return retdata
      
-   def main(self):
-      args = get_args()
+   def processOps(self, opcall_list, logdir):
       cab = CabrilloUtils()
-      dirpath = args.args.directory.strip()
-     
+      retdata = []
+
       f = []
-      for (dirpath, dirnames, filenames) in walk(args.args.directory):
+      for (dirpath, dirnames, filenames) in walk(logdir):
           f.extend(filenames)
           break
 
-      award_data=self.readFile(args.args.inputfile)
-      
-      for line in award_data:
+
+      for line in opcall_list:
           elements = line.split('\t')
           e=elements[3]
           opcall = ''
           for c in e:
-              if (c == '\xD8'):
+              if (c == '\xD8'): #No slashed zeros in file names
                   opcall+='0'
               else:
                   opcall+=c
           logfile = opcall.upper()+'.LOG'
           #print opcall, logfile
-	  opname='x'
-	  opadr='x'
-	  opcity='x'
-	  opstate='x'
-	  opzipcode='x'
-	  opcountry='x'
-	  opemail='x'
+          opname='x'
+          opadr='x'
+          opcity='x'
+          opstate='x'
+          opzipcode='x'
+          opcountry='x'
+          opemail='x'
           if (logfile in f):
               data = cab.readFile(dirpath+'/'+logfile)
               if (data):
@@ -113,7 +107,7 @@ class theApp():
                       opzipcode=self.getHeaderField('ADDRESS-POSTALCODE:', opdata)
                       opcountry=self.getHeaderField('ADDRESS-COUNTRY:', opdata)
                       opemail=self.getHeaderField('EMAIL:', opdata)
-          print('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s'%(
+          retdata.append('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s'%(
                   elements[0],
                   elements[1],    
                   elements[2],    
@@ -126,8 +120,17 @@ class theApp():
                   opzipcode,
                   opcountry,
                   opemail))
-          
-            
+      self.return_data = retdata
+      return retdata          
+
+   def main(self):
+      args = get_args()
+      dirpath = args.args.directory.strip()
+      opcall_list=self.readFile(args.args.inputfile)
+      opdata = self.processOps(opcall_list, dirpath)
+      for line in self.return_data:
+          print('%s'%(line))
+           
 if __name__ == '__main__':
    app=theApp()
   
