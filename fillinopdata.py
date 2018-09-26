@@ -31,7 +31,7 @@ class get_args():
             help="Specifies the directory in which the log files reside.")
         return parser.parse_args()
 
-class theApp():
+class FillInOpData():
    def __init__(self, csvlist=None, logdir=None):
       self.return_data = []
       if __name__ == '__main__':
@@ -132,6 +132,6 @@ class theApp():
           print('%s'%(line))
            
 if __name__ == '__main__':
-   app=theApp()
+   app=FillInOpData()
   
   
