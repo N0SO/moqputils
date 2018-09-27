@@ -12,7 +12,7 @@ from tkFileDialog   import askopenfilename, askdirectory
 import os.path
 import fillinopdata
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 FIELDS = 'CSV list file', 'Logfile Directory'
 
 class MyAPP():
@@ -39,8 +39,6 @@ class MyAPP():
     def FillIn(self):
         csvfilename = self.inpFile.get().strip()
         dirPath = self.logDir.get().strip()
-        #csvfilename = csvfilename.trim()
-        #dirPath = dirPath.trim()
         print('FillIn:\n%s\n%s'%(csvfilename, dirPath))
         if os.path.isfile(csvfilename):
             with open(csvfilename,'r') as f:
@@ -57,12 +55,15 @@ class MyAPP():
             S.config(command=OpData.yview)
             OpData.config(yscrollcommand=S.set)
             S.grid(row=4, column=3, sticky='NS')
+            filledinFile = csvfilename + "-filled.txt"
+            f = open(filledinFile,'w')
             for line in optext:
                 OpData.insert(END, line.strip()+'\n')
+                f.writelines(line.strip())
+            f.close()
 
-            filledinFile = csvfilename + ".log"
-            with open(filledinFile,'w') as f:
-                f.write(cabtext)
+            #with open(filledinFile,'w') as f:
+            #    f.writelines(optext)
             showinfo('File with Op Datat from logs created and saved', 'Saved:\n'+filledinFile)
     
     def OpenDir(self):
