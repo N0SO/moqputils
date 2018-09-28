@@ -4,7 +4,7 @@
 """
 gui_fillinopdata.py - Read the awards.csv file and fill in
 the missing name, address, e-mail address from the
-cabrillo log files.
+MOQP cabrillo log files.
 """
 from Tkinter import *
 from tkMessageBox import *
@@ -12,15 +12,13 @@ from tkFileDialog   import askopenfilename, askdirectory
 import os.path
 import fillinopdata
 
-VERSION = '0.0.2'
-FIELDS = 'CSV list file', 'Logfile Directory'
+VERSION = '1.0.0'
 
 class MyAPP():
     def __init__(self):
-        root = Tk()
-        root.geometry('440x290')
-        self.inpFile, self.logDir, self.LogText = self. makeForm(root)
-        self.root = root
+        self.root = Tk()
+        self.root.geometry('440x290')
+        self.inpFile, self.logDir, self.LogText = self.makeForm(self.root)
         self.main()
         
     def NewFile(self):
@@ -48,7 +46,6 @@ class MyAPP():
             app = fillinopdata.FillInOpData(csvtext, dirPath)
             optext = r""
             optext = app.return_data
-            #print csvtext
             OpData=Text(self.root, height=10, width = 50)
             OpData.grid(row=4, column=0, columnspan=2, padx=5, pady=5)
             S = Scrollbar(self.root)
@@ -56,16 +53,18 @@ class MyAPP():
             OpData.config(yscrollcommand=S.set)
             S.grid(row=4, column=3, sticky='NS')
             filledinFile = csvfilename + "-filled.txt"
-            f = open(filledinFile,'w')
             for line in optext:
                 OpData.insert(END, line.strip()+'\n')
-                f.writelines(line.strip())
-            f.close()
+            self.writeFile(filledinFile, optext)
 
-            #with open(filledinFile,'w') as f:
-            #    f.writelines(optext)
-            showinfo('File with Op Datat from logs created and saved', 'Saved:\n'+filledinFile)
-    
+    def writeFile(self, fname, optext):
+        f = open(fname,'w')
+        for line in optext:
+                f.writelines(line.strip()+'\n')
+        f.close()
+        showinfo('File with Op Datat from logs created and saved', 'Saved:\n'+fname)
+
+
     def OpenDir(self):
         csvlogdirname = askdirectory(title = "Select input log file:")
         print('Log File directory selected: %s'%(csvlogdirname))
@@ -73,7 +72,10 @@ class MyAPP():
         self.logDir.insert(len(csvlogdirname), csvlogdirname)
 
     def About(self):
-        showinfo('GUI_CSV2CAB', 'GUI_CSV2CAB - Version ' + VERSION + '\n' + 'Utility to convert .csv logfiles to CABRILLO format.')
+        aboutSTG = ('GUI_FILLINOPDATA - Version ' + VERSION + '\n'
+                    'Utility to add operator names, addresses and '
+                    'e-mail from the MOQP log files submitted.')
+        showinfo('GUI_FILLINOPDATA', aboutSTG)
 
     def winSize(self):
         screen_width = self.root.winfo_screenwidth()
@@ -110,7 +112,7 @@ class MyAPP():
         filemenu.add_command(label="Select Log File Directory...", command=self.OpenDir)
         filemenu.add_separator()
         filemenu.add_command(label="Window Size", command=self.winSize)
-        filemenu.add_command(label="Exit", command=self.winSize)
+        filemenu.add_command(label="Exit", command=root.quit)
 
         helpmenu = Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)

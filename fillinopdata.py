@@ -4,15 +4,14 @@
 """
 fillinopdata.py - Read the awards.csv file and fill in
 the missing name, address, e-mail address from the
-cabrillo log files.
+MOQP cabrillo log files.
 """
 import datetime
 import argparse
 from os import walk
 from CabrilloUtils import *
 
-VERSION = '0.0.2'
-COUNTYLIST = 'Countylist.csv'
+VERSION = '1.0.0'
 ARGS = None
 
 class get_args():
@@ -21,8 +20,15 @@ class get_args():
             self.args = self.getargs()
             
     def getargs(self):
-        parser = argparse.ArgumentParser(usage='This is the usage string.',
-                                         description='This is the description.',
+        usageSTG = ('fillinopdata.py --input <inputfile> --directory '
+                    '<MOQP log files path>')
+        aboutSTG = ('Utility to read the MOQP awards file (in tab '
+                    'separated variable format) add operator names, '
+                    'addresses and e-mail from the MOQP log files '
+                    'submitted.')
+
+        parser = argparse.ArgumentParser(usage=usageSTG,
+                                         description=aboutSTG,
                                          epilog='That\'s all folks!')
         parser.add_argument('-v', '--version', action='version', version = VERSION)
         parser.add_argument("-i", "--inputfile", default=None,
