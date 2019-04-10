@@ -157,7 +157,8 @@ class CabrilloUtils():
         cabAddState = self.getCabArray('ADDRESS-STATE-PROVINCE:', data)
         cabAddZip = self.getCabArray('ADDRESS-POSTALCODE:', data)
         cabAddCountry = self.getCabArray('ADDRESS-COUNTRY:', data)
-        return cabCall, cabEmail, cabName, cabAddress, cabAddCity, cabAddState, cabAddZip, cabAddCountry
+        return cabCall, cabName, cabEmail, cabAddress, cabAddCity, \
+               cabAddState, cabAddZip, cabAddCountry
         
     def getCategory(self, data):
         """
