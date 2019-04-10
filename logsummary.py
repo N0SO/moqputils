@@ -7,7 +7,7 @@ import datetime
 import argparse
 from CabrilloUtils import *
 
-VERSION = '1.0.4'
+VERSION = '1.0.5'
 ARGS = None
 
 
@@ -46,6 +46,7 @@ class theApp():
       dg = 0
       header = cab.getCABHeader(data)
       opdata = cab.getOperatorData(header)
+      catdata = cab.determineCategory(header)
       for line in data:
          line = cab.packLine(line)
          for tag in cab.CABRILLOTAGS:
@@ -67,17 +68,34 @@ class theApp():
                          print("UNDEFINED MODE: %s -- QSO data = %s"%(mode, line))
                          retdata.append("UNDEFINED MODE: %s -- QSO data = %s"%(mode, line))
                          
-      for headerline in header:
-         headerparts = headerline.split(':')
-         if(len(headerparts) < 2): headerparts.append(' ')
-         #print('%s:,%s'%(headerparts[0],headerparts[1]))
-         retdata.append('%s: %s'%(headerparts[0],headerparts[1]))
-      #print("CW: %d\nPH:  %d\nDIGITAL: %d\n TOTAL QSOs: %d"%(cw,ph,dg,qso))
-      retdata.append("CW: %d"%(cw))
+      retdata.append( "LOG FILE REPORT FOR STATION %s" \
+                          %(cab.getCabArray('CALLSIGN:',header)) )
+      retdata.append( "CONTEST: %s\n" \
+                          %(cab.getCabArray('CONTEST:',header).upper()) )
+                          
+      retdata.append('SUBMITTED BY:')
+      retdata.append('%s %s' \
+         %(cab.getCabArray('NAME:',header), 
+           cab.getCabArray('EMAIL:', header)) )                   
+      retdata.append('%s'%(cab.getCabArray('ADDRESS:',header)) )
+      retdata.append('%s'%(cab.getCabArray('ADDRESS-CITY:',header)) )
+      retdata.append('%s'%(cab.getCabArray('ADDRESS-STATE-PROVINCE:',header)) )
+      retdata.append('%s\n'%(cab.getCabArray('ADDRESS-ADDRESS-POSTALCODE: ',header)) )
+    
+      retdata.append('OPERATORS:%s\n'%(cab.getCabArray('OPERATORS:',header)) )
+                            
+      retdata.append( \
+      "Category: %s STATION, %s, %s MODE, %s POWER\nOverlay: %s\n" \
+                                                     %(catdata[0], \
+                                                       catdata[1], \
+                                                       catdata[3], \
+                                                       catdata[2], \
+                                                       catdata[4]))
+      retdata.append("QSO Summary:\nCW: %d"%(cw))
       retdata.append("PH: %d"%(ph))
       retdata.append("DIGITAL: %d"%(dg))
       retdata.append("TOTAL QSOs: %d"%(qso))
-      
+     
       return retdata
    
       
