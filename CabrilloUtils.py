@@ -1,9 +1,10 @@
 #!/usr/bin/python
 """
-pyreadlog - description goes here
-"""
+CabrilloUtils - A collection of utilities to process CABRILLO
+                Format log files.
 import datetime
 import argparse
+"""
 
 class CabrilloUtils():
     CABRILLOTAGS = ['START-OF-LOG:',
