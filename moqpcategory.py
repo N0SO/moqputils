@@ -12,6 +12,8 @@ VERSION = '0.0.1'
 
 INSTATE = 'MO MISSOURI'
 
+CLASSES = 'FIXED MOBILE EXPEDITION'
+
 CANADA = 'MAR NL QC ONE ONN ONS GTA MB SK AB BC NT'
 
 US = 'CT EMA ME NH RI VT WMA ENY NLI NNJ NNY SNJ WNY DE EPA MDC WPA '
@@ -48,18 +50,35 @@ class MOQPCategory():
        
     def determineMOQPCat(self, filename):
        gen_category = self.processLog(filename)
-          temp = gen_category[5].upper()
-          if(temp in INSTATE):
-              qth = 'MISSOURI'
-          elif (temp in US):
-              qth = 'US'
-          elif (temp in CANADA):
-              qth = ('CANADA %s'%(temp))
-          elif (temp in DX):
-              qth = 'DX'
-          else:
-              qth = ('%s UNKNOWN QTH'%(temp))
-              
+       temp = gen_category[5].upper()
+       if(temp in INSTATE):
+          qth = 'MISSOURI'
+       elif (temp in US):
+          qth = 'US'
+       elif (temp in CANADA):
+          qth = ('CANADA %s'%(temp))
+       elif (temp in DX):
+          qth = 'DX'
+       else:
+          qth = ('%s UNKNOWN QTH'%(temp))
+
+       temp = gen_category[0].upper()
+       if (temp == 'FIXED'):
+           catclass = 'FIXED'
+       elif ( (temp == 'MOBILE') or (temp == 'ROVER')):
+           catclass = 'MOBILE'
+       elif (temp == 'EXPEDITION'):
+           catclass = 'EXPEDITION'
+       else:
+           catclass = 'UNDETERMINED'
+       
+       temp = gen_category[2].upper()
+       if (temp == 'LOW' or temp == 'HIGH' or temp == 'QRP'):
+           power = ('%s POWER'%(temp))
+           
+           
+       print ('%s %s %s'%(qth, catclass, power))
+          
               
               
        
