@@ -7,7 +7,7 @@ import datetime
 import argparse
 from CabrilloUtils import *
 
-VERSION = '1.0.5'
+VERSION = '1.0.6'
 ARGS = None
 
 
@@ -37,16 +37,17 @@ class theApp():
       else:
          print('\n\n==>No data for %s\n\n'%(logfile))
       return retdata
-  
-   def processData(self, cab, data):
-      retdata = []
+      
+   def processQSOs(self, cab, data):
+      """
+      Process and return QSO data only
+      """
+      call = None
+      ops = None
       qso = 0
       cw = 0
       ph = 0
       dg = 0
-      header = cab.getCABHeader(data)
-      opdata = cab.getOperatorData(header)
-      catdata = cab.determineCategory(header)
       for line in data:
          line = cab.packLine(line)
          for tag in cab.CABRILLOTAGS:
@@ -66,8 +67,22 @@ class theApp():
                          dg +=1
                       else:
                          print("UNDEFINED MODE: %s -- QSO data = %s"%(mode, line))
-                         retdata.append("UNDEFINED MODE: %s -- QSO data = %s"%(mode, line))
-                         
+               elif (tag == 'CALLSIGN:'):
+                  call = cab.getCabstg('CALLSIGN:',line)
+               elif (tag == 'OPERATORS:'):
+                  ops = cab.getCabstg('OPERATORS:',line)
+      return call, ops, qso, cw, ph, dg
+
+   def processData(self, cab, data):
+      retdata = []
+      qso = 0
+      cw = 0
+      ph = 0
+      dg = 0
+      header = cab.getCABHeader(data)
+      opdata = cab.getOperatorData(header)
+      catdata = cab.determineCategory(header)
+      qso, cw, ph, dg = self.processQSOs(cab, data)
       retdata.append( "LOG FILE REPORT FOR STATION %s" \
                           %(cab.getCabArray('CALLSIGN:',header)) )
       retdata.append( "CONTEST: %s\n" \

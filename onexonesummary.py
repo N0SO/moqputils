@@ -1,14 +1,14 @@
 #!/usr/bin/python
 """
-countyqsos - A summary of QSOs by mode, with 
-county, state, providence and DX counts
+onexonesummary.py - exports a summary of all 1x1 SE staions
+                    for status
 """
 import datetime
 import argparse
 from CabrilloUtils import *
 
-VERSION = '1.0.0'
-FILELIST = 'filelist.txt'
+VERSION = '1.0.1'
+FILELIST = './'
 ARGS = None
 
 class get_args():
@@ -19,20 +19,14 @@ class get_args():
     def getargs(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('-v', '--version', action='version', version = VERSION)
-        parser.add_argument("-i", "--inputfile", default=FILELIST,
-            help="Specifies the file name that contains the list of files to summarize.")
+        parser.add_argument("-i", "--inputpath", default=FILELIST,
+            help="Specifies the path to the folder that contains the log files to summarize.")
         return parser.parse_args()
 
 class theApp():
    def __init__(self):
       self.main()
       
-   def readFile(self, filename):
-       """Read and return data from a file"""
-       with open(filename, 'r') as thisfile:
-          data = thisfile.readlines()
-       return data
-       
    def parseResults(self, data):
       call = None
       ops = None
@@ -100,37 +94,56 @@ class theApp():
       return call
 
    def main(self):
-      summary = [['K0S',' ','0','0','0','0'],['K0H',' ','0','0','0','0'],['K0O',' ','0','0','0','0'],['K0W',' ','0','0','0','0'],['K0M',' ','0','0','0','0'],['K0E',' ','0','0','0','0'],
-                 ['N0S',' ','0','0','0','0'],['N0H',' ','0','0','0','0'],['N0O',' ','0','0','0','0'],['N0W',' ','0','0','0','0'],['N0M',' ','0','0','0','0'],['N0E',' ','0','0','0','0'],
-                 ['W0S',' ','0','0','0','0'],['W0H',' ','0','0','0','0'],['W0O',' ','0','0','0','0'],['W0W',' ','0','0','0','0'],['W0M',' ','0','0','0','0'],['W0E',' ','0','0','0','0']]
+      summary = [['K0S',' ','0','0','0','0'],
+                 ['K0H',' ','0','0','0','0'],
+                 ['K0O',' ','0','0','0','0'],
+                 ['K0W',' ','0','0','0','0'],
+                 ['K0M',' ','0','0','0','0'],
+                 ['K0E',' ','0','0','0','0'],
+                 ['K0I',' ','0','0','0','0'],
+                 ['K0R',' ','0','0','0','0'],
+                 ['K0U',' ','0','0','0','0'],
+                 ['N0S',' ','0','0','0','0'],
+                 ['N0H',' ','0','0','0','0'],
+                 ['N0O',' ','0','0','0','0'],
+                 ['N0W',' ','0','0','0','0'],
+                 ['N0M',' ','0','0','0','0'],
+                 ['N0E',' ','0','0','0','0'],
+                 ['N0I',' ','0','0','0','0'],
+                 ['N0R',' ','0','0','0','0'],
+                 ['N0U',' ','0','0','0','0'],
+                 ['W0S',' ','0','0','0','0'],
+                 ['W0H',' ','0','0','0','0'],
+                 ['W0O',' ','0','0','0','0'],
+                 ['W0W',' ','0','0','0','0'],
+                 ['W0M',' ','0','0','0','0'],
+                 ['W0E',' ','0','0','0','0'],
+                 ['W0I',' ','0','0','0','0'],
+                 ['W0R',' ','0','0','0','0'],
+                 ['W0U',' ','0','0','0','0']]
 
       args = get_args()
-      files = self.readFile(args.args.inputfile)
       import logsummary
       logsum = logsummary.theApp()
-      for file in files:
-         data = logsum.processLog(file.strip())
+      cab = CabrilloUtils()
+      for si in range (0, len(summary)):
+         filename = summary[si][0]+'.LOG'
+         filename = args.args.inputpath.strip()+'/'+filename
+         data = cab.readFile(filename)
          if (data):
-            call, ops, cw, ph, ry, tot = self.parseResults(data)
-            #call = self.stripCallsign(call)
-            #print '===>', call,ops,cw,ph,ry,tot
-            for si in range (0, len(summary)):
-	     if(call == summary[si][0]):
-	        summary[si][1] = ops
-	        summary[si][2] = cw
-	        summary[si][3] = ph
-	        summary[si][4] = ry
-	        summary[si][5] = tot
-	        break
-#	     si+=1
-      #print summary
+            call, ops, tot, cw, ph, ry = logsum.processQSOs(cab, data)
+            if(call != summary[si][0]):
+               summary[si][0] += ('==>%s'%(call))
+            summary[si][1] = ops
+            summary[si][2] = cw
+            summary[si][3] = ph
+            summary[si][4] = ry
+            summary[si][5] = tot
+                  #break
+         else: #No data or logfile from this station
+            summary[si][1] = "No log file."
         
       self.exportcsv(summary)        
-
- #     for station in summary:
- #        print station
-        
-
 
 if __name__ == '__main__':
    app=theApp() 
