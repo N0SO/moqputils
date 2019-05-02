@@ -35,7 +35,7 @@ class CabrilloUtils():
 			 'QSO:',
 			 'END-OF-LOG: ']
 			 
-    VERSION = '1.0.5'
+    VERSION = '1.0.6'
     PHONEMODES = 'PH SSB LSB USB FM DV'
     DIGIMODES = 'RY RTY RTTY FSK AFSK PSK PSK31 PSK64 DIGU DIGL'
     MODES = 'CW' + PHONEMODES + DIGIMODES
@@ -87,7 +87,7 @@ class CabrilloUtils():
             returnstg = tmparry[1]
         if (returnstg):
             returnstg = returnstg.strip()
-        print returnstg
+        #print returnstg
         return returnstg
         
     def getCabArray(self, target, data):
