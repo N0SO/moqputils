@@ -8,9 +8,14 @@ moqpcategory  - Determine which Missouri QSO Party Award
 """
 from CabrilloUtils import *
 from logsummary import *
+import os
+import argparse
 
 
-VERSION = '0.0.2' 
+VERSION = '0.0.3' 
+FILELIST = './'
+ARGS = None
+
 
 INSTATE = 'MO MISSOURI'
 
@@ -29,13 +34,30 @@ US+= 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD'
 
 DX = 'DX'
 
+ARGS = None
+
+class get_args():
+    def __init__(self):
+        if __name__ == '__main__':
+            self.args = self.getargs()
+            
+    def getargs(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-v', '--version', action='version', version = VERSION)
+        parser.add_argument("-i", "--inputpath", default=FILELIST,
+            help="Specifies the path to the folder that contains the log files to summarize.")
+        return parser.parse_args()
+
+
 class MOQPCategory():
 
-    category = None
+    #category = None
+    
+    #moqp_category = None
 
     def __init__(self, filename = None):
         if (filename):
-           self.determineMOQPCat(filename)
+           self.appMain(filename)
 
     def getVersion(self):
        return VERSION
@@ -60,12 +82,10 @@ class MOQPCategory():
              category.append(dg)
              category.append(qso)
              
-       self.category = category
        return category
        
-    def determineMOQPCat(self, filename):
-       ret_vals = []
-       gen_category = self.processLog(filename)
+    def determineMOQPCat(self, gen_category):
+       moqp_category = []
        temp = gen_category[5].upper().strip()
        qth = ('%s UNDEFINED QTH:'%(temp))
        if(temp in INSTATE):
@@ -76,7 +96,7 @@ class MOQPCategory():
           qth = ('CANADA %s'%(temp))
        elif (temp in DX):
           qth = 'DX'
-       ret_vals.append(qth)
+       moqp_category.append(qth)
 
        temp = gen_category[0].upper().strip()
        catstation = ('UNDEFINED STATION CATEGORY:%s'%(temp))
@@ -89,7 +109,7 @@ class MOQPCategory():
 			   catstation = 'EXPEDITION'
 		   elif (temp == 'SCHOOL'):
 			   catstation = 'SCHOOL'
-       ret_vals.append(catstation)
+       moqp_category.append(catstation)
 		   
            
        temp = gen_category[1].upper().strip()
@@ -100,13 +120,13 @@ class MOQPCategory():
           opcat = 'MULTI-OP'
        elif (temp == 'CHECKLOG'):
           opcat = ('CHECKLOG')
-       ret_vals.append(opcat)
+       moqp_category.append(opcat)
        
        temp = gen_category[2].upper().strip()
        power = ('UNDEFINED STATION POWER ENTRY:%s'%(temp))
        if (temp == 'LOW' or temp == 'HIGH' or temp == 'QRP'):
            power = ('%s POWER'%(temp))
-       ret_vals.append(power)
+       moqp_category.append(power)
     
        temp = gen_category[3].upper().strip()
        opmode = ('UNDEFINED STATION MODE ENTRY:%s'%(temp))
@@ -116,25 +136,89 @@ class MOQPCategory():
           opmode = 'CW'
        elif (temp == 'MIXED'):
           opmode = 'MIXED'
-       ret_vals.append(opmode)
+       moqp_category.append(opmode)
           
        temp = gen_category[4].upper().strip()
        opovly = ('UNDEFINED OP OVERLAY:%s'%(temp))
        if (temp == 'ROOKIE'):
           opovly  = 'ROOKIE'
-       ret_vals.append(opovly)
+       elif (temp == ''):
+          opovly = ''
+       moqp_category.append(opovly)
+       
+       for element in moqp_category:
+          if ('UNDEFINED' in element):
+             moqp_category[0] = 'UNABLE TO DETERMINE'
+             moqp_category[1] = ''
+             moqp_category[2] = ''
+             moqp_category[3] = ''
+             moqp_category[4] = ''
+             moqp_category[5] = ''
+             break
+          
 
        #print ('%s %s %s %s %s OVERLAY:%s'%(qth, catstation, opcat, power, opmode, opovly))
           
-       #print ret_vals
+       #print moqp_category
        
-       return ret_vals
-              
+       moqp_category
+       
+       return moqp_category
+       
+    def csvHeader(self):
+       print (',,,CATEGORIES FROM THE LOG FILE,,,,,')
+       print ('STATION,OPS,MOQP CATEGORY,STATION,OPERATOR,POWER,MODE,LOCATION,OVERLAY,PH Qs,CW Qs,DIGI,TOTAL')
+       
+    def exportcsvline(self, gen, moqp):
+       print ('%s,%s,%s %s %s %s %s %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s'%(gen[6], 
+                        gen[7], 
+                        moqp[0],
+                        moqp[1],
+                        moqp[2],
+                        moqp[3],
+                        moqp[4],
+                        moqp[5],
+                        gen[0],
+                        gen[1],
+                        gen[2],
+                        gen[3],
+                        gen[5],
+                        gen[4], 
+                        gen[8], 
+                        gen[9], 
+                        gen[10], 
+                        gen[11] 
+                        ))
+       
+    def exportcsvfile(self, filename, Headers=True):
+       gencat = self.processLog(filename)
+       if (gencat):
+          moqpcat = self.determineMOQPCat(gencat)
+          if (Headers): self.csvHeader()
+          self.exportcsvline(gencat, moqpcat)
+       else:
+          print ('File %s does not exist or is not in CABRILLO format.'%filename)
+          
+    def exportcsvflist(self, pathname):
+       self.csvHeader()
+       for (dirName, subdirList, fileList) in os.walk(pathname, topdown=True):
+          #print ('dirName =%s, subdirList =%s, fileList=%s'%(dirName,
+          #                                                subdirList,
+          #                                                fileList))
+          if (fileList != ''): 
+             for fileName in fileList:
+                fullPath = ('%s/%s'%(dirName, fileName))
+                self.exportcsvfile(fullPath, False)
+ 
+ 
+    def appMain(self, pathname):
+       if (os.path.isfile(pathname)):
+          self.exportcsvfile(pathname)
+       else:
+          self.exportcsvflist(pathname)
        
 if __name__ == '__main__':
-   app = MOQPCategory('../../Ham/BEARS/moqp/moqp2019/processedlogs/K0R.LOG')
-   print ('Missouri QSO Party Log Categorizer V %s'%(app.getVersion()))
-   print ('Station: %s    Operators: %s'%(app.category[6], app.category[7]))
-   print app.category
+   args = get_args()
+   app = MOQPCategory(args.args.inputpath.strip())
 
 
