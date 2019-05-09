@@ -35,10 +35,11 @@ class CabrilloUtils():
 			 'QSO:',
 			 'END-OF-LOG: ']
 			 
-    VERSION = '1.0.6'
+    VERSION = '1.0.7'
     PHONEMODES = 'PH SSB LSB USB FM DV'
-    DIGIMODES = 'RY RTY RTTY FSK AFSK PSK PSK31 PSK64 DIGU DIGL'
+    DIGIMODES = 'RY RTY RTTY FSK AFSK PSK PSK31 PSK64 DIGU DIGL DG'
     MODES = 'CW' + PHONEMODES + DIGIMODES
+    VHFFREQ = '144 222 432 440 902 1.2G'
     OPERATORTAGS = 'CALLSIGN LOCATION NAME ADDRESS ADDRESS-CITY \
                   ADDRESS-STATE-PROVINCE ADDRESS-POSTALCODE \
                   ADDRESS-COUNTRY EMAIL OPERATORS'
@@ -214,9 +215,6 @@ class CabrilloUtils():
         returnvals.append(overlay)
         
         return returnvals
-
-         
-          
 
 if __name__ == '__main__':
    app=CabrilloUtils()

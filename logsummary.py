@@ -47,6 +47,7 @@ class theApp():
       qso = 0
       cw = 0
       ph = 0
+      vhf = 0
       dg = 0
       for line in data:
          line = cab.packLine(line)
@@ -58,6 +59,13 @@ class theApp():
                       line = cab.packLine(lineparts[1])
                       lineparts = line.split(' ')
                       qso += 1
+                      tfreq = lineparts[0]
+                      try:
+                         freq = float(tfreq)
+                      except:
+                         freq = 0
+                      if ((freq >= 144000.0) or (tfreq in cab.VHFFREQ) ):
+                         vhf += 1
                       mode = lineparts[1].upper()
                       if ('CW' in mode):
                          cw +=1
@@ -67,11 +75,12 @@ class theApp():
                          dg +=1
                       else:
                          print("UNDEFINED MODE: %s -- QSO data = %s"%(mode, line))
+                      #print ('Frequency = %.2f, vhf count = %d, digi count =%d'%(freq, vhf, dg))
                elif (tag == 'CALLSIGN:'):
                   call = cab.getCabstg('CALLSIGN:',line)
                elif (tag == 'OPERATORS:'):
                   ops = cab.getCabstg('OPERATORS:',line)
-      return call, ops, qso, cw, ph, dg
+      return call, ops, qso, cw, ph, dg, vhf
 
    def processData(self, cab, data):
       retdata = []
@@ -82,7 +91,7 @@ class theApp():
       header = cab.getCABHeader(data)
       opdata = cab.getOperatorData(header)
       catdata = cab.determineCategory(header)
-      qso, cw, ph, dg = self.processQSOs(cab, data)
+      call, ops, qso, cw, ph, dg, vhf = self.processQSOs(cab, data)
       retdata.append( "LOG FILE REPORT FOR STATION %s" \
                           %(cab.getCabArray('CALLSIGN:',header)) )
       retdata.append( "CONTEST: %s\n" \
@@ -109,6 +118,7 @@ class theApp():
       retdata.append("QSO Summary:\nCW: %d"%(cw))
       retdata.append("PH: %d"%(ph))
       retdata.append("DIGITAL: %d"%(dg))
+      retdata.append("VHF: %d"%(vhf))
       retdata.append("TOTAL QSOs: %d"%(qso))
      
       return retdata

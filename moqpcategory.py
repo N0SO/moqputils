@@ -12,7 +12,7 @@ import os
 import argparse
 
 
-VERSION = '0.0.3' 
+VERSION = '0.1.0' 
 FILELIST = './'
 ARGS = None
 
@@ -73,7 +73,7 @@ class MOQPCategory():
              catdata = cab.getCategory(headerdata)
              category = cab.determineCategory(catdata)
              qth = cab.getCabArray('LOCATION:',headerdata)
-             qcall, qops, qso, cw, ph, dg = sumqs.processQSOs(cab, log)
+             qcall, qops, qso, cw, ph, dg, vhf = sumqs.processQSOs(cab, log)
              category.append(qth)
              category.append(qcall)
              category.append(qops)
@@ -81,6 +81,7 @@ class MOQPCategory():
              category.append(ph)
              category.append(dg)
              category.append(qso)
+             category.append(vhf)
              
        return category
        
@@ -131,17 +132,22 @@ class MOQPCategory():
        temp = gen_category[3].upper().strip()
        opmode = ('UNDEFINED STATION MODE ENTRY:%s'%(temp))
        if (temp == 'PH' or temp == 'SSB'):
-          opmode = 'SSB'
+          opmode = 'PHONE'
        elif (temp == 'CW'):
           opmode = 'CW'
        elif (temp == 'MIXED'):
           opmode = 'MIXED'
+       if (opmode in 'PHONE CW MIXED'):
+          if (gen_category[10] > 0):
+             opmode += '+DIG'
+          if (gen_category[12] > 0):
+             opmode += '+VHF'
        moqp_category.append(opmode)
           
        temp = gen_category[4].upper().strip()
-       opovly = ('UNDEFINED OP OVERLAY:%s'%(temp))
+       opovly = ''
        if (temp == 'ROOKIE'):
-          opovly  = 'ROOKIE'
+          opovly  = 'ROOKIE'                         
        elif (temp == ''):
           opovly = ''
        moqp_category.append(opovly)
@@ -149,6 +155,14 @@ class MOQPCategory():
        for element in moqp_category:
           if ('UNDEFINED' in element):
              moqp_category[0] = 'UNABLE TO DETERMINE'
+             moqp_category[1] = ''
+             moqp_category[2] = ''
+             moqp_category[3] = ''
+             moqp_category[4] = ''
+             moqp_category[5] = ''
+             break
+          if ( 'CHECKLOG' in opcat):
+             moqp_category[0] = 'CHECKLOG'
              moqp_category[1] = ''
              moqp_category[2] = ''
              moqp_category[3] = ''
@@ -167,10 +181,10 @@ class MOQPCategory():
        
     def csvHeader(self):
        print (',,,CATEGORIES FROM THE LOG FILE,,,,,')
-       print ('STATION,OPS,MOQP CATEGORY,STATION,OPERATOR,POWER,MODE,LOCATION,OVERLAY,PH Qs,CW Qs,DIGI,TOTAL')
+       print ('STATION,OPS,MOQP CATEGORY,STATION,OPERATOR,POWER,MODE,LOCATION,OVERLAY,CW QSO,PH QSO,RY QSO,TOTAL,VHF QSO')
        
     def exportcsvline(self, gen, moqp):
-       print ('%s,%s,%s %s %s %s %s %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s'%(gen[6], 
+       print ( '%s,%s,%s %s %s %s %s %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s'%(gen[6], 
                         gen[7], 
                         moqp[0],
                         moqp[1],
@@ -187,9 +201,14 @@ class MOQPCategory():
                         gen[8], 
                         gen[9], 
                         gen[10], 
-                        gen[11] 
-                        ))
+                        gen[11],
+                        gen[12]) )
        
+    """
+    This method processes a single file passed in filename
+    If the Headers option is false, it will skip printing the
+    csv header info.
+    """
     def exportcsvfile(self, filename, Headers=True):
        gencat = self.processLog(filename)
        if (gencat):
@@ -199,17 +218,16 @@ class MOQPCategory():
        else:
           print ('File %s does not exist or is not in CABRILLO format.'%filename)
           
+    """
+    This method processes all files in the passed in pathname
+    """
     def exportcsvflist(self, pathname):
        self.csvHeader()
        for (dirName, subdirList, fileList) in os.walk(pathname, topdown=True):
-          #print ('dirName =%s, subdirList =%s, fileList=%s'%(dirName,
-          #                                                subdirList,
-          #                                                fileList))
           if (fileList != ''): 
              for fileName in fileList:
                 fullPath = ('%s/%s'%(dirName, fileName))
                 self.exportcsvfile(fullPath, False)
- 
  
     def appMain(self, pathname):
        if (os.path.isfile(pathname)):
