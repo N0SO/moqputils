@@ -12,7 +12,7 @@ import os
 import argparse
 
 
-VERSION = '0.1.0' 
+VERSION = '0.2.0' 
 FILELIST = './'
 ARGS = None
 
@@ -51,10 +51,6 @@ class get_args():
 
 class MOQPCategory():
 
-    #category = None
-    
-    #moqp_category = None
-
     def __init__(self, filename = None):
         if (filename):
            self.appMain(filename)
@@ -82,7 +78,7 @@ class MOQPCategory():
              category.append(dg)
              category.append(qso)
              category.append(vhf)
-             
+       
        return category
        
     def determineMOQPCat(self, gen_category):
@@ -180,11 +176,12 @@ class MOQPCategory():
        return moqp_category
        
     def csvHeader(self):
-       print (',,,CATEGORIES FROM THE LOG FILE,,,,,')
-       print ('STATION,OPS,MOQP CATEGORY,STATION,OPERATOR,POWER,MODE,LOCATION,OVERLAY,CW QSO,PH QSO,RY QSO,TOTAL,VHF QSO')
+       hdata = (',,,CATEGORIES FROM THE LOG FILE,,,,,\n')
+       hdata += ('STATION,OPS,MOQP CATEGORY,STATION,OPERATOR,POWER,MODE,LOCATION,OVERLAY,CW QSO,PH QSO,RY QSO,TOTAL,VHF QSO\n')
+       return hdata
        
     def exportcsvline(self, gen, moqp):
-       print ( '%s,%s,%s %s %s %s %s %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s'%(gen[6], 
+       hdata = ( '%s,%s,%s %s %s %s %s %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n'%(gen[6], 
                         gen[7], 
                         moqp[0],
                         moqp[1],
@@ -203,6 +200,8 @@ class MOQPCategory():
                         gen[10], 
                         gen[11],
                         gen[12]) )
+                        
+       return hdata 
        
     """
     This method processes a single file passed in filename
@@ -210,30 +209,36 @@ class MOQPCategory():
     csv header info.
     """
     def exportcsvfile(self, filename, Headers=True):
+       csvdata = ''
        gencat = self.processLog(filename)
        if (gencat):
           moqpcat = self.determineMOQPCat(gencat)
-          if (Headers): self.csvHeader()
-          self.exportcsvline(gencat, moqpcat)
+          if (Headers): 
+             csvdata = self.csvHeader()
+          csvdata += self.exportcsvline(gencat, moqpcat)
        else:
-          print ('File %s does not exist or is not in CABRILLO format.'%filename)
+          csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
+       return csvdata
           
     """
     This method processes all files in the passed in pathname
     """
     def exportcsvflist(self, pathname):
-       self.csvHeader()
+       csvdata = self.csvHeader()
        for (dirName, subdirList, fileList) in os.walk(pathname, topdown=True):
           if (fileList != ''): 
              for fileName in fileList:
                 fullPath = ('%s/%s'%(dirName, fileName))
-                self.exportcsvfile(fullPath, False)
+                csvdata += self.exportcsvfile(fullPath, False)
+       return csvdata
  
     def appMain(self, pathname):
+       csvdata = 'Nothing.'
        if (os.path.isfile(pathname)):
-          self.exportcsvfile(pathname)
+          csvdata = self.exportcsvfile(pathname)
        else:
-          self.exportcsvflist(pathname)
+          csvdata = self.exportcsvflist(pathname)
+       print csvdata
        
 if __name__ == '__main__':
    args = get_args()
