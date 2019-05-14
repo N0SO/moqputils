@@ -1,9 +1,13 @@
 #!/usr/bin/python
 """
-gui_moqpcategory.py - GUI "front end" for moqpcategory.py
+gui_moqputils.py - GUI "front end" for moqp utilities
 
           V0.0.1 - 2019-05-10
           First interation
+          
+          V0.0.2 - 2019-05-10
+          Renamed to guiMOQPUtils since it now has options
+          for several other MOQP utilities.
           
 """
 from Tkinter import *
@@ -14,12 +18,12 @@ from tkFileDialog   import askdirectory
 import os.path
 import argparse
 from csv2cab import csv2CAB
-from moqpcategory import MOQPCategory
+from moqputils import MOQPUtils
 
 VERSION = '0.0.1'
 FILELIST = './'
 
-class guiMOQPCategory(Frame):
+class guiMOQPUtils(Frame):
 
     # Define settings upon initialization. Here you can specify
     def __init__(self, master=None):
@@ -156,7 +160,7 @@ if __name__ == '__main__':
       root.geometry("800x500")
 
       #creation of an instance
-      app = guiMOQPCategory(root)
+      app = guiMOQPUtils(root)
 
       #mainloop 
       root.mainloop()     
