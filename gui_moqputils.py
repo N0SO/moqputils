@@ -18,7 +18,8 @@ from tkFileDialog   import askdirectory
 import os.path
 import argparse
 from csv2cab import csv2CAB
-from moqputils import MOQPUtils
+from moqpcategory import MOQPCategory
+from onexonesummary import 
 
 VERSION = '0.0.1'
 FILELIST = './'
@@ -77,6 +78,19 @@ class guiMOQPUtils(Frame):
     def About(self):
         showinfo('GUI_MOQPCATEGORY', 'GUI_MOQPCATEGORY - Version ' + VERSION + '\n' + \
               'Utility to help categorize Missouri QSO Party logfiles in CABRILLO format.')
+
+    def SumOneXOnes(self):
+        logpathName = askdirectory()
+        print('Directory name selected: %s'%logpathName)
+        sumApp = MOQPCategory()
+        sumData = sumApp.exportcsvflist(logpathName)
+        sumLines = sumData.split('\n')
+        for line in sumLines:
+           self.LogText.insert(END, line.strip()+'\n')
+        sumfile = logpathName + "logsummaryreport.txt"
+        with open(sumfile,'w') as f:
+           f.write(sumData)
+        showinfo('CSV summary File created and saved', 'Saved as file:\n%s'%sumfile)
 
     def SumDir(self):
         logpathName = askdirectory()
@@ -157,7 +171,7 @@ class guiMOQPUtils(Frame):
 if __name__ == '__main__':
       root = Tk()
 
-      root.geometry("800x500")
+      root.geometry("900x300")
 
       #creation of an instance
       app = guiMOQPUtils(root)
