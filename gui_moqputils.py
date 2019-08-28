@@ -9,6 +9,8 @@ gui_moqputils.py - GUI "front end" for moqp utilities
           Renamed to guiMOQPUtils since it now has options
           for several other MOQP utilities.
           
+          
+          
 """
 from Tkinter import *
 from tkMessageBox import *
@@ -19,9 +21,9 @@ import os.path
 import argparse
 from csv2cab import csv2CAB
 from moqpcategory import MOQPCategory
-from onexonesummary import 
+#from onexonesummary import 
 
-VERSION = '0.0.1'
+VERSION = '0.0.3'
 FILELIST = './'
 
 class guiMOQPUtils(Frame):

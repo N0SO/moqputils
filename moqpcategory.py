@@ -6,13 +6,12 @@ moqpcategory  - Determine which Missouri QSO Party Award
                 Based on 2019 MOQP Rules
                 
 """
-from CabrilloUtils import *
 from logsummary import *
 import os
 import argparse
 
 
-VERSION = '0.2.0' 
+VERSION = '0.2.1' 
 FILELIST = './'
 ARGS = None
 
@@ -49,7 +48,7 @@ class get_args():
         return parser.parse_args()
 
 
-class MOQPCategory():
+class MOQPCategory(LogSummary):
 
     def __init__(self, filename = None):
         if (filename):
@@ -60,16 +59,14 @@ class MOQPCategory():
 
     def processLog(self, fname):
        category = None
-       cab = CabrilloUtils()
-       sumqs = theApp()
-       log = cab.readFile(fname)
+       log = self.readFile(fname)
        if ( log ):
-          if cab.IsThisACabFile(log):
-             headerdata = cab.getCABHeader(log)
-             catdata = cab.getCategory(headerdata)
-             category = cab.determineCategory(catdata)
-             qth = cab.getCabArray('LOCATION:',headerdata)
-             qcall, qops, qso, cw, ph, dg, vhf = sumqs.processQSOs(cab, log)
+          if self.IsThisACabFile(log):
+             headerdata = self.getCABHeader(log)
+             catdata = self.getCategory(headerdata)
+             category = self.determineCategory(catdata)
+             qth = self.getCabArray('LOCATION:',headerdata)
+             qcall, qops, qso, cw, ph, dg, vhf = self.processQSOs( log)
              category.append(qth)
              category.append(qcall)
              category.append(qops)
@@ -98,16 +95,16 @@ class MOQPCategory():
        temp = gen_category[0].upper().strip()
        catstation = ('UNDEFINED STATION CATEGORY:%s'%(temp))
        if (temp in STATIONS):
-		   if (temp == 'FIXED'):
-			   catstation = 'FIXED'
-		   elif ( (temp == 'MOBILE') or (temp == 'ROVER') or temp == 'PORTABLE'):
-			   catstation = 'MOBILE'
-		   elif (temp == 'EXPEDITION'):
-			   catstation = 'EXPEDITION'
-		   elif (temp == 'SCHOOL'):
-			   catstation = 'SCHOOL'
+           if (temp == 'FIXED'):
+               catstation = 'FIXED'
+           elif ( (temp == 'MOBILE') or (temp == 'ROVER') or temp == 'PORTABLE'):
+               catstation = 'MOBILE'
+           elif (temp == 'EXPEDITION'):
+               catstation = 'EXPEDITION'
+           elif (temp == 'SCHOOL'):
+               catstation = 'SCHOOL'
        moqp_category.append(catstation)
-		   
+           
            
        temp = gen_category[1].upper().strip()
        opcat = ('UNDEFINED OP CATEGORY:%s'%(temp))

@@ -7,7 +7,7 @@ import datetime
 import argparse
 from CabrilloUtils import *
 
-VERSION = '1.0.6'
+VERSION = '1.0.7'
 ARGS = None
 
 
@@ -17,28 +17,36 @@ class get_args():
             self.args = self.getargs()
             
     def getargs(self):
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(description = \
+            'Display Cabrillo header from logfile and print ' + \
+            'a summary of QSOs made.')
         parser.add_argument('-v', '--version', action='version', version = VERSION)
         parser.add_argument("-i", "--inputfile", default=None,
             help="Specifies the log file input file name")
         return parser.parse_args()
     
-class theApp():
+class LogSummary(CabrilloUtils):
+   """
+   LogSummary inherits methods from parent class CalbrilloUtils.
+   """
    def __init__(self):
       if __name__ == '__main__':
          self.main()
+         
+   def _get_version(self):
+      return VERSION
       
    def processLog(self, logfile):
       retdata = None
-      cab = CabrilloUtils()
-      data = cab.readFile(logfile)
+      #cab = CabrilloUtils()
+      data = self.readFile(logfile)
       if (data):
-         retdata = self.processData(cab, data)
+         retdata = self.processData( data)
       else:
          print('\n\n==>No data for %s\n\n'%(logfile))
       return retdata
       
-   def processQSOs(self, cab, data):
+   def processQSOs(self,  data):
       """
       Process and return QSO data only
       """
@@ -50,13 +58,13 @@ class theApp():
       vhf = 0
       dg = 0
       for line in data:
-         line = cab.packLine(line)
-         for tag in cab.CABRILLOTAGS:
+         line = self.packLine(line)
+         for tag in self.CABRILLOTAGS:
             if tag in line:
                if (tag == 'QSO:'):
                    lineparts = line.split(tag)
                    if (lineparts[1]):
-                      line = cab.packLine(lineparts[1])
+                      line = self.packLine(lineparts[1])
                       lineparts = line.split(' ')
                       qso += 1
                       tfreq = lineparts[0]
@@ -64,49 +72,49 @@ class theApp():
                          freq = float(tfreq)
                       except:
                          freq = 0
-                      if ((freq >= 144000.0) or (tfreq in cab.VHFFREQ) ):
+                      if ((freq >= 144000.0) or (tfreq in self.VHFFREQ) ):
                          vhf += 1
                       mode = lineparts[1].upper()
                       if ('CW' in mode):
                          cw +=1
-                      elif (mode in cab.PHONEMODES):
+                      elif (mode in self.PHONEMODES):
                          ph +=1
-                      elif (mode in cab.DIGIMODES):
+                      elif (mode in self.DIGIMODES):
                          dg +=1
                       else:
                          print("UNDEFINED MODE: %s -- QSO data = %s"%(mode, line))
                       #print ('Frequency = %.2f, vhf count = %d, digi count =%d'%(freq, vhf, dg))
                elif (tag == 'CALLSIGN:'):
-                  call = cab.getCabstg('CALLSIGN:',line)
+                  call = self.getCabstg('CALLSIGN:',line)
                elif (tag == 'OPERATORS:'):
-                  ops = cab.getCabstg('OPERATORS:',line)
+                  ops = self.getCabstg('OPERATORS:',line)
       return call, ops, qso, cw, ph, dg, vhf
 
-   def processData(self, cab, data):
+   def processData(self,  data):
       retdata = []
       qso = 0
       cw = 0
       ph = 0
       dg = 0
-      header = cab.getCABHeader(data)
-      opdata = cab.getOperatorData(header)
-      catdata = cab.determineCategory(header)
-      call, ops, qso, cw, ph, dg, vhf = self.processQSOs(cab, data)
+      header = self.getCABHeader(data)
+      opdata = self.getOperatorData(header)
+      catdata = self.determineCategory(header)
+      call, ops, qso, cw, ph, dg, vhf = self.processQSOs( data)
       retdata.append( "LOG FILE REPORT FOR STATION %s" \
-                          %(cab.getCabArray('CALLSIGN:',header)) )
+                          %(self.getCabArray('CALLSIGN:',header)) )
       retdata.append( "CONTEST: %s\n" \
-                          %(cab.getCabArray('CONTEST:',header).upper()) )
+                          %(self.getCabArray('CONTEST:',header).upper()) )
                           
       retdata.append('SUBMITTED BY:')
       retdata.append('%s %s' \
-         %(cab.getCabArray('NAME:',header), 
-           cab.getCabArray('EMAIL:', header)) )                   
-      retdata.append('%s'%(cab.getCabArray('ADDRESS:',header)) )
-      retdata.append('%s'%(cab.getCabArray('ADDRESS-CITY:',header)) )
-      retdata.append('%s'%(cab.getCabArray('ADDRESS-STATE-PROVINCE:',header)) )
-      retdata.append('%s\n'%(cab.getCabArray('ADDRESS-ADDRESS-POSTALCODE: ',header)) )
+         %(self.getCabArray('NAME:',header), 
+           self.getCabArray('EMAIL:', header)) )                   
+      retdata.append('%s'%(self.getCabArray('ADDRESS:',header)) )
+      retdata.append('%s'%(self.getCabArray('ADDRESS-CITY:',header)) )
+      retdata.append('%s'%(self.getCabArray('ADDRESS-STATE-PROVINCE:',header)) )
+      retdata.append('%s\n'%(self.getCabArray('ADDRESS-ADDRESS-POSTALCODE: ',header)) )
     
-      retdata.append('OPERATORS:%s\n'%(cab.getCabArray('OPERATORS:',header)) )
+      retdata.append('OPERATORS:%s\n'%(self.getCabArray('OPERATORS:',header)) )
                             
       retdata.append( \
       "Category: %s STATION, %s, %s MODE, %s POWER\nOverlay: %s\n" \
@@ -132,4 +140,5 @@ class theApp():
             print line
 
 if __name__ == '__main__':
-   app=theApp()
+   app=LogSummary()
+   print( 'Version %s exiting...'%(app._get_version()) )
