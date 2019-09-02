@@ -180,5 +180,3 @@ if __name__ == '__main__':
 
       #mainloop 
       root.mainloop()     
-   
-        
