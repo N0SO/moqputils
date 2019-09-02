@@ -6,13 +6,12 @@ moqpcategory  - Determine which Missouri QSO Party Award
                 Based on 2019 MOQP Rules
                 
 """
-from CabrilloUtils import *
 from logsummary import *
 import os
 import argparse
 
 
-VERSION = '0.1.0' 
+VERSION = '0.2.1' 
 FILELIST = './'
 ARGS = None
 
@@ -49,11 +48,7 @@ class get_args():
         return parser.parse_args()
 
 
-class MOQPCategory():
-
-    #category = None
-    
-    #moqp_category = None
+class MOQPCategory(LogSummary):
 
     def __init__(self, filename = None):
         if (filename):
@@ -64,16 +59,14 @@ class MOQPCategory():
 
     def processLog(self, fname):
        category = None
-       cab = CabrilloUtils()
-       sumqs = theApp()
-       log = cab.readFile(fname)
+       log = self.readFile(fname)
        if ( log ):
-          if cab.IsThisACabFile(log):
-             headerdata = cab.getCABHeader(log)
-             catdata = cab.getCategory(headerdata)
-             category = cab.determineCategory(catdata)
-             qth = cab.getCabArray('LOCATION:',headerdata)
-             qcall, qops, qso, cw, ph, dg, vhf = sumqs.processQSOs(cab, log)
+          if self.IsThisACabFile(log):
+             headerdata = self.getCABHeader(log)
+             catdata = self.getCategory(headerdata)
+             category = self.determineCategory(catdata)
+             qth = self.getCabArray('LOCATION:',headerdata)
+             qcall, qops, qso, cw, ph, dg, vhf = self.processQSOs( log)
              category.append(qth)
              category.append(qcall)
              category.append(qops)
@@ -82,7 +75,7 @@ class MOQPCategory():
              category.append(dg)
              category.append(qso)
              category.append(vhf)
-             
+       
        return category
        
     def determineMOQPCat(self, gen_category):
@@ -102,16 +95,16 @@ class MOQPCategory():
        temp = gen_category[0].upper().strip()
        catstation = ('UNDEFINED STATION CATEGORY:%s'%(temp))
        if (temp in STATIONS):
-		   if (temp == 'FIXED'):
-			   catstation = 'FIXED'
-		   elif ( (temp == 'MOBILE') or (temp == 'ROVER') or temp == 'PORTABLE'):
-			   catstation = 'MOBILE'
-		   elif (temp == 'EXPEDITION'):
-			   catstation = 'EXPEDITION'
-		   elif (temp == 'SCHOOL'):
-			   catstation = 'SCHOOL'
+           if (temp == 'FIXED'):
+               catstation = 'FIXED'
+           elif ( (temp == 'MOBILE') or (temp == 'ROVER') or temp == 'PORTABLE'):
+               catstation = 'MOBILE'
+           elif (temp == 'EXPEDITION'):
+               catstation = 'EXPEDITION'
+           elif (temp == 'SCHOOL'):
+               catstation = 'SCHOOL'
        moqp_category.append(catstation)
-		   
+           
            
        temp = gen_category[1].upper().strip()
        opcat = ('UNDEFINED OP CATEGORY:%s'%(temp))
@@ -180,11 +173,12 @@ class MOQPCategory():
        return moqp_category
        
     def csvHeader(self):
-       print (',,,CATEGORIES FROM THE LOG FILE,,,,,')
-       print ('STATION,OPS,MOQP CATEGORY,STATION,OPERATOR,POWER,MODE,LOCATION,OVERLAY,CW QSO,PH QSO,RY QSO,TOTAL,VHF QSO')
+       hdata = (',,,CATEGORIES FROM THE LOG FILE,,,,,\n')
+       hdata += ('STATION,OPS,MOQP CATEGORY,STATION,OPERATOR,POWER,MODE,LOCATION,OVERLAY,CW QSO,PH QSO,RY QSO,TOTAL,VHF QSO\n')
+       return hdata
        
     def exportcsvline(self, gen, moqp):
-       print ( '%s,%s,%s %s %s %s %s %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s'%(gen[6], 
+       hdata = ( '%s,%s,%s %s %s %s %s %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n'%(gen[6], 
                         gen[7], 
                         moqp[0],
                         moqp[1],
@@ -203,6 +197,8 @@ class MOQPCategory():
                         gen[10], 
                         gen[11],
                         gen[12]) )
+                        
+       return hdata 
        
     """
     This method processes a single file passed in filename
@@ -210,30 +206,36 @@ class MOQPCategory():
     csv header info.
     """
     def exportcsvfile(self, filename, Headers=True):
+       csvdata = ''
        gencat = self.processLog(filename)
        if (gencat):
           moqpcat = self.determineMOQPCat(gencat)
-          if (Headers): self.csvHeader()
-          self.exportcsvline(gencat, moqpcat)
+          if (Headers): 
+             csvdata = self.csvHeader()
+          csvdata += self.exportcsvline(gencat, moqpcat)
        else:
-          print ('File %s does not exist or is not in CABRILLO format.'%filename)
+          csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
+       return csvdata
           
     """
     This method processes all files in the passed in pathname
     """
     def exportcsvflist(self, pathname):
-       self.csvHeader()
+       csvdata = self.csvHeader()
        for (dirName, subdirList, fileList) in os.walk(pathname, topdown=True):
           if (fileList != ''): 
              for fileName in fileList:
                 fullPath = ('%s/%s'%(dirName, fileName))
-                self.exportcsvfile(fullPath, False)
+                csvdata += self.exportcsvfile(fullPath, False)
+       return csvdata
  
     def appMain(self, pathname):
+       csvdata = 'Nothing.'
        if (os.path.isfile(pathname)):
-          self.exportcsvfile(pathname)
+          csvdata = self.exportcsvfile(pathname)
        else:
-          self.exportcsvflist(pathname)
+          csvdata = self.exportcsvflist(pathname)
+       print csvdata
        
 if __name__ == '__main__':
    args = get_args()

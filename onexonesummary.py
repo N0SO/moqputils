@@ -7,7 +7,7 @@ import datetime
 import argparse
 from CabrilloUtils import *
 
-VERSION = '1.0.2'
+VERSION = '1.0.3'
 FILELIST = './'
 ARGS = None
 
@@ -23,7 +23,7 @@ class get_args():
             help="Specifies the path to the folder that contains the log files to summarize.")
         return parser.parse_args()
 
-class theApp():
+class onexoneSum():
    def __init__(self):
       self.main()
 
@@ -112,4 +112,4 @@ class theApp():
       self.exportcsv(summary)        
 
 if __name__ == '__main__':
-   app=theApp() 
+   app=onexoneSum() 
