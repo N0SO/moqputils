@@ -4,7 +4,7 @@ require_once "recaptchalib.php";
 include 'moqpconfig.php';
 
 // your secret key
-$secret = "your_key_goes_here";
+$secret = "6LeRFlUUAAAAAIPzn7qUXNplsvL3jSuVSZboFk1K";
 
 // empty response
 $response = null;
