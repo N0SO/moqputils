@@ -1,0 +1,94 @@
+#!/usr/bin/env python
+import os, sys, argparse
+"""
+csv2cab - Process a .csv file from MSExcel (or other spreadsheets)
+          and make it a .CAB file by removing all commas, blank
+          QSO: lines, etc. Usually used to clean a file submitted
+          using AA0CL's MOQP_log.xls form.
+          
+          Usage:
+             python csv2cab.py -i logfilename.csv
+             
+          This will create a file named logfile.csv.log that should
+          be in the same folder as the source.
+          
+          Starting with V1.0.2, can also be called from inside your 
+      code:
+        from csv2cab import *
+        mycab = csv2cab('csvcabfilename')
+                   
+        --or-- if you want to manipulate the cab data:
+        mycab = csv2cab()
+        mycsvdata = mycab.readcsvcabFile(csvcabfilename)
+        mycabdata = mycab.processcsvData(mycsvdata)
+
+          
+          This program inserts whatever is in the TAGLINE constant
+          as the first line of the SOAPBOX: fields
+          
+          V1.0.1 - Initial release
+          
+          V1.0.2 - 2018-05-01 
+          Made csv2cab callable from another module. The stand-alone
+          command line functions still work too.
+          
+"""
+
+DESCRIPTION = \
+"""csv2cab - Process a .csv file from MSExcel (or other spreadsheets)
+and make it a .CAB file by removing all commas, blank
+QSO: lines, etc. Usually used to clean a file submitted
+using AA0CL's MOQP_log.xls form."""
+
+EPILOG = \
+"""
+Running with no parameters will launch the GUI.
+"""
+
+DEVMODPATH = ['CSVtoCAB']
+
+VERSION = '0.1.0'
+
+# If the development module source paths exist, 
+# add them to the python path
+for mypath in DEVMODPATH:
+    if ( os.path.exists(mypath) and \
+                       (os.path.isfile(mypath) == False) ):
+        sys.path.insert(0,mypath)
+#print('Python path = %s'%(sys.path))
+from common import common
+
+"""
+The main app class.
+Only gets called if this file is running stand alone, and
+not if it's included as part of a larger application
+"""
+class theApp():        
+    def __init__(self):
+        self.appMain()
+
+    def getArgs(self):
+        commons = common()
+        parser = argparse.ArgumentParser(\
+                               description = DESCRIPTION,
+                                           epilog = EPILOG)
+        parser.add_argument('-v', '--version', action='version', 
+                             version = commons.__get_app_version__())
+        parser.add_argument("-i", "--inputfile", default=None,
+            help="Specifies the log file input file name")
+        return parser.parse_args()
+        return args
+
+    def appMain(self):
+        args = self.getArgs()
+        if (args.inputfile):
+            from csv2cab import csv2CAB
+            app = csv2CAB(args.inputfile)
+        else:
+            from ui import gui_csv2cab
+            app=gui_csv2cab()
+"""
+Main program - run stand-alone if not included as part of a larger application
+"""
+if __name__ == '__main__':
+   app = theApp()
