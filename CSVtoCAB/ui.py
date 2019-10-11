@@ -8,9 +8,14 @@ csv2cab - Process a .csv file from MSExcel (or other spreadsheets)
           using AA0CL's MOQP_log.xls form.
           
           
-          V0.0.1 - 2018-09-19
-          First interation
-          
+* Thu Sep 19 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.1 - 2018-09-19 - First interation
+* Thu Oct 11 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0 - 2019-10-11
+- Made csv2cab inherit from CabrilloUtils.
+- Make module CSVtoCAB with classes csv2CAB and ui.
+- Added csv2cab script that will do both command line and GUI.
+      
 """
 #!/usr/bin/env python
 import sys
@@ -31,7 +36,7 @@ import os.path
 from csv2cab import csv2CAB
 from common import common
 
-VERSION = '0.0.1'
+VERSION = '1.0.0'
 
 class gui_csv2cab(csv2CAB):
 
@@ -43,7 +48,8 @@ class gui_csv2cab(csv2CAB):
         return VERSION
 
     def NewFile(self):
-        print "New File!"
+        print( "New File!" )
+        self.notimplemented()
 
     def OpenFile(self):
         csvfilename = askopenfilename(title = "Select input log file:",
@@ -60,7 +66,7 @@ class gui_csv2cab(csv2CAB):
                 self.LogText.insert(END, line.strip()+'\n')
             cabtext = r""
             cabtext = self.processcsvData(csvtext)
-            print cabtext
+            #print (cabtext)
             if (cabtext):
                 filestuff = os.path.splitext(csvfilename)
                 cabfile = filestuff[0] + '.log'
@@ -76,7 +82,7 @@ class gui_csv2cab(csv2CAB):
                 filename = asksaveasfilename(initialdir = "./",
                                   title = "Save user log file...",
                                   initialfile = cabfile,
-                                  filetypes = [("log files","*.csv"),
+                                  filetypes = [("log files","*.log"),
                                                ("text files","*.txt"),
                                                ("all files","*.*")])
 
@@ -86,7 +92,12 @@ class gui_csv2cab(csv2CAB):
                     showinfo('CAB File created and saved', 'Saved as CAB file:\n'+cabfile)
 
     def sum(self):
-        print "Function sum() called..."
+        print ("Function sum() called...")
+        self.notimplemented()
+        
+    def notimplemented(self):
+        text = 'Function not implemented'
+        showinfo('Sorry, Not Implemented Yet',  text)
 
     def About(self):
         print ('About...')

@@ -37,7 +37,6 @@ Update History:
 - Made csv2cab inherit from CabrilloUtils.
 - Make module CSVtoCAB with classes csv2CAB and ui.
 - Added csv2cab script that will do both command line and GUI.
-- Fixed a bug in processcsvData that omitted the END-OF-LOG: tag.
 """
 import datetime
 import argparse
