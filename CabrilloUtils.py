@@ -2,42 +2,48 @@
 """
 CabrilloUtils - A collection of utilities to process CABRILLO
                 Format log files.
-import datetime
-import argparse
+Update History:
+* Tues Sep 18 2018 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0 - Initial release
+* Tue May 01 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.2 - Release of moqpcategory class
+* Fri Oct 11 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.8 - 2019-10-11
+- Fixed typo in CABRILLOAGS tag END-OF-LOG:
 """
 
 class CabrilloUtils():
     CABRILLOTAGS = ['START-OF-LOG:',
-			 'CALLSIGN:',
-			 'CREATED-BY:',
-			 'LOCATION:',
-			 'CONTEST:',
-			 'NAME:',
-			 'ADDRESS:',
-			 'ADDRESS:',
-			 'ADDRESS-CITY:',
-			 'ADDRESS-STATE-PROVINCE:',
-			 'ADDRESS-POSTALCODE:',
-			 'ADDRESS-COUNTRY:',
-			 'EMAIL:',
-			 'CATEGORY-ASSISTED:', 
-			 'CATEGORY-BAND:', 
-			 'CATEGORY-MODE:', 
-			 'CATEGORY-OPERATOR:', 
-			 'CATEGORY-POWER:', 
-			 'CATEGORY-STATION:', 
-			 'CATEGORY-TRANSMITTER:', 
-			 'CERTIFICATE:', 
-			 'OPERATORS:', 
-			 'CLAIMED-SCORE:',
-			 'CLUB:', 
-			 'SOAPBOX:',
-			 'QSO:',
-			 'END-OF-LOG: ']
-			 
-    VERSION = '1.0.7'
+             'CALLSIGN:',
+             'CREATED-BY:',
+             'LOCATION:',
+             'CONTEST:',
+             'NAME:',
+             'ADDRESS:',
+             'ADDRESS:',
+             'ADDRESS-CITY:',
+             'ADDRESS-STATE-PROVINCE:',
+             'ADDRESS-POSTALCODE:',
+             'ADDRESS-COUNTRY:',
+             'EMAIL:',
+             'CATEGORY-ASSISTED:', 
+             'CATEGORY-BAND:', 
+             'CATEGORY-MODE:', 
+             'CATEGORY-OPERATOR:', 
+             'CATEGORY-POWER:', 
+             'CATEGORY-STATION:', 
+             'CATEGORY-TRANSMITTER:', 
+             'CERTIFICATE:', 
+             'OPERATORS:', 
+             'CLAIMED-SCORE:',
+             'CLUB:', 
+             'SOAPBOX:',
+             'QSO:',
+             'END-OF-LOG:']
+             
+    VERSION = '1.0.8'
     PHONEMODES = 'PH SSB LSB USB FM DV'
-    DIGIMODES = 'RY RTY RTTY FSK AFSK PSK PSK31 PSK64 DIGU DIGL DG'
+    DIGIMODES = 'RY RTY RTTY FSK AFSK PSK PSK31 PSK64 DIGU DIGL DG FT8'
     MODES = 'CW' + PHONEMODES + DIGIMODES
     VHFFREQ = '144 222 432 440 902 1.2G'
     OPERATORTAGS = 'CALLSIGN LOCATION NAME ADDRESS ADDRESS-CITY \
@@ -54,6 +60,9 @@ class CabrilloUtils():
 
     def __init__(self):
         pass
+
+    def __version__(self):
+        return self.VERSION
 
     def getVersion(self):
        return self.VERSION
@@ -88,7 +97,6 @@ class CabrilloUtils():
             returnstg = tmparry[1]
         if (returnstg):
             returnstg = returnstg.strip()
-        #print returnstg
         return returnstg
         
     def getCabArray(self, target, data):
@@ -218,4 +226,5 @@ class CabrilloUtils():
 
 if __name__ == '__main__':
    app=CabrilloUtils()
-   print app.getVersion()
+   print ('Classname: %s Version: %s'%(app.__class__.__name__,
+                                       app.__version__()))
