@@ -12,13 +12,23 @@ gui_moqputils.py - GUI "front end" for moqp utilities
           
           
 """
+import os.path
+import sys
+DEVMODPATH = ['CSVtoCAB']
+# If the development module source paths exist, 
+# add them to the python path
+for mypath in DEVMODPATH:
+    if ( os.path.exists(mypath) and \
+                       (os.path.isfile(mypath) == False) ):
+        sys.path.insert(0,mypath)
+#print('Python path = %s'%(sys.path))
+
 from Tkinter import *
 from tkMessageBox import *
 from tkFileDialog   import askopenfilename
 from tkFileDialog   import askdirectory
 
-import os.path
-import argparse
+#import argparse
 from csv2cab import csv2CAB
 from moqpcategory import MOQPCategory
 #from onexonesummary import 
