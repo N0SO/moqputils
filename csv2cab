@@ -1,38 +1,39 @@
 #!/usr/bin/env python
 import os, sys, argparse
 """
-csv2cab - Process a .csv file from MSExcel (or other spreadsheets)
-          and make it a .CAB file by removing all commas, blank
-          QSO: lines, etc. Usually used to clean a file submitted
-          using AA0CL's MOQP_log.xls form.
-          
-          Usage:
-             python csv2cab.py -i logfilename.csv
-             
-          This will create a file named logfile.csv.log that should
-          be in the same folder as the source.
-          
-          Starting with V1.0.2, can also be called from inside your 
-      code:
-        from csv2cab import *
-        mycab = csv2cab('csvcabfilename')
-                   
-        --or-- if you want to manipulate the cab data:
-        mycab = csv2cab()
-        mycsvdata = mycab.readcsvcabFile(csvcabfilename)
-        mycabdata = mycab.processcsvData(mycsvdata)
+csv2cab - 
+Process a .csv file from MSExcel (or other spreadsheets)
+and make it a .CAB file by removing all commas, blank
+QSO: lines, etc. Usually used to clean a file submitted
+using AA0CL's MOQP_log.xls form.
 
-          
-          This program inserts whatever is in the TAGLINE constant
-          as the first line of the SOAPBOX: fields
-          
-          V1.0.1 - Initial release
-          
-          V1.0.2 - 2018-05-01 
-          Made csv2cab callable from another module. The stand-alone
-          command line functions still work too.
-          
+Usage:
+ python csv2cab.py -i logfilename.csv
+
+This will create a file named logfile.csv.log that should
+be in the same folder as the source.
+
+Starting with V1.0.2, can also be called from inside your 
+code:
+from csv2cab import *
+mycab = csv2cab('csvcabfilename')
+
+--or-- if you want to manipulate the cab data:
+mycab = csv2cab()
+mycsvdata = mycab.readcsvcabFile(csvcabfilename)
+mycabdata = mycab.processcsvData(mycsvdata)
+
+* Thu Oct 10 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - 2019-10-10
+- Made csv2cab inherit from CabrilloUtils.
+- Make module cabrilloutils with classes cabrilloutils, 
+- csv2CAB and ui_csv2cab.
+- Added csv2cab script that will do both command line and GUI.
+* Mon Oct 14 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0 - Ready for release
+- Also renamed module directory to cabrilloutils
 """
+
 
 DESCRIPTION = \
 """csv2cab - Process a .csv file from MSExcel (or other spreadsheets)
@@ -45,9 +46,9 @@ EPILOG = \
 Running with no parameters will launch the GUI.
 """
 
-DEVMODPATH = ['CSVtoCAB']
+DEVMODPATH = ['cabrilloutils']
 
-VERSION = '0.1.0'
+#VERSION = '0.1.1'
 
 # If the development module source paths exist, 
 # add them to the python path
@@ -85,7 +86,7 @@ class theApp():
             from csv2cab import csv2CAB
             app = csv2CAB(args.inputfile)
         else:
-            from ui import gui_csv2cab
+            from ui_csv2cab import gui_csv2cab
             app=gui_csv2cab()
 """
 Main program - run stand-alone if not included as part of a larger application
