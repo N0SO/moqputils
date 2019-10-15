@@ -1,21 +1,25 @@
 #!/usr/bin/python
 #!/usr/bin/env python
 """
-moqpcategory  - Determine which Missouri QSO Party Award
-                category a Cabrillo Format log file is in.
+mqpcategory  - Determine which Missouri QSO Party Award
+               category a Cabrillo Format log file is in.
                 
-                Based on 2019 MOQP Rules
+               Based on 2019 MOQP Rules
 
 Update History:
 * Fri May 10 2019 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - 2019-05-10 -First interation
+* Tue Oct 15 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 
+- Added this file (mqpcategory) and moved the MOQPCategory
+- and GUI into the moqputils module directory.
 
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.0.1'
+VERSION = '0.1.0'
 ARGS = None
 
 DEVMODPATH = ['moqputils', 'cabrilloutils']
@@ -27,7 +31,17 @@ for mypath in DEVMODPATH:
         sys.path.insert(0,mypath)
 #print('Python path = %s'%(sys.path))
         
-ARGS = None
+DESCRIPTION = \
+"""moqpcategory  - Determine which Missouri QSO Party Award
+                   category a Cabrillo Format log file is in.
+                
+                   Based on 2019 MOQP Rules
+"""
+
+EPILOG = \
+"""
+Running with no parameters will launch the GUI.
+"""
 
 class get_args():
     def __init__(self):
@@ -35,7 +49,9 @@ class get_args():
             self.args = self.getargs()
             
     def getargs(self):
-        parser = argparse.ArgumentParser()
+        parser = argparse.ArgumentParser(\
+                               description = DESCRIPTION,
+                                           epilog = EPILOG)
         parser.add_argument('-v', '--version', action='version', version = VERSION)
         parser.add_argument("-i", "--inputpath", default=None,
             help="Specifies the path to the folder that contains the log files to summarize.")
@@ -52,5 +68,4 @@ if __name__ == '__main__':
    else:
        from gui_moqpcategory import gui_MOQPCategory
        app=gui_MOQPCategory()
-
         
