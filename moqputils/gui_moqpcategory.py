@@ -11,38 +11,24 @@ from tkMessageBox import *
 from tkFileDialog   import askopenfilename
 import os.path
 import argparse
-#from moqpcategory import *
+from moqpcategory import MOQPCategory
 
 VERSION = '0.0.1'
 FILELIST = './'
-ARGS = None
 
-class get_args():
-    def __init__(self):
-        if __name__ == '__main__':
-            self.args = self.getargs()
-            
-    def getargs(self):
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-v', '--version', action='version', version = VERSION)
-        parser.add_argument("-i", "--inputpath", default=None,
-            help="Specifies the path to the folder that contains the log files to summarize.")
-        args = parser.parse_args()
-        return args
-
-class gui_MOQPCategory(Frame):
+class gui_MOQPCategory(MOQPCategory):
 
     # Define settings upon initialization. Here you can specify
-    def __init__(self, master=None):
+    def __init__(self):
+    
+        self.master = Tk()
+    
+        self.master.geometry("400x300")
         
-        # parameters that you want to send through the Frame class. 
-        Frame.__init__(self, master)   
-
-        #reference to the master widget, which is the tk window                 
-        self.master = master
-
         #with that, we want to then run init_window, which doesn't yet exist
         self.init_window()
+
+        self.appMain()
 
     #Creation of init_window
     def client_exit(self):
@@ -52,30 +38,28 @@ class gui_MOQPCategory(Frame):
     def init_window(self):
         root = self.master
         S = Scrollbar(root)
-        LogText = Text(root, height=10, width=120)
+        self.LogText = Text(root, height=10, width=120)
         S.pack(side=RIGHT, fill=Y)
-        LogText.pack(side=LEFT, fill=Y)
-        S.config(command=LogText.yview)
-        LogText.config(yscrollcommand=S.set)
+        self.LogText.pack(side=LEFT, fill=Y)
+        S.config(command=self.LogText.yview)
+        self.LogText.config(yscrollcommand=S.set)
 
-        root.title("MOQP Utilities")
+        root.title("MOQP Category")
         menu = Menu(root)
         root.config(menu=menu)
         filemenu = Menu(menu)
         menu.add_cascade(label="File", menu=filemenu)
-        filemenu.add_command(label="New", command=self.NewFile)
-        filemenu.add_command(label="Convert CSV to CAB...", command=self.OpenFile)
+        #filemenu.add_command(label="New", command=self.NewFile)
+        #filemenu.add_command(label="Convert CSV to CAB...", command=self.OpenFile)
         filemenu.add_separator()
-        filemenu.add_command(label="Log File summary...", command=self.SumFile)
-        filemenu.add_command(label="Sum directory of logs...", command=self.SumDir)
+        filemenu.add_command(label="Log File to Categorize...", command=self.SumFile)
+        #filemenu.add_command(label="Sum directory of logs...", command=self.SumDir)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.client_exit)
 
         helpmenu = Menu(menu)
         menu.add_cascade(label="Help", menu=helpmenu)
         helpmenu.add_command(label="About...", command=self.About)
-
-        #mainloop()
 
     def NewFile(self):
         print "New File!"
@@ -97,7 +81,16 @@ class gui_MOQPCategory(Frame):
                                                  ("All Files","*.*")])
         print('File name selected: %s'%(logfileName))
         
-        logsum = MOQPCategory(logfileName)
+        logsum = self.exportcsvfile(logfileName)
+        self.fillLogTextfromData(logsum, self.LogText, clearWin=True)
+        
+        print(logsum)
+        
+        for r in range(3):
+           for c in range(4):
+              Label(self.master, text='R%s/C%s'%(r,c),
+                 borderwidth=1 ).grid(row=r,column=c)
+
 
     def OpenFile(self):
         csvfilename = askopenfilename(title = "Select input log file:",
@@ -118,15 +111,17 @@ class gui_MOQPCategory(Frame):
             with open(cabfile,'w') as f:
                 f.write(cabtext)
             showinfo('CAB File created and saved', 'Saved as CAB file:\n'+cabfile)
+
+    def fillLogTextfromData(self, Data, textWindow, clearWin = False):
+        if (clearWin):
+            textWindow.delete(1.0, END)
+        for line in Data:
+            textWindow.insert(END, line.strip()+'\n')
+
         
-    def appMain(self, pathname):
-       import moqpcategory
-       mqpcat = moqpcategory.MOQPCategory()
-       
-       if (os.path.isfile(pathname)):
-          mqpcat.exportcsvfile(pathname.strip())
-       else:
-          mqpcat.exportcsvflist(pathname.strip())
+    def appMain(self):
+        #mainloop 
+        self.master.mainloop()     
         
 if __name__ == '__main__':
    ARGS = get_args()
