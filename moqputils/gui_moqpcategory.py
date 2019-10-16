@@ -82,15 +82,16 @@ class gui_MOQPCategory(MOQPCategory):
         print('File name selected: %s'%(logfileName))
         
         logsum = self.exportcsvfile(logfileName)
-        self.fillLogTextfromData(logsum, self.LogText, clearWin=True)
+        loglines = logsum.splitlines()
+        self.fillLogTextfromData(loglines, self.LogText, clearWin=True)
         
-        print(logsum)
-        
+        print(loglines)
+        """
         for r in range(3):
            for c in range(4):
               Label(self.master, text='R%s/C%s'%(r,c),
                  borderwidth=1 ).grid(row=r,column=c)
-
+        """
 
     def OpenFile(self):
         csvfilename = askopenfilename(title = "Select input log file:",
