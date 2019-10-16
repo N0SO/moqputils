@@ -5,10 +5,24 @@ gui_moqpcategory.py - GUI "front end" for moqpcategory.py
           V0.0.1 - 2019-05-10
           First interation
           
-"""
 from Tkinter import *
 from tkMessageBox import *
 from tkFileDialog   import askopenfilename
+"""
+import sys
+python_version = sys.version_info[0]
+if (python_version == 2):
+    from Tkinter import *
+    from tkMessageBox import *
+    from tkFileDialog   import askopenfilename
+    from tkFileDialog   import askdirectory
+    from tkFileDialog   import asksaveasfilename
+else:
+    from tkinter import *
+    from tkinter.messagebox import showinfo
+    from tkinter.filedialog import askopenfilename
+    from tkinter.filedialog import askdirectory
+    from tkinter.filedialog import asksaveasfilename
 import os.path
 import argparse
 from moqpcategory import MOQPCategory
@@ -32,7 +46,7 @@ class gui_MOQPCategory(MOQPCategory):
 
     #Creation of init_window
     def client_exit(self):
-        print "Exiting..."
+        print("Exiting...")
         exit()
 
     def init_window(self):
@@ -62,7 +76,7 @@ class gui_MOQPCategory(MOQPCategory):
         helpmenu.add_command(label="About...", command=self.About)
 
     def NewFile(self):
-        print "New File!"
+        print("New File!")
 
 
     def About(self):
@@ -81,17 +95,30 @@ class gui_MOQPCategory(MOQPCategory):
                                                  ("All Files","*.*")])
         print('File name selected: %s'%(logfileName))
         
+        self.fillLogTextfromFile(logfileName, self.LogText, clearWin=True)
+        
         logsum = self.exportcsvfile(logfileName)
         loglines = logsum.splitlines()
-        self.fillLogTextfromData(loglines, self.LogText, clearWin=True)
+        #self.fillLogTextfromData(loglines, self.LogText, clearWin=True)
         
-        print(loglines)
-        """
-        for r in range(3):
-           for c in range(4):
-              Label(self.master, text='R%s/C%s'%(r,c),
-                 borderwidth=1 ).grid(row=r,column=c)
-        """
+        #print(loglines)
+        win = Toplevel()
+        win.title('MOQP Category of logfile: '+logfileName)
+        r=0
+        for line in loglines:
+            print(line)
+            lineparts = line.split(',')
+            c=0
+            for cell in lineparts:
+               if (cell.strip() == ''):
+                   reltext = 'flat'
+               else:
+                   reltext = 'solid'
+               Label(win, text=cell,
+                     borderwidth=3,
+                     relief=reltext).grid(row=r,column=c)
+               c+=1
+            r+=1
 
     def OpenFile(self):
         csvfilename = askopenfilename(title = "Select input log file:",
@@ -107,7 +134,7 @@ class gui_MOQPCategory(MOQPCategory):
             app = csv2cab.csv2CAB()
             cabtext = r""
             cabtext = app.processcsvData(csvtext)
-            print csvtext
+            print(csvtext)
             cabfile = csvfilename + ".log"
             with open(cabfile,'w') as f:
                 f.write(cabtext)
@@ -119,6 +146,16 @@ class gui_MOQPCategory(MOQPCategory):
         for line in Data:
             textWindow.insert(END, line.strip()+'\n')
 
+    def fillLogTextfromFile(self, filename, textWindow, clearWin = False):
+        if (clearWin):
+            textWindow.delete(1.0, END)
+        try: 
+           with open(filename,'r') as f:
+              retText = f.readlines()
+           self.fillLogTextfromData(retText, textWindow, clearWin)
+        except IOError:
+           retText = ('Could not read file: '%(fName))
+        return retText
         
     def appMain(self):
         #mainloop 
