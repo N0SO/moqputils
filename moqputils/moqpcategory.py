@@ -61,6 +61,37 @@ class MOQPCategory(LogSummary):
        
        return category
        
+    def processLogdict(self, fname):
+       """
+       Read the Cabrillo log file and separate log header data
+       from qso data. 
+       Returns a dictionary with two elements:
+          HEADER = a dictionary objject of the log header
+          QSOLIST = a list dictionary objects with QSO data
+          QSOSUM = a summary of the QSO statstics
+                   QSOS = total number of QSOs
+                   CW = number of CW QSOs
+                   PH = number of PHONE QSOSs
+                   DG = number of DIGITAL QSOs
+                   VHF = number of VHF (>=144MHz) QSOs
+       """
+       log = None
+       logSummary = None
+       logtext = self.readFile(fname)
+       if ( logtext ):
+          if self.IsThisACabFile(logtext):
+             log = self.getQSOdata(logtext)
+             #headerdata = log[HEADER]
+             #catdata = self.getCategorydict(headerdata)
+             #category = self.determineCategorydict(catdata)
+             qsosummary = self.processQSOList(log['QSOLIST'])
+             logSummary = dict()
+             logSummary['HEADER'] = log['HEADER']
+             logSummary['QSOLIST'] = log['QSOLIST']
+             logSummary['QSOSUM'] = qsosummary
+
+       return logSummary
+
     def determineMOQPCat(self, gen_category):
        moqp_category = []
        temp = gen_category[5].upper().strip()
@@ -200,6 +231,28 @@ class MOQPCategory(LogSummary):
           csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
        return csvdata
           
+        
+    """
+    This method processes a single file passed in filename
+    If the Headers option is false, it will skip printing the
+    csv header info.
+    
+    Using dictionary objects
+    """
+    def exportcsvfile(self, filename, Headers=True):
+       logsummary = self.processLogList(filename)
+       if (logsummary):
+          catdata = self.getCategorydict(logsummary['HEADER'])
+          gencat  = self.determineCategorydict(catdata)
+          
+          moqpcat = self.determineMOQPCat(gencat)
+          if (Headers): 
+             csvdata = self.csvHeader()
+          csvdata += self.exportcsvline(gencat, moqpcat)
+       else:
+          csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
+       return csvdata
+ 
     """
     This method processes all files in the passed in pathname
     """
