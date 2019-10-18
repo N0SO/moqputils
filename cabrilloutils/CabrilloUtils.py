@@ -16,33 +16,37 @@ Update History:
 """
 
 class CabrilloUtils():
-    CABRILLOTAGS = ['START-OF-LOG:',
-             'CALLSIGN:',
-             'CREATED-BY:',
-             'LOCATION:',
-             'CONTEST:',
-             'NAME:',
-             'ADDRESS:',
-             'ADDRESS:',
-             'ADDRESS-CITY:',
-             'ADDRESS-STATE-PROVINCE:',
-             'ADDRESS-POSTALCODE:',
-             'ADDRESS-COUNTRY:',
-             'EMAIL:',
-             'CATEGORY-ASSISTED:', 
-             'CATEGORY-BAND:', 
-             'CATEGORY-MODE:', 
-             'CATEGORY-OPERATOR:', 
-             'CATEGORY-POWER:', 
-             'CATEGORY-STATION:', 
-             'CATEGORY-TRANSMITTER:', 
-             'CERTIFICATE:', 
-             'OPERATORS:', 
-             'CLAIMED-SCORE:',
-             'CLUB:', 
-             'SOAPBOX:',
-             'QSO:',
-             'END-OF-LOG:']
+    CABRILLOTAGS = ['START-OF-LOG',
+             'CALLSIGN',
+             'CREATED-BY',
+             'LOCATION',
+             'CONTEST',
+             'NAME',
+             'ADDRESS',
+             'ADDRESS',
+             'ADDRESS-CITY',
+             'ADDRESS-STATE-PROVINCE',
+             'ADDRESS-POSTALCODE',
+             'ADDRESS-COUNTRY',
+             'EMAIL',
+             'CATEGORY-ASSISTED', 
+             'CATEGORY-BAND', 
+             'CATEGORY-MODE', 
+             'CATEGORY-OPERATOR', 
+             'CATEGORY-OVERLAY',
+             'CATEGORY-POWER', 
+             'CATEGORY-STATION', 
+             'CATEGORY-TRANSMITTER', 
+             'CERTIFICATE', 
+             'OPERATORS', 
+             'CLAIMED-SCORE',
+             'CLUB', 
+             'CREATED-BY',
+             'IOTA-ISLAND-NAME',
+             'OFFTIME',
+             'SOAPBOX',
+             'QSO',
+             'END-OF-LOG']
              
     VERSION = '1.0.9'
     PHONEMODES = 'PH SSB LSB USB FM DV'
@@ -148,66 +152,47 @@ class CabrilloUtils():
              headerline = self.packLine(line)
              header.append(headerline)
        return header
-        
+       
+    def MakeEmptyDict(self,taglist, initval):
+       """
+       Return an empty dictionary of elements
+       based on taglist passed.
+       """
+       emptydict = dict()
+       for tag in taglist:
+           emptydict[tag] = initval
+           
+       return emptydict    
+           
     def makeHEADERdict(self):
        """
-       Return a dictionary for Cabrillo HEADER Data
-       """
+       Return an empty  dictionary for Cabrillo HEADER Data
+       based on CABRILLITAGS list above.
        header = dict()
-       header['START-OF-LOG']  = ''
-       header['CALLSIGN']  = ''
-       header['CREATED-BY']  = ''
-       header['LOCATION']  = ''
-       header['CONTEST']  = ''
-       header['NAME']  = ''
-       header['ADDRESS']  = ''
-       header['ADDRESS']  = ''
-       header['ADDRESS-CITY']  = ''
-       header['ADDRESS-STATE-PROVINCE']  = ''
-       header['ADDRESS-POSTALCODE']  = ''
-       header['ADDRESS-COUNTRY']  = ''
-       header['EMAIL']  = ''
-       header['CATEGORY-ASSISTED']  = '' 
-       header['CATEGORY-BAND']  = '' 
-       header['CATEGORY-MODE']  = '' 
-       header['CATEGORY-OPERATOR']  = '' 
-       header['CATEGORY-POWER']  = '' 
-       header['CATEGORY-STATION']  = '' 
-       header['CATEGORY-TRANSMITTER']  = '' 
-       header['CERTIFICATE']  = '' 
-       header['OPERATORS']  = '' 
-       header['CLAIMED-SCORE']  = ''
-       header['CLUB']  = '' 
-       header['SOAPBOX']  = ''
-       header['END-OF-LOG']  = ''
+       for tag in self.CABRILLOTAGS:
+           header[tag] = ''
+       """
+       header = self.MakeEmptyDict(self.CABRILLOTAGS, '')
        return header
 
     def makeQSOdict(self):
        """
-       Return a dictionary for Cabrillo QSO Data
+       Return an empty dictionary for Cabrillo QSO Data
+       based on the QSOTAGS list above
        """
-       qso = dict()
-       qso['FREQ'] = ''
-       qso['MODE'] = ''
-       qso['DATE'] = ''
-       qso['TIME'] = ''
-       qso['MYCALL'] = ''
-       qso['MYREPORT'] = ''
-       qso['MYQTH'] = ''
-       qso['URCALL'] = ''
-       qso['URREPORT'] = ''
-       qso['URQTH'] = ''
+       qso = self.MakeEmptyDict(self.QSOTAGS, '')
        return qso
 
     def getCABHeaderdict(self, cabdata):
        header = self.makeHEADERdict()
        for line in cabdata:
-          headerline = self.packLine(line)
+          headerline = self.packLine(line.upper())
           linesplit = line.split(':')
           if (linesplit[0] in 'QSO END-OF-LOG'):
              continue
           else:
-             header[linesplit[0]] += linesplit[1]
+             if (len(linesplit) > 1):
+                header[linesplit[0]] += linesplit[1].strip()
        #print(header)
        return header
        
@@ -221,26 +206,14 @@ class CabrilloUtils():
           if (linesplit[0] == 'QSO'):
              qso = self.makeQSOdict()
              qsoparts = linesplit[1].split(' ')
-             #print('qsoparts = %s\n'%(qsoparts))
-             """
-             qso['FREQ'] = qsoparts[1]
-             qso['MODE'] = qsoparts[2]
-             qso['DATE'] = qsoparts[3]
-             qso['TIME'] = qsoparts[4]
-             qso['MYCALL'] = qsoparts[5]
-             qso['MYREPORT'] = qsoparts[6]
-             qso['MYQTH'] = qsoparts[7]
-             qso['URCALL'] = qsoparts[8]
-             qso['URREPORT'] = qsoparts[9]
-             qso['URQTH'] = qsoparts[10]
-             """
              i=1
              for tag in self.QSOTAGS:
-                 qso[tag] = qsoparts[i]
+                 qso[tag] = qsoparts[i].strip()
                  i += 1
              qsos.append(qso)
           else:
-             header[linesplit[0]] += linesplit[1]
+             if (len(linesplit) > 1):
+                 header[linesplit[0]] += linesplit[1]
        thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
        return thislog
