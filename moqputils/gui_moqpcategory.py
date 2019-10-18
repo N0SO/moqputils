@@ -95,7 +95,10 @@ class gui_MOQPCategory(MOQPCategory):
         self.fillLogTextfromFile(logfileName, self.LogText, clearWin=True)
         
         logsum = self.exportcsvfiledict(logfileName)
-        print(logsum)
+        print(logsum.viewkeys())
+        print('MOQP Summary:\n%s\nQSO Summary:\n%s'% \
+                    (logsum['MOQPSUM'],
+                     logsum['QSOSUM']))
         """
         loglines = logsum.splitlines()
         #self.fillLogTextfromData(loglines, self.LogText, clearWin=True)
