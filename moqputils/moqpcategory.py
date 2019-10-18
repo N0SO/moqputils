@@ -185,6 +185,74 @@ class MOQPCategory(LogSummary):
        moqp_category
        
        return moqp_category
+
+    def determineMOQPCatdict(self, gen_category):
+       moqp_category = dict()
+
+       if(gen_category['LOCATION'] in INSTATE):
+          moqp_category['LOCATION'] = 'MISSOURI'
+       elif (gen_category['LOCATION'] in US):
+          moqp_category['LOCATION'] = 'US'
+       elif (gen_category['LOCATION'] in CANADA):
+          moqp_category['LOCATION'] = \
+                         ('CANADA %s'%(gen_category['LOCATION']))
+       elif (gen_category['LOCATION'] in DX):
+          moqp_category['LOCATION'] = 'DX'
+       else:
+          moqp_category['LOCATION'] = \
+            'UNDEFINED OP CATEGORY:%s'%(gen_category['LOCATION'])
+            
+       moqp_category['CATEGORY-STATION'] = \
+           ('UNDEFINED STATION CATEGORY:%s' \
+                             %(gen_category['CATEGORY-STATION']))
+       if (gen_category['CATEGORY-STATION'] in STATIONS):
+           if (gen_category['CATEGORY-STATION'] == 'FIXED'):
+               moqp_category['CATEGORY-STATION'] = 'FIXED'
+           elif ( (gen_category['CATEGORY-STATION'] == 'MOBILE') \
+               or (gen_category['CATEGORY-STATION'] == 'ROVER') \
+               or gen_category['CATEGORY-STATION'] == 'PORTABLE'):
+               moqp_category['CATEGORY-STATION'] = 'MOBILE'
+           elif (gen_category['CATEGORY-STATION'] == 'EXPEDITION'):
+               moqp_category['CATEGORY-STATION'] = 'EXPEDITION'
+           elif (gen_category['CATEGORY-STATION'] == 'SCHOOL'):
+               moqp_category['CATEGORY-STATION'] = 'SCHOOL'
+           
+           
+       moqp_category['CATEGORY-OPERATOR'] = \
+          ('UNDEFINED OP CATEGORY:%s'% \
+                 (gen_category['CATEGORY-OPERATOR']))
+       if (gen_category['CATEGORY-OPERATOR'] == 'SINGLE-OP'):
+          moqp_category['CATEGORY-OPERATOR']  = 'SINGLE-OP'
+       elif (gen_category['CATEGORY-OPERATOR'] == 'MULTI-OP'):
+          moqp_category['CATEGORY-OPERATOR'] = 'MULTI-OP'
+       elif (gen_category['CATEGORY-OPERATOR'] == 'CHECKLOG'):
+          moqp_category['CATEGORY-OPERATOR'] = 'CHECKLOG'
+       
+       moqp_category['CATEGORY-POWER'] = \
+         ('UNDEFINED STATION POWER ENTRY:%s'% \
+                           (gen_category['CATEGORY-POWER']))
+       if (gen_category['CATEGORY-POWER'] == 'LOW' \
+                 or gen_category['CATEGORY-POWER'] == 'HIGH' \
+                 or gen_category['CATEGORY-POWER'] == 'QRP'):
+           moqp_category['CATEGORY-POWER'] = \
+                  gen_category['CATEGORY-POWER']
+    
+       moqp_category['CATEGORY-MODE'] = \
+            ('UNDEFINED STATION MODE ENTRY:%s'% \
+                              (gen_category['CATEGORY-MODE']))
+       if (gen_category['CATEGORY-MODE'] == 'PH' \
+                     or gen_category['CATEGORY-MODE'] == 'SSB'):
+          moqp_category['CATEGORY-MODE'] = 'PHONE'
+       elif (gen_category['CATEGORY-MODE'] == 'CW'):
+          moqp_category['CATEGORY-MODE'] = 'CW'
+       elif (gen_category['CATEGORY-MODE'] == 'MIXED'):
+          moqp_category['CATEGORY-MODE'] = 'MIXED'
+       if (gen_category['CATEGORY-MODE'] in 'PHONE CW MIXED'):
+          moqp_category['CATEGORY-OVERLAY'] = ''
+       if (gen_category['CATEGORY-OVERLAY'] == 'ROOKIE'):
+          moqp_category['CATEGORY-OVERLAY']  = 'ROOKIE'                         
+       
+       return moqp_category
        
     def csvHeader(self):
        hdata = (',,,CATEGORIES FROM THE LOG FILE,,,,,\n')
@@ -239,19 +307,24 @@ class MOQPCategory(LogSummary):
     
     Using dictionary objects
     """
-    def exportcsvfile(self, filename, Headers=True):
-       logsummary = self.processLogList(filename)
+    def exportcsvfiledict(self, filename, Headers=True):
+       logsummary = self.processLogdict(filename)
        if (logsummary):
           catdata = self.getCategorydict(logsummary['HEADER'])
           gencat  = self.determineCategorydict(catdata)
           
-          moqpcat = self.determineMOQPCat(gencat)
-          if (Headers): 
-             csvdata = self.csvHeader()
-          csvdata += self.exportcsvline(gencat, moqpcat)
+          moqpcat = self.determineMOQPCatdict(gencat)
+          if(logsummary['QSOSUM']['DG'] > 0):
+              moqpcat['CATEGORY-MODE'] += '+DG'
+          if(logsummary['QSOSUM']['VHF'] > 0):
+              moqpcat['CATEGORY-MODE'] += '+VHF'
+          logsummary.update('MOQPCAT', moqpcat)
+          #if (Headers): 
+          #   csvdata = self.csvHeader()
+          #csvdata += self.exportcsvline(gencat, moqpcat)
        else:
-          csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
-       return csvdata
+          print('File %s does not exist or is not in CABRILLO format.'%filename)
+       return logsummary
  
     """
     This method processes all files in the passed in pathname

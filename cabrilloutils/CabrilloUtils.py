@@ -303,7 +303,8 @@ class CabrilloUtils():
            line = self.packLine(line)
            lineparts = line.split(':')
            if (lineparts[0] in self.CATEGORYTAGL):
-              retdata[lineparts[0]] = lineparts[1]
+              if(len(lineparts)>1):
+                  retdata[lineparts[0]] = lineparts[1]
         return retdata
 
 

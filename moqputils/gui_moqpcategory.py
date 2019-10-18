@@ -5,9 +5,6 @@ gui_moqpcategory.py - GUI "front end" for moqpcategory.py
           V0.0.1 - 2019-05-10
           First interation
           
-from Tkinter import *
-from tkMessageBox import *
-from tkFileDialog   import askopenfilename
 """
 import sys
 python_version = sys.version_info[0]
@@ -97,7 +94,9 @@ class gui_MOQPCategory(MOQPCategory):
         
         self.fillLogTextfromFile(logfileName, self.LogText, clearWin=True)
         
-        logsum = self.exportcsvfile(logfileName)
+        logsum = self.exportcsvfiledict(logfileName)
+        print(logsum)
+        """
         loglines = logsum.splitlines()
         #self.fillLogTextfromData(loglines, self.LogText, clearWin=True)
         
@@ -119,7 +118,8 @@ class gui_MOQPCategory(MOQPCategory):
                      relief=reltext).grid(row=r,column=c)
                c+=1
             r+=1
-
+    """
+    
     def OpenFile(self):
         csvfilename = askopenfilename(title = "Select input log file:",
                                       filetypes=[("CSV files","*.csv"),
