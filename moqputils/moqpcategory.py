@@ -75,20 +75,14 @@ class MOQPCategory(LogSummary):
                    DG = number of DIGITAL QSOs
                    VHF = number of VHF (>=144MHz) QSOs
        """
-       log = None
        logSummary = None
-       logtext = self.readFile(fname)
-       if ( logtext ):
-          if self.IsThisACabFile(logtext):
-             log = self.getQSOdata(logtext)
-             #headerdata = log[HEADER]
-             #catdata = self.getCategorydict(headerdata)
-             #category = self.determineCategorydict(catdata)
-             qsosummary = self.processQSOList(log['QSOLIST'])
-             logSummary = dict()
-             logSummary['HEADER'] = log['HEADER']
-             logSummary['QSOLIST'] = log['QSOLIST']
-             logSummary['QSOSUM'] = qsosummary
+       log = self.getLogFile(fname)
+       if ( log ):
+          qsosummary = self.processQSOList(log['QSOLIST'])
+          logSummary = dict()
+          logSummary['HEADER'] = log['HEADER']
+          logSummary['QSOLIST'] = log['QSOLIST']
+          logSummary['QSOSUM'] = qsosummary
 
        return logSummary
 
@@ -186,77 +180,103 @@ class MOQPCategory(LogSummary):
        
        return moqp_category
 
-    def determineMOQPCatdict(self, gen_category):
-       moqp_category = dict()
-       compstring = gen_category['LOCATION'].strip()
+    def _moqpcatloc_(self, log):
+       moqpcatstg = None
+       compstring = log['HEADER']['LOCATION'].strip()
        if(compstring in INSTATE):
-          moqp_category['LOCATION'] = 'MISSOURI'
+          moqpcatstg = 'MISSOURI'
        elif (compstring in US):
-          moqp_category['LOCATION'] = 'US'
+          moqpcatstg = 'US'
        elif (compstring in CANADA):
-          moqp_category['LOCATION'] = \
-                         ('CANADA: %s'%(gen_category['LOCATION']))
+          moqpcatstg = ('CANADA: (%s)'%(gen_category['LOCATION']))
        elif (compstring in DX):
-          moqp_category['LOCATION'] = 'DX'
-       else:
-          moqp_category['LOCATION'] = \
-            'UNDEFINED OP CATEGORY:%s'%(gen_category['LOCATION'])
-            
-       compstring = gen_category['CATEGORY-STATION'].strip()
-       moqp_category['CATEGORY-STATION'] = \
-           ('UNDEFINED STATION CATEGORY:%s' \
-                             %(gen_category['CATEGORY-STATION']))
-       #print('compstring =%s'%(compstring))
+          moqpcatstg = 'DX'          
+       return moqpcatstg
+
+    def _moqpcatsta_(self, log):
+       moqpcatstg = None
+       compstring = log['HEADER']['CATEGORY-STATION'].strip()
        if (compstring in STATIONS):
            if (compstring == 'FIXED'):
-               moqp_category['CATEGORY-STATION'] = 'FIXED'
+               moqpcatstg = ' FIXED'
            elif ( (compstring == 'MOBILE') \
-               or (compstring == 'ROVER') \
-               or compstring == 'PORTABLE'):
-               moqp_category['CATEGORY-STATION'] = 'MOBILE'
+                     or (compstring == 'ROVER') \
+                     or compstring == 'PORTABLE'):
+               moqpcatstg = ' MOBILE'
            elif (compstring == 'EXPEDITION'):
-               moqp_category['CATEGORY-STATION'] = 'EXPEDITION'
+               moqpcatstg = ' EXPEDITION'
            elif (compstring == 'SCHOOL'):
-               moqp_category['CATEGORY-STATION'] = 'SCHOOL'
-           
-       compstring = gen_category['CATEGORY-OPERATOR'].strip()
-       moqp_category['CATEGORY-OPERATOR'] = \
-          ('UNDEFINED OP CATEGORY:%s'% \
-                 (gen_category['CATEGORY-OPERATOR']))
+               moqpcatstg = 'SCHOOL'
+       return moqpcatstg
+
+    def _moqpcatop_(self, log):
+       moqpcatstg = None
+       compstring = log['HEADER']['CATEGORY-OPERATOR'].strip()
        if (compstring == 'SINGLE-OP'):
-          moqp_category['CATEGORY-OPERATOR']  = 'SINGLE-OP'
+          moqpcatstg  = 'SINGLE-OP'
        elif (compstring == 'MULTI-OP'):
-          moqp_category['CATEGORY-OPERATOR'] = 'MULTI-OP'
+          moqpcatstg   = 'MULTI-OP'
        elif (compstring == 'CHECKLOG'):
-          moqp_category['CATEGORY-OPERATOR'] = 'CHECKLOG'
-       
-       compstring = gen_category['CATEGORY-POWER'].strip()
-       moqp_category['CATEGORY-POWER'] = \
-         ('UNDEFINED STATION POWER ENTRY:%s'% \
-                           (gen_category['CATEGORY-POWER']))
+          moqpcatstg   = 'CHECKLOG'
+       return moqpcatstg
+
+    def _moqpcatpower_(self, log):
+       moqpcatstg = None
+       compstring = log['HEADER']['CATEGORY-POWER'].strip()
        if (compstring == 'LOW' \
                  or compstring == 'HIGH' \
                  or compstring == 'QRP'):
-           moqp_category['CATEGORY-POWER'] = compstring
+           moqpcatstg  = ('%s POWER'%(compstring))
+       return moqpcatstg
     
-       compstring = gen_category['CATEGORY-MODE'].strip()
-       moqp_category['CATEGORY-MODE'] = \
-            ('UNDEFINED STATION MODE ENTRY:%s'% \
-                              (gen_category['CATEGORY-MODE']))
+    def _moqpcatmode_(self, log):
+       moqpcatstg = None
+       compstring = log['HEADER']['CATEGORY-MODE'].strip()
        if (compstring == 'PH' \
                      or compstring == 'SSB'):
-          moqp_category['CATEGORY-MODE'] = 'PHONE'
+          moqpcatstg = 'PHONE'
        elif (compstring == 'CW'):
-          moqp_category['CATEGORY-MODE'] = 'CW'
+          moqpcatstg = 'CW'
        elif (compstring == 'MIXED'):
-          moqp_category['CATEGORY-MODE'] = 'MIXED'
-       if (compstring in 'PHONE CW MIXED'):
-          moqp_category['CATEGORY-OVERLAY'] = ''
-       if (gen_category['CATEGORY-OVERLAY'].strip() == 'ROOKIE'):
-          moqp_category['CATEGORY-OVERLAY']  = 'ROOKIE'                         
+          moqpcatstg = 'MIXED'
+       return moqpcatstg
+
+    def _combine_moqpcat_parts(self, moqpcatstg, newstring):
+       retstring = None
+       if (newstring):
+          retstring = ('%s %s'%(moqpcatstg, newstring))
+       return retstring    
+
+    def determineMOQPCatstg(self, log):
+       moqpcatstg = self._moqpcatloc_(log)
+
+       if (moqpcatstg):
+          temp=self._moqpcatsta_(log)
+          moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+
+       if (moqpcatstg):
+          temp=self._moqpcatop_(log)
+          moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
        
-       return moqp_category
-       
+       if (moqpcatstg):
+          temp=self._moqpcatpower_(log)
+          moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+
+       if (moqpcatstg):
+          temp=self._moqpcatmode_(log)
+          moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+
+       if (moqpcatstg):
+          if (log['QSOSUM']['DG'] > 0):
+              moqpcatstg += '+DG'
+          if (log['QSOSUM']['VHF'] > 0):
+              moqpcatstg += '+VHF'
+          
+       if (moqpcatstg):
+          if (log['HEADER']['CATEGORY-OVERLAY'].strip() == 'ROOKIE'):
+              moqpcatstg += ' ROOKIE'                         
+
+       return moqpcatstg
        
     def csvHeader(self):
        hdata = (',,,CATEGORIES FROM THE LOG FILE,,,,,\n')
@@ -314,21 +334,11 @@ class MOQPCategory(LogSummary):
     def exportcsvfiledict(self, filename, Headers=True):
        logsummary = self.processLogdict(filename)
        if (logsummary):
-          #catdata = self.getCategorydict(logsummary['HEADER'])
-          #gencat  = self.determineCategorydict(catdata)
-          
-          #print('HEADER = %s\nCATDATA = %s\nGENCAT = %s\n'%(logsummary['HEADER'], catdata, gencat))
-          
-          moqpcat = self.determineMOQPCatdict(logsummary['HEADER'])
-          if(logsummary['QSOSUM']['DG'] > 0):
-              moqpcat['CATEGORY-MODE'] += '+DG'
-          if(logsummary['QSOSUM']['VHF'] > 0):
-              moqpcat['CATEGORY-MODE'] += '+VHF'
-          #logsummary.update(moqpcat)
+          moqpcat = self.determineMOQPCatstg(logsummary)
           fullSummary = dict()
           fullSummary['HEADER'] = logsummary['HEADER']
           fullSummary['QSOSUM'] = logsummary['QSOSUM']
-          fullSummary['MOQPSUM'] = moqpcat
+          fullSummary['MOQPCAT'] = moqpcat
           fullSummary['QSOLIST'] = logsummary['QSOLIST']
           #if (Headers): 
           #   csvdata = self.csvHeader()

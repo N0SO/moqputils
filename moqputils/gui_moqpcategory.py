@@ -62,7 +62,7 @@ class gui_MOQPCategory(MOQPCategory):
         menu.add_cascade(label="File", menu=filemenu)
         #filemenu.add_command(label="New", command=self.NewFile)
         #filemenu.add_command(label="Convert CSV to CAB...", command=self.OpenFile)
-        filemenu.add_separator()
+        #filemenu.add_separator()
         filemenu.add_command(label="Log File to Categorize...", command=self.SumFile)
         #filemenu.add_command(label="Sum directory of logs...", command=self.SumDir)
         filemenu.add_separator()
@@ -86,7 +86,8 @@ class gui_MOQPCategory(MOQPCategory):
 
     def SumFile(self):
         logfileName = askopenfilename(title = "Select input log file:",
-                                      filetypes=[("LOG files","*.log"),
+                                      filetypes=[("LOG files","*.LOG"),
+                                                 ("log files","*.log"),
                                                  ("CSV files","*.csv"),
                                                  ("Text files","*.txt"),
                                                  ("All Files","*.*")])
@@ -97,9 +98,16 @@ class gui_MOQPCategory(MOQPCategory):
         logsum = self.exportcsvfiledict(logfileName)
         print(logsum.viewkeys())
         print('MOQP Summary:\n%s\nQSO Summary:\n%s'% \
-                    (logsum['MOQPSUM'],
+                    (logsum['MOQPCAT'],
                      logsum['QSOSUM']))
-        """
+        """                     
+        print('MOQP Category:\n%s %s %s %s %s %s'% (\
+                      logsum['MOQPSUM']['LOCATION'],
+                      logsum['MOQPSUM']['CATEGORY-STATION'],
+                      logsum['MOQPSUM']['CATEGORY-OPERATOR'],
+                      logsum['MOQPSUM']['CATEGORY-POWER'],
+                      logsum['MOQPSUM']['CATEGORY-MODE'],
+                      logsum['MOQPSUM']['CATEGORY-OVERLAY']))
         loglines = logsum.splitlines()
         #self.fillLogTextfromData(loglines, self.LogText, clearWin=True)
         

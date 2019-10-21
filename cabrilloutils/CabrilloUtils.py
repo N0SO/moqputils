@@ -92,6 +92,13 @@ class CabrilloUtils():
         except:
             data = None
         return data
+        
+    def getLogFile(self, filename):
+        log = None
+        fileText = self.readFile(filename)
+        if (self.IsThisACabFile(fileText)):
+            log = self.getQSOdata(fileText)
+        return log
 
     def IsThisACabFile(self, data):
         cabfile = False
@@ -101,8 +108,7 @@ class CabrilloUtils():
             (any ('END-OF-LOG:' in string for string in data)) ):
             cabfile = True
         return cabfile
-    
-
+        
     def getCabstg(self, target, data):
         """
         Get the target Cabrillo data from a single string
@@ -213,7 +219,7 @@ class CabrilloUtils():
              qsos.append(qso)
           else:
              if (len(linesplit) > 1):
-                 header[linesplit[0]] += linesplit[1]
+                 header[linesplit[0]] += linesplit[1].strip()
        thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
        return thislog
@@ -376,12 +382,13 @@ class CabrilloUtils():
 
 if __name__ == '__main__':
    app=CabrilloUtils()
-   logdata = app.readFile('../testfiles/W2CVW.LOG')
+   """
+   logdata = app.getLogFile('../testfiles/W0QBX.LOG')
+   print (logdata)
+   #catg = app.getCategorydict(logdata)
    
-   catg = app.getCategorydict(logdata)
-   
-   print(catg)
-   
+   #print(catg)
+   """
    """print('Callsign:%s\n Name:%s\n Ops:%s\n'%(header['CALLSIGN'],
                                              header['NAME'],
                                              header['OPERATORS']))"""
