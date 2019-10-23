@@ -26,6 +26,10 @@ from moqpcategory import MOQPCategory
 
 VERSION = '0.0.1'
 FILELIST = './'
+COLUMNHEADERS = 'CALLSIGN\tOPS\t\t\tSTATION\t\tOPERATOR\t\t' + \
+                'POWER\t\tMODE\t\tLOCATION\t\tOVERLAY\t\t' + \
+                'CW QSO\tPH QSO\tRY QSO\tTOTAL\tVHF QSO\t' + \
+                'MOQP CATEGORY\n'
 
 class gui_MOQPCategory(MOQPCategory):
 
@@ -48,14 +52,8 @@ class gui_MOQPCategory(MOQPCategory):
 
     def init_window(self):
         root = self.master
-        S = Scrollbar(root)
-        self.LogText = Text(root, height=10, width=120)
-        S.pack(side=RIGHT, fill=Y)
-        self.LogText.pack(side=LEFT, fill=Y)
-        S.config(command=self.LogText.yview)
-        self.LogText.config(yscrollcommand=S.set)
-
         root.title("MOQP Category")
+        self.LogText = self.makeSumWindow(root)
         menu = Menu(root)
         root.config(menu=menu)
         filemenu = Menu(menu)
@@ -64,7 +62,7 @@ class gui_MOQPCategory(MOQPCategory):
         #filemenu.add_command(label="Convert CSV to CAB...", command=self.OpenFile)
         #filemenu.add_separator()
         filemenu.add_command(label="Log File to Categorize...", command=self.SumFile)
-        #filemenu.add_command(label="Sum directory of logs...", command=self.SumDir)
+        filemenu.add_command(label="Sum directory of logs...", command=self.SumDir)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.client_exit)
 
@@ -81,56 +79,74 @@ class gui_MOQPCategory(MOQPCategory):
               'Utility to help categorize Missouri QSO Party logfiles in CABRILLO format.')
 
     def SumDir(self):
-        logpathName = filedialog.askdirectory()
-        print('Directory name selected: %s'%logpaathName)
+        logpathName = askdirectory()
+        print('Directory name selected: %s'%logpathName)
+        for (dirName, subdirList, fileList) in os.walk(logpathName, topdown=True):
+           if (fileList != ''): 
+              win = Toplevel()
+              win.title(logpathName)
+              logtext = self.makeSumWindow(win)
+              logtext.delete(1.0, END)
+              logtext.insert(END, ('Summary of logs in %s\n'%(logpathName)))
+              headers = True
+              for logfileName in fileList:
+                  print('Summing file %s'%(logfileName))
+                  logsum = self.exportcsvfiledict(logfileName)
+                  self.showsummary(logtext, logsum, colheader=headers)
+                  if (headers): 
+                      headers = False
+
 
     def SumFile(self):
         logfileName = askopenfilename(title = "Select input log file:",
-                                      filetypes=[("LOG files","*.LOG"),
-                                                 ("log files","*.log"),
+                                      filetypes=[ \
+                                                 ("LOG files","*.log"),
+                                                 ("LOG files","*.LOG"),
                                                  ("CSV files","*.csv"),
+                                                 ("CSV files","*.CSV"),
                                                  ("Text files","*.txt"),
+                                                 ("Text files","*.TXT"),
                                                  ("All Files","*.*")])
         print('File name selected: %s'%(logfileName))
         
         self.fillLogTextfromFile(logfileName, self.LogText, clearWin=True)
         
         logsum = self.exportcsvfiledict(logfileName)
-        print(logsum.viewkeys())
-        print('MOQP Summary:\n%s\nQSO Summary:\n%s'% \
-                    (logsum['MOQPCAT'],
-                     logsum['QSOSUM']))
-        """                     
-        print('MOQP Category:\n%s %s %s %s %s %s'% (\
-                      logsum['MOQPSUM']['LOCATION'],
-                      logsum['MOQPSUM']['CATEGORY-STATION'],
-                      logsum['MOQPSUM']['CATEGORY-OPERATOR'],
-                      logsum['MOQPSUM']['CATEGORY-POWER'],
-                      logsum['MOQPSUM']['CATEGORY-MODE'],
-                      logsum['MOQPSUM']['CATEGORY-OVERLAY']))
-        loglines = logsum.splitlines()
-        #self.fillLogTextfromData(loglines, self.LogText, clearWin=True)
-        
-        #print(loglines)
+
         win = Toplevel()
-        win.title('MOQP Category of logfile: '+logfileName)
-        r=0
-        for line in loglines:
-            print(line)
-            lineparts = line.split(',')
-            c=0
-            for cell in lineparts:
-               if (cell.strip() == ''):
-                   reltext = 'flat'
-               else:
-                   reltext = 'solid'
-               Label(win, text=cell,
-                     borderwidth=3,
-                     relief=reltext).grid(row=r,column=c)
-               c+=1
-            r+=1
-    """
-    
+        win.title(os.path.basename(logfileName))
+        logtext = self.makeSumWindow(win)
+        logtext.delete(1.0, END)
+        logtext.insert(END, ('Log Summary for Station %s\n'%(logsum['HEADER']['CALLSIGN'])))
+        self.showsummary(logtext, logsum, colheader=True)
+
+    def makeSumWindow(self, win):
+        S = Scrollbar(win)
+        Logwin = Text(win, height=10, width=220)
+        S.pack(side=RIGHT, fill=Y)
+        Logwin.pack(side=LEFT, fill=Y)
+        S.config(command=Logwin.yview)
+        Logwin.config(yscrollcommand=S.set)
+        return Logwin
+        
+    def showsummary(self, window, log, colheader=False):
+        if (colheader):
+            window.insert(END, COLUMNHEADERS)
+        window.insert(END, ('%s\t'%(log['HEADER']['CALLSIGN'])))
+        window.insert(END, ('%s\t\t\t'%(log['HEADER']['OPERATORS'])))
+        window.insert(END, ('%s\t\t'%(log['HEADER']['CATEGORY-STATION'])))
+        window.insert(END, ('%s\t\t'%(log['HEADER']['CATEGORY-OPERATOR'])))
+        window.insert(END, ('%s\t\t'%(log['HEADER']['CATEGORY-POWER'])))
+        window.insert(END, ('%s\t\t'%(log['HEADER']['CATEGORY-MODE'])))
+        window.insert(END, ('%s\t\t'%(log['HEADER']['LOCATION'])))
+        window.insert(END, ('%s\t\t'%(log['HEADER']['CATEGORY-OVERLAY'])))
+        window.insert(END, ('%s\t'%(log['QSOSUM']['CW'])))
+        window.insert(END, ('%s\t'%(log['QSOSUM']['PH'])))
+        window.insert(END, ('%s\t'%(log['QSOSUM']['DG'])))
+        window.insert(END, ('%s\t'%(log['QSOSUM']['QSOS'])))
+        window.insert(END, ('%s\t'%(log['QSOSUM']['VHF'])))
+        window.insert(END, ('%s\t'%(log['MOQPCAT'])))
+
     def OpenFile(self):
         csvfilename = askopenfilename(title = "Select input log file:",
                                       filetypes=[("CSV files","*.csv"),
@@ -175,15 +191,16 @@ class gui_MOQPCategory(MOQPCategory):
 if __name__ == '__main__':
    ARGS = get_args()
    if ARGS.args.inputpath == None:
+      """
       root = Tk()
 
       root.geometry("400x300")
-
+      """
       #creation of an instance
       app = guiMOQPCategory(root)
 
       #mainloop 
-      root.mainloop()     
+      #root.mainloop()     
    
    else:
       app = guiMOQPCategory(ARGS.args.inputpath)
