@@ -38,7 +38,6 @@ class LogSummary(CabrilloUtils):
       
    def processLog(self, logfile):
       retdata = None
-      #cab = CabrilloUtils()
       data = self.readFile(logfile)
       if (data):
          retdata = self.processData( data)
