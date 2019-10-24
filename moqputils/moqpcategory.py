@@ -332,6 +332,7 @@ class MOQPCategory(LogSummary):
     Using dictionary objects
     """
     def exportcsvfiledict(self, filename, Headers=True):
+       fullSummary = None
        logsummary = self.processLogdict(filename)
        if (logsummary):
           moqpcat = self.determineMOQPCatstg(logsummary)

@@ -82,6 +82,10 @@ class gui_MOQPCategory(MOQPCategory):
         logpathName = askdirectory()
         print('Directory name selected: %s'%logpathName)
         for (dirName, subdirList, fileList) in os.walk(logpathName, topdown=True):
+           """
+           print('dirName = %s\nsubdirList = %s\nfileList = %s'% \
+                   (dirName, subdirList, fileList))
+           """
            if (fileList != ''): 
               win = Toplevel()
               win.title(logpathName)
@@ -91,8 +95,10 @@ class gui_MOQPCategory(MOQPCategory):
               headers = True
               for logfileName in fileList:
                   print('Summing file %s'%(logfileName))
-                  logsum = self.exportcsvfiledict(logfileName)
-                  self.showsummary(logtext, logsum, colheader=headers)
+                  logsum = self.exportcsvfiledict(dirName+'/'+logfileName)
+                  if (logsum):
+                      self.showsummary(logtext, logsum, colheader=headers)
+                      logtext.insert(END, '\n')
                   if (headers): 
                       headers = False
 
@@ -197,7 +203,7 @@ if __name__ == '__main__':
       root.geometry("400x300")
       """
       #creation of an instance
-      app = guiMOQPCategory(root)
+      app = guiMOQPCategory()
 
       #mainloop 
       #root.mainloop()     

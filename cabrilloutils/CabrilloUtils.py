@@ -102,11 +102,12 @@ class CabrilloUtils():
 
     def IsThisACabFile(self, data):
         cabfile = False
-        if ( (any ('START-OF-LOG:' in string for string in data)) and
-            (any ('CALLSIGN:' in string for string in data)) and
-            (any ('QSO:' in string for string in data)) and
-            (any ('END-OF-LOG:' in string for string in data)) ):
-            cabfile = True
+        if(data):
+            if ( (any ('START-OF-LOG:' in string for string in data)) and
+              (any ('CALLSIGN:' in string for string in data)) and
+              (any ('QSO:' in string for string in data)) and
+              (any ('END-OF-LOG:' in string for string in data)) ):
+                cabfile = True
         return cabfile
         
     def getCabstg(self, target, data):
@@ -219,7 +220,10 @@ class CabrilloUtils():
              qsos.append(qso)
           else:
              if (len(linesplit) > 1):
-                 header[linesplit[0]] += linesplit[1].strip()
+                 if (header.has_key(linesplit[0])):
+                     header[linesplit[0]] += linesplit[1].strip()
+                 else:
+                     print('UKNOWN CAB TAG: %s - skipping.'%(cabline))
        thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
        return thislog
