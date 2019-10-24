@@ -203,6 +203,21 @@ class CabrilloUtils():
        #print(header)
        return header
        
+    def getQSOdict(self, qsodata):
+       qso = None
+       temp = qsodata.replace(':','')
+       qsoparts = qsodata.split(' ')
+       #print(len(qsoparts))
+       if (len(qsoparts) >= 10):
+          i=0
+          qso = self.makeQSOdict()
+          for tag in self.QSOTAGS:
+             #print('qso[%s] = %s %d'%(tag, qsoparts[i], i))
+             qso[tag] = qsoparts[i].strip()
+             i += 1
+       #print qso
+       return qso       
+       
     def getQSOdata(self, cabdata):
        thislog = dict()
        qsos = []
@@ -210,20 +225,28 @@ class CabrilloUtils():
        for line in cabdata:
           cabline = self.packLine(line)
           linesplit = cabline.split(':')
-          if (linesplit[0] == 'QSO'):
-             qso = self.makeQSOdict()
-             qsoparts = linesplit[1].split(' ')
-             i=1
-             for tag in self.QSOTAGS:
-                 qso[tag] = qsoparts[i].strip()
-                 i += 1
-             qsos.append(qso)
+          lineparts = len(linesplit)
+          if (lineparts >= 2):
+             cabkey = linesplit[0].strip()
+             recdata = linesplit[1].strip()
+             if (lineparts > 2):
+                tagpos = cabline.find(':')
+                templine = cabline[tagpos:].replace(':','')
+                recdata = templine.strip()
+             if (cabkey == 'QSO'):
+                qso = self.getQSOdict(recdata)
+                if (qso):
+                   qsos.append(qso)
+                else:
+                   print('Bad QSO data line: \"%s\" -- skipping'\
+                           %(cabline))
+             elif (header.has_key(cabkey)):
+                header[cabkey] += recdata
+             else:
+                print('UKNOWN CAB TAG: %s - skipping.'%(cabline))
           else:
-             if (len(linesplit) > 1):
-                 if (header.has_key(linesplit[0])):
-                     header[linesplit[0]] += linesplit[1].strip()
-                 else:
-                     print('UKNOWN CAB TAG: %s - skipping.'%(cabline))
+            print('Bad CAB data: \"%s\" - Skipping this line'% \
+                                (cabline)) 
        thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
        return thislog
