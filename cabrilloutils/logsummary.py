@@ -176,7 +176,7 @@ class LogSummary(CabrilloUtils):
           sumdata = self.processLog(args.args.inputfile)
           if (sumdata):
              for line in sumdata:
-                print line
+                print(line)
 
 if __name__ == '__main__':
    app=LogSummary()

@@ -60,7 +60,7 @@ class guiMOQPUtils(Frame):
 
     #Creation of init_window
     def client_exit(self):
-        print "Exiting..."
+        print("Exiting...")
         exit()
 
     def init_window(self):
@@ -92,7 +92,7 @@ class guiMOQPUtils(Frame):
         #mainloop()
 
     def NewFile(self):
-        print "New File!"
+        print("New File!")
 
 
     def About(self):

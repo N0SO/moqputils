@@ -188,7 +188,7 @@ class MOQPCategory(LogSummary):
        elif (compstring in US):
           moqpcatstg = 'US'
        elif (compstring in CANADA):
-          moqpcatstg = ('CANADA: (%s)'%(gen_category['LOCATION']))
+          moqpcatstg = ('CANADA: (%s)'%(log['HEADER']['LOCATION']))
        elif (compstring in DX):
           moqpcatstg = 'DX'          
        return moqpcatstg
@@ -366,7 +366,7 @@ class MOQPCategory(LogSummary):
           csvdata = self.exportcsvfile(pathname)
        else:
           csvdata = self.exportcsvflist(pathname)
-       print csvdata
+       print(csvdata)
        
 if __name__ == '__main__':
    args = get_args()

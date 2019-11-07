@@ -13,6 +13,9 @@ Update History:
 * Thu Oct 17 2019 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.9 
 - Adding dictionary objects for HEADER and QSO data
+* Wed Nov 05 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.10
+- Deleted duplicate CREATED-BY tag in CABRILLOTAGS.
 """
 
 class CabrilloUtils():
@@ -48,7 +51,7 @@ class CabrilloUtils():
              'QSO',
              'END-OF-LOG']
              
-    VERSION = '1.0.9'
+    VERSION = '1.0.10'
     PHONEMODES = 'PH SSB LSB USB FM DV'
     DIGIMODES = 'RY RTY RTTY FSK AFSK PSK PSK31 PSK64 DIGU DIGL DG FT8'
     MODES = 'CW' + PHONEMODES + DIGIMODES
@@ -240,7 +243,8 @@ class CabrilloUtils():
                 else:
                    print('Bad QSO data line: \"%s\" -- skipping'\
                            %(cabline))
-             elif (header.has_key(cabkey)):
+             #elif (header.has_key(cabkey)):
+             elif (cabkey in header):
                 header[cabkey] += recdata
              else:
                 print('UKNOWN CAB TAG: %s - skipping.'%(cabline))
