@@ -1,5 +1,5 @@
 #!/usr/bin/python
 HOSTNAME = 'localhost'
-USER = 'youruser'
-PW = 'youruserpw'
-DBNAME = 'yourdbname'
+USER = 'mike'
+PW = 'hambone1'
+DBNAME = 'moqp-2019'

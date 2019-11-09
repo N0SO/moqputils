@@ -52,10 +52,6 @@ class MOQPLoadLogs(MOQPCategory):
         
     def write_header(self, db, header, catg, qsostatus):
         logID = None
-   
-        """query = "INSERT INTO logheader(START) VALUES (%s)"%(header['START-OF-LOG'])"""   
-
-
 
         query = """INSERT INTO logheader(START,
                       CALLSIGN,
@@ -118,15 +114,40 @@ class MOQPLoadLogs(MOQPCategory):
                         ('"%s",'%(header['END-OF-LOG'])) +\
                         ('"%s",'%(catg)) +\
                         ('"%s")'%(qsostatus))      
-        print('query = %s'%(query))
+        #print('query = %s'%(query))
         cursor = db.cursor()
         cursor.execute(query)
         db.commit()
         logID = cursor.lastrowid
         return logID
         
-    def write_qsodata(self, qsodata):
+    def write_qsodata(self, db, logID, qsodata):
         qsoID = None
+        query = """INSERT INTO QSOS(LOGID,
+                                    FREQ,
+                                    MODE,
+                                    DATE,
+                                    TIME,
+                                    MYCALL,
+                                    MYREPORT,
+                                    MYQTH,
+                                    URCALL,
+                                    URREPORT,
+                                    URQTH)
+                      VALUES(""" + \
+                         ('"%d",'%(logID)) +\
+                         ('"%s",'%(qsodata['FREQ'])) +\
+                         ('"%s",'%(qsodata['MODE'])) +\
+                         ('"%s",'%(qsodata['DATE'])) +\
+                         ('"%s",'%(qsodata['TIME'])) +\
+                         ('"%s",'%(qsodata['MYCALL'])) +\
+                         ('"%s",'%(qsodata['MYREPORT'])) +\
+                         ('"%s",'%(qsodata['MYQTH'])) +\
+                         ('"%s",'%(qsodata['URCALL'])) +\
+                         ('"%s",'%(qsodata['URREPORT'])) +\
+                         ('"%s")'%(qsodata['URQTH']))
+
+        """
         print('%s  %s  %s  %s  %s  %s  %s  %s  %s' \
                 %(qso['FREQ'],
                   qso['MODE'],
@@ -137,15 +158,19 @@ class MOQPLoadLogs(MOQPCategory):
                   qso['URCALL'],
                   qso['URREPORT'],
                   qso['URQTH']))
-        
-        
-        
+        """
+        print('Writeing QSO Data: %s'%(query))
+        cursor = db.cursor()
+        cursor.execute(query)
+        db.commit()
+        qsoID = cursor.lastrowid
         return qsoID
         
-    def write_qsolist(self, qsolist):
+    def write_qsolist(self, db, logID, qsolist):
         success = None
+
         for qso in qsolist:
-            qID = self.write_qsodata(qso)
+            qID = self.write_qsodata(db, logID, qso)
             if (qID):
                 continue
             else:
@@ -165,7 +190,8 @@ class MOQPLoadLogs(MOQPCategory):
             logID = self.write_header(db, log['HEADER'], 
                               log['MOQPCAT'],
                               'QSOSTATUS')
-            print('ID of this log is: %d'%(logID))
+            if (logID):
+                self.write_qsolist(db, logID, log['QSOLIST'])
             cursor.close()
             db.close()
 
