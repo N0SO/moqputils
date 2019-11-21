@@ -359,6 +359,86 @@ class MOQPCategory(LogSummary):
                 fullPath = ('%s/%s'%(dirName, fileName))
                 csvdata += self.exportcsvfile(fullPath, False)
        return csvdata
+       
+    def qso_valid(self, qso):
+       errorData = []
+       qsovalid = True
+       valid_date_chars = set('0123456789/-')
+       if ( qso['FREQ'].isnumeric() ):
+          pass
+       else:
+          errorData.append( ('QSO FREQ Parameter invalid: %s'%(qso['FREQ'])) )
+          qsovalid = False
+       
+       if ( qso['MODE'] in self.MODES ):
+          pass
+       else:
+          errorData.append(  ('QSO MODE Parameter invalid: %s'%(qso['MODE'])) )
+          qsovalid = False
+
+       #if ( qso['DATE'].isnumeric() ):
+       if all(char in valid_date_chars for char in qso['DATE']):
+          pass
+       else:
+          errorData.append(  ('QSO DATE Parameter invalid: %s'%(qso['DATE'])) )
+          qsovalid = False
+
+       if ( qso['TIME'].isnumeric() ):
+          pass
+       else:
+          errorData.append(  ('QSO TIME Parameter invalid: %s'%(qso['TIME'])) )
+          qsovalid = False
+
+       if ( qso['MYCALL'].isalnum() ):
+          pass
+       else:
+          errorData.append(  ('QSO MYCALL Parameter invalid: %s'%(qso['MYCALL'])) )
+          qsovalid = False
+
+       if ( qso['MYREPORT'].isnumeric() ):
+          pass
+       else:
+          errorData.append(  ('QSO MYREPORT Parameter invalid: %s'%(qso['MYREPORT'])) )
+          qsovalid = False
+
+       if ( qso['MYQTH'].isalpha() ):
+          pass
+       else:
+          errorData.append(  ('QSO MYQTH Parameter invalid: %s'%(qso['MYQTH'])) )
+          qsovalid = False
+
+       if ( qso['URCALL'].isalnum() ):
+          pass
+       else:
+          errorData.append(  ('QSO URCALL Parameter invalid: %s'%(qso['URCALL'])) )
+          qsovalid = False
+
+       if ( qso['URREPORT'].isnumeric() ):
+          pass
+       else:
+          errorData.append(  ('QSO URREPORT Parameter invalid: %s'%(qso['URREPORT'])) )
+          qsovalid = False
+
+       if ( qso['URQTH'].isalpha() ):
+          pass
+       else:
+          errorData.append(  ('QSO URQTH Parameter invalid: %s'%(qso['URQTH'])) )
+          qsovalid = False
+          
+       return errorData
+
+       
+    def qsolist_valid(self, qsolist):
+       qcount = 0
+       errorData = []
+       for qso in qsolist:
+           qcount += 1
+           qsoerrors = self.qso_valid(qso)
+           if (qsoerrors):
+              r = [qcount, qsoerrors]
+              errorData.append(r)
+       return errorData
+           
  
     def appMain(self, pathname):
        csvdata = 'Nothing.'
