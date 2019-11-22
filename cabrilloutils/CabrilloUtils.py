@@ -16,6 +16,11 @@ Update History:
 * Wed Nov 05 2019 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.10
 - Deleted duplicate CREATED-BY tag in CABRILLOTAGS.
+* Fri Nov 22 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.11
+- Added CATEGORY-TIME tag in CABRILLOTAGS.
+- Method getQSOdata now returns a list of errors encountered
+- in thislog['ERRORS'] instead of just printing them.
 """
 
 class CabrilloUtils():
@@ -40,18 +45,18 @@ class CabrilloUtils():
              'CATEGORY-POWER', 
              'CATEGORY-STATION', 
              'CATEGORY-TRANSMITTER', 
+             'CATEGORY-TIME',
              'CERTIFICATE', 
              'OPERATORS', 
              'CLAIMED-SCORE',
              'CLUB', 
-             'CREATED-BY',
              'IOTA-ISLAND-NAME',
              'OFFTIME',
              'SOAPBOX',
              'QSO',
              'END-OF-LOG']
              
-    VERSION = '1.0.10'
+    VERSION = '1.0.11'
     PHONEMODES = 'PH SSB LSB USB FM DV'
     DIGIMODES = 'RY RTY RTTY FSK AFSK PSK PSK31 PSK64 DIGU DIGL DG FT8'
     MODES = 'CW' + PHONEMODES + DIGIMODES
@@ -69,9 +74,6 @@ class CabrilloUtils():
                 CREATED-BY IOTA-ISLAND-NAME OFFTIME SOAPBOX'
     HEADERTAGS = CATEGORYTAGS + OPERATORTAGS + MISCTAGS
     
-    QSOTAGS = ['FREQ', 'MODE', 'DATE', 'TIME', 'MYCALL',
-               'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH']
-
     CATEGORYTAGL = ['CATEGORY-ASSISTED', 'CATEGORY-BAND', 'CATEGORY-MODE',
                     'CATEGORY-OPERATOR', 'CATEGORY-POWER',
                     'CATEGORY-STATION', 'CATEGORY-TIME',
@@ -96,12 +98,6 @@ class CabrilloUtils():
             data = None
         return data
         
-    def getLogFile(self, filename):
-        log = None
-        fileText = self.readFile(filename)
-        if (self.IsThisACabFile(fileText)):
-            log = self.getQSOdata(fileText)
-        return log
 
     def IsThisACabFile(self, data):
         cabfile = False
@@ -185,13 +181,6 @@ class CabrilloUtils():
        header = self.MakeEmptyDict(self.CABRILLOTAGS, '')
        return header
 
-    def makeQSOdict(self):
-       """
-       Return an empty dictionary for Cabrillo QSO Data
-       based on the QSOTAGS list above
-       """
-       qso = self.MakeEmptyDict(self.QSOTAGS, '')
-       return qso
 
     def getCABHeaderdict(self, cabdata):
        header = self.makeHEADERdict()
@@ -206,54 +195,6 @@ class CabrilloUtils():
        #print(header)
        return header
        
-    def getQSOdict(self, qsodata):
-       qso = None
-       temp = qsodata.replace(':','')
-       qsoparts = qsodata.split(' ')
-       #print(len(qsoparts))
-       if (len(qsoparts) >= 10):
-          i=0
-          qso = self.makeQSOdict()
-          for tag in self.QSOTAGS:
-             #print('qso[%s] = %s %d'%(tag, qsoparts[i], i))
-             qso[tag] = qsoparts[i].strip()
-             i += 1
-       #print qso
-       return qso       
-       
-    def getQSOdata(self, cabdata):
-       thislog = dict()
-       qsos = []
-       header = self.makeHEADERdict()
-       for line in cabdata:
-          cabline = self.packLine(line)
-          linesplit = cabline.split(':')
-          lineparts = len(linesplit)
-          if (lineparts >= 2):
-             cabkey = linesplit[0].strip()
-             recdata = linesplit[1].strip()
-             if (lineparts > 2):
-                tagpos = cabline.find(':')
-                templine = cabline[tagpos:].replace(':','')
-                recdata = templine.strip()
-             if (cabkey == 'QSO'):
-                qso = self.getQSOdict(recdata)
-                if (qso):
-                   qsos.append(qso)
-                else:
-                   print('Bad QSO data line: \"%s\" -- skipping'\
-                           %(cabline))
-             #elif (header.has_key(cabkey)):
-             elif (cabkey in header):
-                header[cabkey] += recdata
-             else:
-                print('UKNOWN CAB TAG: %s - skipping.'%(cabline))
-          else:
-            print('Bad CAB data: \"%s\" - Skipping this line'% \
-                                (cabline)) 
-       thislog['HEADER'] = header
-       thislog['QSOLIST'] = qsos
-       return thislog
 
 
     def getOperatorData(self, data):
