@@ -151,7 +151,7 @@ class gui_MOQPCategory(MOQPCategory):
         window.insert(END, ('%s\t'%(log['QSOSUM']['DG'])))
         window.insert(END, ('%s\t'%(log['QSOSUM']['QSOS'])))
         window.insert(END, ('%s\t'%(log['QSOSUM']['VHF'])))
-        window.insert(END, ('%s\t'%(log['MOQPCAT'])))
+        window.insert(END, ('%s\n'%(log['MOQPCAT'])))
         
         qsoErrors = self.qsolist_valid(log['QSOLIST'])
         for r in qsoErrors:

@@ -32,6 +32,9 @@ DX = 'DX'
 
 class MOQPCategory(LogSummary):
 
+    QSOTAGS = ['FREQ', 'MODE', 'DATE', 'TIME', 'MYCALL',
+               'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH']
+
     def __init__(self, filename = None):
         if (filename):
            if (filename):
@@ -39,6 +42,77 @@ class MOQPCategory(LogSummary):
 
     def getVersion(self):
        return VERSION
+
+    def getLogFile(self, filename):
+        log = None
+        fileText = self.readFile(filename)
+        if (self.IsThisACabFile(fileText)):
+            log = self.getQSOdata(fileText)
+        return log
+
+    def makeQSOdict(self):
+       """
+       Return an empty dictionary for Cabrillo QSO Data
+       based on the QSOTAGS list above
+       """
+       qso = self.MakeEmptyDict(self.QSOTAGS, '')
+       return qso
+
+    def getQSOdict(self, qsodata):
+       qso = None
+       temp = qsodata.replace(':','')
+       qsoparts = qsodata.split(' ')
+       #print(len(qsoparts))
+       if (len(qsoparts) >= 10):
+          i=0
+          qso = self.makeQSOdict()
+          for tag in self.QSOTAGS:
+             #print('qso[%s] = %s %d'%(tag, qsoparts[i], i))
+             qso[tag] = qsoparts[i].strip()
+             i += 1
+       #print qso
+       return qso       
+       
+    def getQSOdata(self, cabdata):
+       thislog = dict()
+       qsos = []
+       errorData = []
+       header = self.makeHEADERdict()
+       for line in cabdata:
+          cabline = self.packLine(line)
+          linesplit = cabline.split(':')
+          lineparts = len(linesplit)
+          if (lineparts >= 2):
+             cabkey = linesplit[0].strip()
+             recdata = linesplit[1].strip()
+             if (lineparts > 2):
+                tagpos = cabline.find(':')
+                templine = cabline[tagpos:].replace(':','')
+                recdata = templine.strip()
+             if (cabkey == 'QSO'):
+                qso = self.getQSOdict(recdata)
+                if (qso):
+                   qsos.append(qso)
+                else:
+                   errorData.append( \
+                      ('Bad QSO data line: \"%s\" -- skipping'\
+                                                   %(cabline)) )
+             #elif (header.has_key(cabkey)):
+             elif (cabkey in header):
+                header[cabkey] += recdata
+             else:
+                errorData.append( \
+                  ('UKNOWN CAB TAG: %s - skipping.'%(cabline)) )
+          else:
+            errorData.append( \
+                  ('Bad CAB data: \"%s\" - Skipping this line'% \
+                                                     (cabline)) )
+       thislog['HEADER'] = header
+       thislog['QSOLIST'] = qsos
+       thislog['ERRORS'] = errorData
+       return thislog
+
+
 
     def processLog(self, fname):
        category = None
@@ -59,7 +133,7 @@ class MOQPCategory(LogSummary):
              category.append(qso)
              category.append(vhf)
        
-       return category
+       return category      
        
     def processLogdict(self, fname):
        """
@@ -68,6 +142,8 @@ class MOQPCategory(LogSummary):
        Returns a dictionary with two elements:
           HEADER = a dictionary objject of the log header
           QSOLIST = a list dictionary objects with QSO data
+          ERRORS = A list of errors encountered while 
+                   processing the log.
           QSOSUM = a summary of the QSO statstics
                    QSOS = total number of QSOs
                    CW = number of CW QSOs
@@ -82,8 +158,9 @@ class MOQPCategory(LogSummary):
           logSummary = dict()
           logSummary['HEADER'] = log['HEADER']
           logSummary['QSOLIST'] = log['QSOLIST']
+          logSummary['ERRORS'] = log['ERRORS']
           logSummary['QSOSUM'] = qsosummary
-
+          
        return logSummary
 
     def determineMOQPCat(self, gen_category):
@@ -256,25 +333,28 @@ class MOQPCategory(LogSummary):
 
        if (moqpcatstg):
           temp=self._moqpcatop_(log)
-          moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+          if temp == 'CHECKLOG':
+             moqpcatstg = 'CHECKLOG'
+          else:
+             moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
        
-       if (moqpcatstg):
-          temp=self._moqpcatpower_(log)
-          moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+             if (moqpcatstg):
+                temp=self._moqpcatpower_(log)
+                moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
 
-       if (moqpcatstg):
-          temp=self._moqpcatmode_(log)
-          moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+             if (moqpcatstg):
+                temp=self._moqpcatmode_(log)
+                moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
 
-       if (moqpcatstg):
-          if (log['QSOSUM']['DG'] > 0):
-              moqpcatstg += '+DG'
-          if (log['QSOSUM']['VHF'] > 0):
-              moqpcatstg += '+VHF'
+             if (moqpcatstg):
+                if (log['QSOSUM']['DG'] > 0):
+                    moqpcatstg += '+DG'
+                if (log['QSOSUM']['VHF'] > 0):
+                    moqpcatstg += '+VHF'
           
-       if (moqpcatstg):
-          if (log['HEADER']['CATEGORY-OVERLAY'].strip() == 'ROOKIE'):
-              moqpcatstg += ' ROOKIE'                         
+             if (moqpcatstg):
+                if (log['HEADER']['CATEGORY-OVERLAY'].strip() == 'ROOKIE'):
+                    moqpcatstg += ' ROOKIE'                         
 
        return moqpcatstg
        
