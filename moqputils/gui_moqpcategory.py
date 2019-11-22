@@ -152,6 +152,13 @@ class gui_MOQPCategory(MOQPCategory):
         window.insert(END, ('%s\t'%(log['QSOSUM']['QSOS'])))
         window.insert(END, ('%s\t'%(log['QSOSUM']['VHF'])))
         window.insert(END, ('%s\t'%(log['MOQPCAT'])))
+        
+        qsoErrors = self.qsolist_valid(log['QSOLIST'])
+        for r in qsoErrors:
+            window.insert(END, ('Error in QSO %d:\n'%(r[0])) )
+            for e in r[1]:
+                window.insert(END, ('\t%s\n'%(e)) )
+        
 
     def OpenFile(self):
         csvfilename = askopenfilename(title = "Select input log file:",
