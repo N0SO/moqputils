@@ -364,6 +364,7 @@ class MOQPCategory(LogSummary):
        errorData = []
        qsovalid = True
        valid_date_chars = set('0123456789/-')
+       valid_call_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-')
        if ( qso['FREQ'].isnumeric() ):
           pass
        else:
@@ -376,7 +377,6 @@ class MOQPCategory(LogSummary):
           errorData.append(  ('QSO MODE Parameter invalid: %s'%(qso['MODE'])) )
           qsovalid = False
 
-       #if ( qso['DATE'].isnumeric() ):
        if all(char in valid_date_chars for char in qso['DATE']):
           pass
        else:
@@ -389,7 +389,8 @@ class MOQPCategory(LogSummary):
           errorData.append(  ('QSO TIME Parameter invalid: %s'%(qso['TIME'])) )
           qsovalid = False
 
-       if ( qso['MYCALL'].isalnum() ):
+       #if ( qso['MYCALL'].isalnum() ):
+       if all(char in valid_call_chars for char in qso['MYCALL']):
           pass
        else:
           errorData.append(  ('QSO MYCALL Parameter invalid: %s'%(qso['MYCALL'])) )
@@ -407,7 +408,8 @@ class MOQPCategory(LogSummary):
           errorData.append(  ('QSO MYQTH Parameter invalid: %s'%(qso['MYQTH'])) )
           qsovalid = False
 
-       if ( qso['URCALL'].isalnum() ):
+       #if ( qso['URCALL'].isalnum() ):
+       if all(char in valid_call_chars for char in qso['URCALL']):
           pass
        else:
           errorData.append(  ('QSO URCALL Parameter invalid: %s'%(qso['URCALL'])) )
