@@ -60,6 +60,8 @@ class MOQPCategory(LogSummary):
 
     def getQSOdict(self, qsodata):
        qso = None
+       qso_errors = []
+       qso_data = dict()
        temp = qsodata.replace(':','')
        qsoparts = qsodata.split(' ')
        #print(len(qsoparts))
@@ -71,14 +73,19 @@ class MOQPCategory(LogSummary):
              qso[tag] = qsoparts[i].strip()
              i += 1
        #print qso
-       return qso       
+       qso_errors = self.qso_valid(qso)
+       qso_data['ERRORS'] = qso_errors
+       qso_data['DATA'] = qso
+       return qso_data       
        
     def getQSOdata(self, cabdata):
        thislog = dict()
        qsos = []
        errorData = []
        header = self.makeHEADERdict()
+       linecount = 0
        for line in cabdata:
+          linecount += 1
           cabline = self.packLine(line)
           linesplit = cabline.split(':')
           lineparts = len(linesplit)
@@ -91,22 +98,24 @@ class MOQPCategory(LogSummary):
                 recdata = templine.strip()
              if (cabkey == 'QSO'):
                 qso = self.getQSOdict(recdata)
-                if (qso):
-                   qsos.append(qso)
+                print('qso errors = %s'%(qso['ERRORS']))
+                if (qso['ERRORS'] == []):
+                   qsos.append(qso['DATA'])
                 else:
                    errorData.append( \
-                      ('Bad QSO data line: \"%s\" -- skipping'\
-                                                   %(cabline)) )
+                      ('Bad QSO data line %d: \"%s\" \n' \
+                        '-- skipping\n    %s'% \
+                        (linecount, cabline, qso['ERRORS'])) )
              #elif (header.has_key(cabkey)):
              elif (cabkey in header):
                 header[cabkey] += recdata
              else:
                 errorData.append( \
-                  ('UKNOWN CAB TAG: %s - skipping.'%(cabline)) )
+                  ('UKNOWN CAB TAG: %s - skipping this QSO.'%(cabline)) )
           else:
             errorData.append( \
-                  ('Bad CAB data: \"%s\" - Skipping this line'% \
-                                                     (cabline)) )
+           ('Bad CAB data line %d: \"%s\" - Skipping this line'% \
+                                               (linecount, cabline)) )
        thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
        thislog['ERRORS'] = errorData
@@ -139,7 +148,7 @@ class MOQPCategory(LogSummary):
        """
        Read the Cabrillo log file and separate log header data
        from qso data. 
-       Returns a dictionary with two elements:
+       Returns a dictionary with four elements:
           HEADER = a dictionary objject of the log header
           QSOLIST = a list dictionary objects with QSO data
           ERRORS = A list of errors encountered while 
@@ -414,6 +423,7 @@ class MOQPCategory(LogSummary):
     def exportcsvfiledict(self, filename, Headers=True):
        fullSummary = None
        logsummary = self.processLogdict(filename)
+       #print( logsummary['ERRORS'] )
        if (logsummary):
           moqpcat = self.determineMOQPCatstg(logsummary)
           fullSummary = dict()
@@ -421,9 +431,7 @@ class MOQPCategory(LogSummary):
           fullSummary['QSOSUM'] = logsummary['QSOSUM']
           fullSummary['MOQPCAT'] = moqpcat
           fullSummary['QSOLIST'] = logsummary['QSOLIST']
-          #if (Headers): 
-          #   csvdata = self.csvHeader()
-          #csvdata += self.exportcsvline(gencat, moqpcat)
+          fullSummary['ERRORS'] = logsummary['ERRORS']
        else:
           print('File %s does not exist or is not in CABRILLO format.'%filename)
        return fullSummary
