@@ -82,37 +82,21 @@ class gui_MOQPCategory(MOQPCategory):
         logpathName = askdirectory()
         print('Directory name selected: %s'%logpathName)
         for (dirName, subdirList, fileList) in os.walk(logpathName, topdown=True):
-           """
-           print('dirName = %s\nsubdirList = %s\nfileList = %s'% \
-                   (dirName, subdirList, fileList))
-           """
-           if (fileList != ''): 
+           if (fileList != ''):
+              """ 
               win = Toplevel()
               win.title(logpathName)
               logtext = self.makeSumWindow(win)
               logtext.delete(1.0, END)
               logtext.insert(END, ('Summary of logs in %s\n'%(logpathName)))
               headers = True
-              for logfileName in fileList:
-                  print('Summing file %s'%(logfileName))
-                  logsum = self.exportcsvfiledict(dirName+'/'+logfileName)
-                  if (logsum):
-                      self.showsummary(logtext, logsum, colheader=headers)
-                      logtext.insert(END, '\n')
-                  if (headers): 
-                      headers = False
+              """
+              for logfileName in fileList: 
+                  if ( (not logfileName.startswith('.')) and \
+                                 (logfileName.endswith('.LOG')) ):
+                      self._sumfile(dirName+'/'+logfileName)
 
-
-    def SumFile(self):
-        logfileName = askopenfilename(title = "Select input log file:",
-                                      filetypes=[ \
-                                                 ("LOG files","*.log"),
-                                                 ("LOG files","*.LOG"),
-                                                 ("CSV files","*.csv"),
-                                                 ("CSV files","*.CSV"),
-                                                 ("Text files","*.txt"),
-                                                 ("Text files","*.TXT"),
-                                                 ("All Files","*.*")])
+    def _sumfile(self, logfileName):
         print('File name selected: %s'%(logfileName))
         
         self.fillLogTextfromFile(logfileName, self.LogText, clearWin=True)
@@ -128,6 +112,22 @@ class gui_MOQPCategory(MOQPCategory):
         logtext.insert(END, ('Log Summary for Station %s\n'%(logsum['HEADER']['CALLSIGN'])))
         self.showsummary(logtext, logsum, colheader=True)
 
+
+    def SumFile(self):
+        logfileName = askopenfilename(title = "Select input log file:",
+                                      filetypes=[ \
+                                                 ("LOG files","*.log"),
+                                                 ("LOG files","*.LOG"),
+                                                 ("CSV files","*.csv"),
+                                                 ("CSV files","*.CSV"),
+                                                 ("Text files","*.txt"),
+                                                 ("Text files","*.TXT"),
+                                                 ("All Files","*.*")])
+        print('File name selected: %s'%(logfileName))
+        
+        if(logfileName):
+            self._sumfile(logfileName)
+        
     def makeSumWindow(self, win):
         S = Scrollbar(win)
         Logwin = Text(win, height=10, width=220)
@@ -158,6 +158,7 @@ class gui_MOQPCategory(MOQPCategory):
         for r in log['ERRORS']:
             if ( r != [] ):
                 print (r)
+                window.insert(END, r)
         
         """
         qsoErrors = self.qsolist_valid(log['QSOLIST'])

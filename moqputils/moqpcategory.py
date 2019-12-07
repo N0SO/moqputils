@@ -98,23 +98,24 @@ class MOQPCategory(LogSummary):
                 recdata = templine.strip()
              if (cabkey == 'QSO'):
                 qso = self.getQSOdict(recdata)
-                print('qso errors = %s'%(qso['ERRORS']))
+                #print('qso errors = %s'%(qso['ERRORS']))
                 if (qso['ERRORS'] == []):
                    qsos.append(qso['DATA'])
                 else:
                    errorData.append( \
-                      ('Bad QSO data line %d: \"%s\" \n' \
-                        '-- skipping\n    %s'% \
+                      ('QSO data bad, line %d: \"%s\" \n' \
+                        '    %s\n'% \
                         (linecount, cabline, qso['ERRORS'])) )
              #elif (header.has_key(cabkey)):
              elif (cabkey in header):
                 header[cabkey] += recdata
              else:
                 errorData.append( \
-                  ('UKNOWN CAB TAG: %s - skipping this QSO.'%(cabline)) )
+                  ('CAB TAG unknown, line %d: \"%s\"\n'% \
+                            (linecount, cabline)) )
           else:
             errorData.append( \
-           ('Bad CAB data line %d: \"%s\" - Skipping this line'% \
+           ('CAB data bad, line %d: \"%s\"skipping'% \
                                                (linecount, cabline)) )
        thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
