@@ -9,7 +9,7 @@ moqpcategory  - Determine which Missouri QSO Party Award
 from logsummary import *
 import os
 
-VERSION = '0.2.1' 
+VERSION = '0.2.2' 
 FILELIST = './'
 ARGS = None
 

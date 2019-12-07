@@ -24,7 +24,7 @@ import os.path
 import argparse
 from moqpcategory import MOQPCategory
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 FILELIST = './'
 COLUMNHEADERS = 'CALLSIGN\tOPS\t\t\tSTATION\t\tOPERATOR\t\t' + \
                 'POWER\t\tMODE\t\tLOCATION\t\tOVERLAY\t\t' + \
@@ -78,24 +78,6 @@ class gui_MOQPCategory(MOQPCategory):
         showinfo('GUI_MOQPCATEGORY', 'GUI_MOQPCATEGORY - Version ' + VERSION + '\n' + \
               'Utility to help categorize Missouri QSO Party logfiles in CABRILLO format.')
 
-    def SumDir(self):
-        logpathName = askdirectory()
-        print('Directory name selected: %s'%logpathName)
-        for (dirName, subdirList, fileList) in os.walk(logpathName, topdown=True):
-           if (fileList != ''):
-              """ 
-              win = Toplevel()
-              win.title(logpathName)
-              logtext = self.makeSumWindow(win)
-              logtext.delete(1.0, END)
-              logtext.insert(END, ('Summary of logs in %s\n'%(logpathName)))
-              headers = True
-              """
-              for logfileName in fileList: 
-                  if ( (not logfileName.startswith('.')) and \
-                                 (logfileName.endswith('.LOG')) ):
-                      self._sumfile(dirName+'/'+logfileName)
-
     def _sumfile(self, logfileName):
         print('File name selected: %s'%(logfileName))
         
@@ -128,6 +110,16 @@ class gui_MOQPCategory(MOQPCategory):
         if(logfileName):
             self._sumfile(logfileName)
         
+    def SumDir(self):
+        logpathName = askdirectory()
+        print('Directory name selected: %s'%logpathName)
+        for (dirName, subdirList, fileList) in os.walk(logpathName, topdown=True):
+           if (fileList != ''):
+              for logfileName in fileList: 
+                  if ( (not logfileName.startswith('.')) and \
+                                 (logfileName.endswith('.LOG')) ):
+                      self._sumfile(dirName+'/'+logfileName)
+
     def makeSumWindow(self, win):
         S = Scrollbar(win)
         Logwin = Text(win, height=10, width=220)
