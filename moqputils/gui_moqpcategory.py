@@ -22,14 +22,10 @@ else:
     from tkinter.filedialog import asksaveasfilename
 import os.path
 import argparse
-from moqpcategory import MOQPCategory
+from moqpcategory import MOQPCategory, COLUMNHEADERS
 
 VERSION = '0.0.2'
 FILELIST = './'
-COLUMNHEADERS = 'CALLSIGN\tOPS\t\t\tSTATION\t\tOPERATOR\t\t' + \
-                'POWER\t\tMODE\t\tLOCATION\t\tOVERLAY\t\t' + \
-                'CW QSO\tPH QSO\tRY QSO\tTOTAL\tVHF QSO\t' + \
-                'MOQP CATEGORY\n'
 
 class gui_MOQPCategory(MOQPCategory):
 

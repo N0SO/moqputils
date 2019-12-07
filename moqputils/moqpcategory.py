@@ -30,6 +30,11 @@ US+= 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD'
 
 DX = 'DX'
 
+COLUMNHEADERS = 'CALLSIGN\tOPS\t\t\tSTATION\t\tOPERATOR\t\t' + \
+                'POWER\t\tMODE\t\tLOCATION\t\tOVERLAY\t\t' + \
+                'CW QSO\tPH QSO\tRY QSO\tTOTAL\tVHF QSO\t' + \
+                'MOQP CATEGORY\n'
+
 class MOQPCategory(LogSummary):
 
     QSOTAGS = ['FREQ', 'MODE', 'DATE', 'TIME', 'MYCALL',
@@ -372,47 +377,43 @@ class MOQPCategory(LogSummary):
        hdata = (',,,CATEGORIES FROM THE LOG FILE,,,,,\n')
        hdata += ('STATION,OPS,MOQP CATEGORY,STATION,OPERATOR,POWER,MODE,LOCATION,OVERLAY,CW QSO,PH QSO,RY QSO,TOTAL,VHF QSO\n')
        return hdata
-       
-    def exportcsvline(self, gen, moqp):
-       hdata = ( '%s,%s,%s %s %s %s %s %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n'%(gen[6], 
-                        gen[7], 
-                        moqp[0],
-                        moqp[1],
-                        moqp[2],
-                        moqp[3],
-                        moqp[4],
-                        moqp[5],
-                        gen[0],
-                        gen[1],
-                        gen[2],
-                        gen[3],
-                        gen[5],
-                        gen[4], 
-                        gen[8], 
-                        gen[9], 
-                        gen[10], 
-                        gen[11],
-                        gen[12]) )
-                        
-       return hdata 
-       
+
+    def exportcsvline(self, log):
+       csvdata = ('%s\t'%(log['HEADER']['CALLSIGN']))
+       csvdata += ('%s\t\t\t'%(log['HEADER']['OPERATORS']))
+       csvdata += ('%s\t\t'%(log['HEADER']['CATEGORY-STATION']))
+       csvdata += ('%s\t\t'%(log['HEADER']['CATEGORY-OPERATOR']))
+       csvdata += ('%s\t\t'%(log['HEADER']['CATEGORY-POWER']))
+       csvdata += ('%s\t\t'%(log['HEADER']['CATEGORY-MODE']))
+       csvdata += ('%s\t\t'%(log['HEADER']['LOCATION']))
+       csvdata += ('%s\t\t'%(log['HEADER']['CATEGORY-OVERLAY']))
+       csvdata += ('%s\t'%(log['QSOSUM']['CW']))
+       csvdata += ('%s\t'%(log['QSOSUM']['PH']))
+       csvdata += ('%s\t'%(log['QSOSUM']['DG']))
+       csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
+       csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
+       csvdata += ('%s\n'%(log['MOQPCAT']))
+        
+       for r in log['ERRORS']:
+          if ( r != [] ):
+             csvdata += r
+       return csvdata
+    
     """
     This method processes a single file passed in filename
     If the Headers option is false, it will skip printing the
     csv header info.
     """
     def exportcsvfile(self, filename, Headers=True):
-       csvdata = ''
-       gencat = self.processLog(filename)
-       if (gencat):
-          moqpcat = self.determineMOQPCat(gencat)
-          if (Headers): 
-             csvdata = self.csvHeader()
-          csvdata += self.exportcsvline(gencat, moqpcat)
+       log = self.exportcsvfiledict(filename)
+       if (log):
+          csvdata = ''
+          if (Headers):
+             csvdata += ('%s'%(COLUMNHEADERS))
+          csvdata += self.exportcsvline(log)
        else:
           csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
-       return csvdata
-          
+       print(csvdata)  
         
     """
     This method processes a single file passed in filename
