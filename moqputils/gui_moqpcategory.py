@@ -101,7 +101,7 @@ class gui_MOQPCategory(MOQPCategory):
         
         self.fillLogTextfromFile(logfileName, self.LogText, clearWin=True)
         
-        logsum = self.exportcsvfiledict(logfileName)
+        logsum = self.parseLog(logfileName)
         
         #print(logsum['ERRORS'])
 

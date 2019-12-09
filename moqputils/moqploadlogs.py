@@ -1,7 +1,7 @@
 from moqpcategory import MOQPCategory
 import os
 from moqpdbconfig import *
-import MySQLdb
+#import MySQLdb
 
 
 VERSION = '0.0.1' 
@@ -50,104 +50,14 @@ class MOQPLoadLogs(MOQPCategory):
         return connection
 
         
-    def write_header(self, db, header, catg, qsostatus):
+    def write_header(self, header, catg):
         logID = None
-
-        query = """INSERT INTO logheader(START,
-                      CALLSIGN,
-                      CREATEDBY,
-                      LOCATION, 
-                      CONTEST,
-                      NAME,
-                      ADDRESS,
-                      CITY,
-                      STATEPROV,
-                      ZIPCODE,
-                      COUNTRY,
-                      EMAIL,
-                      CATASSISTED,
-                      CATBAND,
-                      CATMODE,
-                      CATOPERATOR,
-                      CATOVERLAY,
-                      CATPOWER,
-                      CATSTATION,
-                      CATXMITTER,
-                      CERTIFICATE,
-                      OPERATORS,
-                      CLAIMEDSCORE,
-                      CLUB,
-                      IOTAISLANDNAME,
-                      OFFTIME,
-                      SOAPBOX,
-                      ENDOFLOG,
-                      MOQPCAT,
-                      STATUS)
-                   VALUES(""" + \
-                        ('"%s",'%(header['START-OF-LOG'])) +\
-                        ('"%s",'%(header['CALLSIGN'])) +\
-                        ('"%s",'%(header['CREATED-BY'])) +\
-                        ('"%s",'%(header['LOCATION'])) +\
-                        ('"%s",'%(header['CONTEST'])) +\
-                        ('"%s",'%(header['NAME'])) +\
-                        ('"%s",'%(header['ADDRESS'])) +\
-                        ('"%s",'%(header['ADDRESS-CITY'])) +\
-                        ('"%s",'%(header['ADDRESS-STATE-PROVINCE'])) +\
-                        ('"%s",'%(header['ADDRESS-POSTALCODE'])) +\
-                        ('"%s",'%(header['ADDRESS-COUNTRY'])) +\
-                        ('"%s",'%(header['EMAIL'])) +\
-                        ('"%s",'%(header['CATEGORY-ASSISTED'])) +\
-                        ('"%s",'%(header['CATEGORY-BAND'])) +\
-                        ('"%s",'%(header['CATEGORY-MODE'])) +\
-                        ('"%s",'%(header['CATEGORY-OPERATOR'])) +\
-                        ('"%s",'%(header['CATEGORY-OVERLAY'])) +\
-                        ('"%s",'%(header['CATEGORY-POWER'])) +\
-                        ('"%s",'%(header['CATEGORY-STATION'])) +\
-                        ('"%s",'%(header['CATEGORY-TRANSMITTER'])) +\
-                        ('"%s",'%(header['CERTIFICATE'])) +\
-                        ('"%s",'%(header['OPERATORS'])) +\
-                        ('"%s",'%(header['CLAIMED-SCORE'])) +\
-                        ('"%s",'%(header['CLUB'])) +\
-                        ('"%s",'%(header['IOTA-ISLAND-NAME'])) +\
-                        ('"%s",'%(header['OFFTIME'])) +\
-                        ('"%s",'%(header['SOAPBOX'])) +\
-                        ('"%s",'%(header['END-OF-LOG'])) +\
-                        ('"%s",'%(catg)) +\
-                        ('"%s")'%(qsostatus))      
-        #print('query = %s'%(query))
-        cursor = db.cursor()
-        cursor.execute(query)
-        db.commit()
-        logID = cursor.lastrowid
+        
+        
         return logID
         
-    def write_qsodata(self, db, logID, qsodata):
+    def write_qsodata(self, qsodata):
         qsoID = None
-        query = """INSERT INTO QSOS(LOGID,
-                                    FREQ,
-                                    MODE,
-                                    DATE,
-                                    TIME,
-                                    MYCALL,
-                                    MYREPORT,
-                                    MYQTH,
-                                    URCALL,
-                                    URREPORT,
-                                    URQTH)
-                      VALUES(""" + \
-                         ('"%d",'%(logID)) +\
-                         ('"%s",'%(qsodata['FREQ'])) +\
-                         ('"%s",'%(qsodata['MODE'])) +\
-                         ('"%s",'%(qsodata['DATE'])) +\
-                         ('"%s",'%(qsodata['TIME'])) +\
-                         ('"%s",'%(qsodata['MYCALL'])) +\
-                         ('"%s",'%(qsodata['MYREPORT'])) +\
-                         ('"%s",'%(qsodata['MYQTH'])) +\
-                         ('"%s",'%(qsodata['URCALL'])) +\
-                         ('"%s",'%(qsodata['URREPORT'])) +\
-                         ('"%s")'%(qsodata['URQTH']))
-
-        """
         print('%s  %s  %s  %s  %s  %s  %s  %s  %s' \
                 %(qso['FREQ'],
                   qso['MODE'],
@@ -158,42 +68,30 @@ class MOQPLoadLogs(MOQPCategory):
                   qso['URCALL'],
                   qso['URREPORT'],
                   qso['URQTH']))
-        """
-        print('Writeing QSO Data: %s'%(query))
-        cursor = db.cursor()
-        cursor.execute(query)
-        db.commit()
-        qsoID = cursor.lastrowid
+        
+        
+        
         return qsoID
         
-    def write_qsolist(self, db, logID, qsolist):
+    def write_qsolist(self, qsolist):
         success = None
-
         for qso in qsolist:
-            qID = self.write_qsodata(db, logID, qso)
+            qID = self.write_qsodata(qso)
             if (qID):
                 continue
             else:
                 print('Error writing QSO data!')
                 break
+        
+    
             
     def appMain(self, fileName):
-        log = self.exportcsvfiledict(fileName)
+        log = self.parseLog(fileName)
         if(log):
             print('MOQPLoadLogs: Importing %s...'%(fileName))    
             self.show_details(log)
             db = self.dbconnect(HOSTNAME, USER, PW, DBNAME)
-            cursor = db.cursor()
-            cursor.execute ("SELECT VERSION()")
-            row = cursor.fetchone()
-            print("server version:", row[0])
-            logID = self.write_header(db, log['HEADER'], 
-                              log['MOQPCAT'],
-                              'QSOSTATUS')
-            if (logID):
-                self.write_qsolist(db, logID, log['QSOLIST'])
-            cursor.close()
-            db.close()
+
 
 if __name__ == '__main__':
    args = get_args()
