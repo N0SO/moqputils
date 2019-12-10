@@ -4,7 +4,9 @@ moqpcategory  - Determine which Missouri QSO Party Award
                 category a Cabrillo Format log file is in.
                 
                 Based on 2019 MOQP Rules
-                
+Update History:
+* Thu Dec 09 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.2.1 - Start tracking revs.               
 """
 from logsummary import *
 import os
@@ -26,14 +28,15 @@ OVERLAY = 'ROOKIE'
 US = 'CT EMA ME NH RI VT WMA ENY NLI NNJ NNY SNJ WNY DE EPA MDC WPA '
 US += 'AL GA KY NC NFL SC SFL WCF TN VA PR VI AR LA MS NM NTX OK STX '
 US+= 'WTX EB LAX ORG SB SCV SDG SF SJV SV PAC AZ EWA ID MT NV OR UT '
-US+= 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD'
+US+= 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD '
 
 DX = 'DX'
 
-COLUMNHEADERS = 'CALLSIGN\tOPS\t\t\tSTATION\t\tOPERATOR\t\t' + \
-                'POWER\t\tMODE\t\tLOCATION\t\tOVERLAY\t\t' + \
+COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
+                'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tTOTAL\tVHF QSO\t' + \
                 'MOQP CATEGORY\n'
+
 
 class MOQPCategory(LogSummary):
 
@@ -68,17 +71,19 @@ class MOQPCategory(LogSummary):
        qso_errors = []
        qso_data = dict()
        temp = qsodata.replace(':','')
-       qsoparts = qsodata.split(' ')
+       qsoparts = temp.split(' ')
        #print(len(qsoparts))
-       if (len(qsoparts) >= 10):
+       if (len(qsoparts) == 10):
           i=0
           qso = self.makeQSOdict()
           for tag in self.QSOTAGS:
              #print('qso[%s] = %s %d'%(tag, qsoparts[i], i))
              qso[tag] = qsoparts[i].strip()
              i += 1
-       #print qso
-       qso_errors = self.qso_valid(qso)
+          #print qso
+          qso_errors = self.qso_valid(qso)
+       else:
+          qso_errors = ['QSO has %d elements, should have 10.'%(len(qsoparts))]
        qso_data['ERRORS'] = qso_errors
        qso_data['DATA'] = qso
        return qso_data       
@@ -108,10 +113,9 @@ class MOQPCategory(LogSummary):
                    qsos.append(qso['DATA'])
                 else:
                    errorData.append( \
-                      ('QSO data bad, line %d: \"%s\" \n' \
+                      ('QSO BUSTED, line %d: \"%s\" \n' \
                         '    %s\n'% \
                         (linecount, cabline, qso['ERRORS'])) )
-             #elif (header.has_key(cabkey)):
              elif (cabkey in header):
                 header[cabkey] += recdata
              else:
@@ -120,14 +124,12 @@ class MOQPCategory(LogSummary):
                             (linecount, cabline)) )
           else:
             errorData.append( \
-           ('CAB data bad, line %d: \"%s\"skipping'% \
+           ('CAB data bad, line %d: \"%s\" skipping'% \
                                                (linecount, cabline)) )
        thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
        thislog['ERRORS'] = errorData
        return thislog
-
-
 
     def processLog(self, fname):
        category = None
@@ -177,100 +179,6 @@ class MOQPCategory(LogSummary):
           logSummary['QSOSUM'] = qsosummary
           
        return logSummary
-
-    def determineMOQPCat(self, gen_category):
-       moqp_category = []
-       temp = gen_category[5].upper().strip()
-       qth = ('%s UNDEFINED QTH:'%(temp))
-       if(temp in INSTATE):
-          qth = 'MISSOURI'
-       elif (temp in US):
-          qth = 'US'
-       elif (temp in CANADA):
-          qth = ('CANADA %s'%(temp))
-       elif (temp in DX):
-          qth = 'DX'
-       moqp_category.append(qth)
-
-       temp = gen_category[0].upper().strip()
-       catstation = ('UNDEFINED STATION CATEGORY:%s'%(temp))
-       if (temp in STATIONS):
-           if (temp == 'FIXED'):
-               catstation = 'FIXED'
-           elif ( (temp == 'MOBILE') or (temp == 'ROVER') or temp == 'PORTABLE'):
-               catstation = 'MOBILE'
-           elif (temp == 'EXPEDITION'):
-               catstation = 'EXPEDITION'
-           elif (temp == 'SCHOOL'):
-               catstation = 'SCHOOL'
-       moqp_category.append(catstation)
-           
-           
-       temp = gen_category[1].upper().strip()
-       opcat = ('UNDEFINED OP CATEGORY:%s'%(temp))
-       if (temp == 'SINGLE-OP'):
-          opcat  = 'SINGLE-OP'
-       elif (temp == 'MULTI-OP'):
-          opcat = 'MULTI-OP'
-       elif (temp == 'CHECKLOG'):
-          opcat = ('CHECKLOG')
-       moqp_category.append(opcat)
-       
-       temp = gen_category[2].upper().strip()
-       power = ('UNDEFINED STATION POWER ENTRY:%s'%(temp))
-       if (temp == 'LOW' or temp == 'HIGH' or temp == 'QRP'):
-           power = ('%s POWER'%(temp))
-       moqp_category.append(power)
-    
-       temp = gen_category[3].upper().strip()
-       opmode = ('UNDEFINED STATION MODE ENTRY:%s'%(temp))
-       if (temp == 'PH' or temp == 'SSB'):
-          opmode = 'PHONE'
-       elif (temp == 'CW'):
-          opmode = 'CW'
-       elif (temp == 'MIXED'):
-          opmode = 'MIXED'
-       if (opmode in 'PHONE CW MIXED'):
-          if (gen_category[10] > 0):
-             opmode += '+DIG'
-          if (gen_category[12] > 0):
-             opmode += '+VHF'
-       moqp_category.append(opmode)
-          
-       temp = gen_category[4].upper().strip()
-       opovly = ''
-       if (temp == 'ROOKIE'):
-          opovly  = 'ROOKIE'                         
-       elif (temp == ''):
-          opovly = ''
-       moqp_category.append(opovly)
-       
-       for element in moqp_category:
-          if ('UNDEFINED' in element):
-             moqp_category[0] = 'UNABLE TO DETERMINE'
-             moqp_category[1] = ''
-             moqp_category[2] = ''
-             moqp_category[3] = ''
-             moqp_category[4] = ''
-             moqp_category[5] = ''
-             break
-          if ( 'CHECKLOG' in opcat):
-             moqp_category[0] = 'CHECKLOG'
-             moqp_category[1] = ''
-             moqp_category[2] = ''
-             moqp_category[3] = ''
-             moqp_category[4] = ''
-             moqp_category[5] = ''
-             break
-          
-
-       #print ('%s %s %s %s %s OVERLAY:%s'%(qth, catstation, opcat, power, opmode, opovly))
-          
-       #print moqp_category
-       
-       #moqp_category
-       
-       return moqp_category
 
     def _moqpcatloc_(self, log):
        moqpcatstg = None
@@ -373,44 +281,44 @@ class MOQPCategory(LogSummary):
 
        return moqpcatstg
        
-    def csvHeader(self):
-       hdata = (',,,CATEGORIES FROM THE LOG FILE,,,,,\n')
-       hdata += ('STATION,OPS,MOQP CATEGORY,STATION,OPERATOR,POWER,MODE,LOCATION,OVERLAY,CW QSO,PH QSO,RY QSO,TOTAL,VHF QSO\n')
-       return hdata
-
-    def exportcsvline(self, log):
-       csvdata = ('%s\t'%(log['HEADER']['CALLSIGN']))
-       csvdata += ('%s\t\t\t'%(log['HEADER']['OPERATORS']))
-       csvdata += ('%s\t\t'%(log['HEADER']['CATEGORY-STATION']))
-       csvdata += ('%s\t\t'%(log['HEADER']['CATEGORY-OPERATOR']))
-       csvdata += ('%s\t\t'%(log['HEADER']['CATEGORY-POWER']))
-       csvdata += ('%s\t\t'%(log['HEADER']['CATEGORY-MODE']))
-       csvdata += ('%s\t\t'%(log['HEADER']['LOCATION']))
-       csvdata += ('%s\t\t'%(log['HEADER']['CATEGORY-OVERLAY']))
-       csvdata += ('%s\t'%(log['QSOSUM']['CW']))
-       csvdata += ('%s\t'%(log['QSOSUM']['PH']))
-       csvdata += ('%s\t'%(log['QSOSUM']['DG']))
-       csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
-       csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
-       csvdata += ('%s\n'%(log['MOQPCAT']))
-        
-       for r in log['ERRORS']:
-          if ( r != [] ):
-             csvdata += r
-       return csvdata
-    
     """
-    This method processes a single file passed in filename
+    This method processes a single log file passed in filename
+    and returns the summary ino in .CSV format to be printed
+    or saved to a .CSV file.
+    
     If the Headers option is false, it will skip printing the
     csv header info.
     """
     def exportcsvfile(self, filename, Headers=True):
-       log = self.exportcsvfiledict(filename)
+       csvdata = None
+       log = self.parseLog(filename)
        if (log):
-          csvdata = ''
-          if (Headers):
-             csvdata += ('%s'%(COLUMNHEADERS))
-          csvdata += self.exportcsvline(log)
+       
+           if (Headers): 
+               csvdata = COLUMNHEADERS
+               
+           else:
+               csvdata = ''
+
+           csvdata += ('%s\t'%(log['HEADER']['CALLSIGN']))
+           csvdata += ('%s\t'%(log['HEADER']['OPERATORS']))
+           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-STATION']))
+           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OPERATOR']))
+           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-POWER']))
+           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-MODE']))
+           csvdata += ('%s\t'%(log['HEADER']['LOCATION']))
+           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OVERLAY']))
+           csvdata += ('%s\t'%(log['QSOSUM']['CW']))
+           csvdata += ('%s\t'%(log['QSOSUM']['PH']))
+           csvdata += ('%s\t'%(log['QSOSUM']['DG']))
+           csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
+           csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
+           csvdata += ('%s\n'%(log['MOQPCAT']))
+
+           for err in log['ERRORS']:
+               if ( err != [] ):
+                   csvdata += err
+       
        else:
           csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
        print(csvdata)  
@@ -422,7 +330,7 @@ class MOQPCategory(LogSummary):
     
     Using dictionary objects
     """
-    def exportcsvfiledict(self, filename, Headers=True):
+    def parseLog(self, filename, Headers=True):
        fullSummary = None
        logsummary = self.processLogdict(filename)
        #print( logsummary['ERRORS'] )
@@ -442,12 +350,14 @@ class MOQPCategory(LogSummary):
     This method processes all files in the passed in pathname
     """
     def exportcsvflist(self, pathname):
-       csvdata = self.csvHeader()
+       csvdata = COLUMNHEADERS
        for (dirName, subdirList, fileList) in os.walk(pathname, topdown=True):
           if (fileList != ''): 
+             Headers = True
              for fileName in fileList:
                 fullPath = ('%s/%s'%(dirName, fileName))
-                csvdata += self.exportcsvfile(fullPath, False)
+                csvdata += self.exportcsvfile(fullPath, Headers)
+                Headers = False
        return csvdata
        
     def qso_valid(self, qso):
