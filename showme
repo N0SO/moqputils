@@ -6,12 +6,19 @@ ShowMe  - Determine which Missouri QSO Party stations
 Update History:
 * Thu Dec 09 2019 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start of work
+* Thu Dec 10 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Working command  line version of SHOWME and
+- MISSOURI awards.
+- Needs more testing and tweaking - Files with lots of
+- bad QSO errors make the output confusing to read.
+- Needs to factor in use of COMMONCALLS and WILDCARD.
+- No GUI
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.0.1'
+VERSION = '0.1.0'
 ARGS = None
 
 DEVMODPATH = ['moqputils', 'cabrilloutils']
@@ -56,7 +63,7 @@ if __name__ == '__main__':
    
    if (args.args.inputpath):
        print(args.args.inputpath)
-       from showme import ShowMe
+       from showmeaward import ShowMe
        app = ShowMe(args.args.inputpath)
    else:
        from showme_ui import ui
