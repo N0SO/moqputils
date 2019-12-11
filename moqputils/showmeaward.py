@@ -10,16 +10,17 @@ COMMONCALLS = ['K0M', 'N0M','W0M',
 SHOWMECALLS = ['K0H', 'N0H','W0H',
                'K0W', 'N0W','W0W',
                'K0E', 'N0E','W0E']
+SHOWMEKEYS = 'SHOWME'
                 
 MOCALLS = ['K0I', 'N0I','W0I',
                  'K0U', 'N0U','W0U',
                  'K0R', 'N0R','W0R']
-                 
-WILDCARDS = ['W0MA']
-
-SHOWMEKEYS = 'SHOWME'
-
 MOKEYS = 'MISSOURI'
+                 
+WILDCARDS = ['W0MA', 'K0GQ']
+WILDKEYS = 'MG'
+
+
 
 VERSION = '0.1.0'
 
@@ -40,8 +41,16 @@ class GenAward():
     def init_award(self, KEYS):
         award = dict()
         for key in KEYS:
-            award[key] = None
+            award[key] = {0:None, 1:None, 2:None}
         return award
+
+    def combineLists(self, list1, list2):
+       retlist = []
+       for i in list1:
+           retlist.append(i)
+       for i in list2:
+           retlist.append(i)
+       return retlist
 
     """
     Checks the award object KEYS for all elements set.
@@ -49,16 +58,18 @@ class GenAward():
     """
     def _bingo_(self, award, KEYS):
         bingo = True
-        retval = False
         for key in KEYS:
             if key in award:
-                if (award[key] == None):
+                nokeypresent = True
+                for i in range(3):
+                   if (award[key][i] != None):
+                       nokeypresent = False
+                if (nokeypresent): 
                    bingo = False
-                   break
             else:
+                bingo = False
                 break
-        retval = bingo
-        return retval
+        return bingo
 
     """
     Checks the call passed in to see if the award object 
@@ -72,18 +83,28 @@ class GenAward():
           #print('call = %s, key = %s'%(call, key))
           if (key in award):
               #print('Found %s for key %s'%(call, key))
-              if (award[key] == None):
+              if ( (award[key][0] == None) or \
+                   (award[key][1] == None) or \
+                   (award[key][2] == None) ):
                   retval = key
        return retval
        
-    def combineLists(self, list1, list2):
-       retlist = []
-       for i in list1:
-           retlist.append(i)
-       for i in list2:
-           retlist.append(i)
-       return retlist
-
+    """
+    Make sure a call added to an award is unique
+    """
+    def isunique(self, call, award):
+        index = -1
+        if (award[0] == None):
+            if ( (award[1] != call) and \
+                 (award[2] != call) ): index = 0
+        elif (award[1] == None):
+            if ( (award[0] != call) and \
+                 (award[2] != call) ): index = 1
+        elif (award[2] == None):
+            if ( (award[0] != call) and \
+                 (award[1] != call) ): index = 2
+        return index
+       
     def checkLog(self, logqsos):
        retval = False
        for qso in logqsos:
@@ -92,8 +113,11 @@ class GenAward():
                                  self.callset, 
                                  self.Award)
           if (key):
-              self.Award[key] = qso['URCALL']
-              
+              index = self.isunique(qso['URCALL'], 
+                                    self.Award[key])
+              if (index != -1):
+                  self.Award[key][index] = qso['URCALL']
+
           if (self._bingo_(self.Award, self.KEYS)):
               #print('***BINGO*** - SHOWME complete!')
               retval = True
@@ -151,6 +175,27 @@ class MissouriAward(GenAward):
         return [Bingo,self.Award]
 
 """
+BonusAward - Bonus points for working the WILDCARD calls
+"""
+class BonusAward(GenAward):
+
+    def __init__(self, qsolist=None):
+       self.KEYS = WILDKEYS
+       self.Award = self.init_award(self.KEYS)
+       self.callset = WILDCARDS
+#       print('Keys = %s\nAward = %s\ncallset = %s'%(self.KEYS,
+#                                                   self.Award, 
+#                                                   self.callset))
+
+    def appMain(self, qsolist):
+        Bingo = self.checkLog(qsolist)
+#        print('MISSOURI AWARD = %s\nStats: %s'%(Bingo, 
+#                                                  self.Award))
+        return [Bingo,self.Award]
+
+
+
+"""
 ShowMe - For command line operations. 
 """
 class ShowMe(MOQPCategory):
@@ -165,16 +210,24 @@ class ShowMe(MOQPCategory):
             if (log['ERRORS'] == []):
 #                award = ShowMeAward(log['QSOLIST'])
 #                awardm = MissouriAward(log['QSOLIST'])
+                bonus = BonusAward()
+                bonus.appMain(log['QSOLIST'])
                 award = ShowMeAward()
                 awardm = MissouriAward()
                 print(award.appMain(log['QSOLIST']))
                 print(awardm.appMain(log['QSOLIST']))
+                print(bonus.Award['M'][0],bonus.Award['G'][0])
             else:
-                print('log file %s has errors:\n %s'\
-				%(pathname, log['ERRORS']))
+                print('log file %s has errors' \
+				%(pathname))
+        else:
+            print(\
+            'File %s does not exist or is not in CABRILLO Format'\
+                %(pathname))
 
     def scorefileList(self, pathname):
-        for (dirName, subdirList, fileList) in os.walk(pathname, topdown=True):
+        for (dirName, subdirList, fileList) in os.walk(pathname, 
+                                                   topdown=True):
            if (fileList != ''): 
                Headers = True
                for fileName in fileList:
