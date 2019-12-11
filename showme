@@ -4,21 +4,31 @@ ShowMe  - Determine which Missouri QSO Party stations
           qualify for the ShowMe and/or MISSOURI awards
 
 Update History:
-* Thu Dec 09 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+* Mon Dec 09 2019 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start of work
-* Thu Dec 10 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+* Tue Dec 10 2019 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 - Working command  line version of SHOWME and
 - MISSOURI awards.
 - Needs more testing and tweaking - Files with lots of
 - bad QSO errors make the output confusing to read.
 - Needs to factor in use of COMMONCALLS and WILDCARD.
 - No GUI
+* Wed Dec 11 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Added child class BonusAward to determine
+- if stations worked the BONUS stations (W0MA and K0GQ
+- for 2019.
+- Updated GenAward to keep up to four (4) unique calls
+- per element to help match multiple awards (SHOWME and
+- MISSOURI for 2019) Need to write method to prevent 
+- same call being used for both awards and account for
+- bonus stations.
+
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 ARGS = None
 
 DEVMODPATH = ['moqputils', 'cabrilloutils']
