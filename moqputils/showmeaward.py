@@ -107,12 +107,39 @@ class GenAward():
             if ( (award[0] != call) and \
                  (award[1] != call) ): index = 2
         return index
+
+    """
+    Check to see if a callsign found in sourceElement is needed
+    in targetElement to qualify for an award.
+    sourceElement is s list of up to 3 callsigns (string format).
+    targetElement is a single callsign (also string format).
+    If the targetElement = None, one of three callsign from 
+    sourceElement[0 to 2] could may be needed. This method
+    will return the sourceElement index [0 to 2] to the first
+    callsign in the list that is not None.
+    
+    The caller is responsible for copying the data from
+    sourceElement[i] to targetElement, then setting 
+    sourceElement[i] = None
+    """
+    def parseSingleKey(self, sourceElement, targetElement):
+        retval = -1
+        if (targetElement == None):
+            for i in range(3):
+                if (sourceElement[i]):
+                    retval = i
+                    break
+        return retval
+              
     """
     Does this log qualify for the award?
     """
     def qualify(self, match, wildcard):
         qualify = False
-        wcreturn = wildcard
+        if (wildcard):
+            wcreturn = wildcard
+        else:
+            wcreturn = ''
         stats = self.getStats()
         if (stats['COUNT'] == match):
             qualify = True
@@ -126,27 +153,25 @@ class GenAward():
                  'CALLS': stats['CALLS'],
                  'WILDCARD': wcreturn }
 
-    def showReport(self, match, wildcard):
+    def showReport(self, match, wildcard, awardName, callsign):
         Returndata = []
         stats = self.qualify(match, wildcard)
-        print(stats)
+#        print('Stats from showReport:\n%s'%(stats))
         if (stats['QUALIFY'] == True):
            str = 'QUALIFIES '
         else:
            str = 'DOES NOT QUALIFY '
-        Returndata.append(str + 'for the award.')
+        Returndata.append('%s %s for the %s award.' \
+                                    %(callsign, str, awardName))
         
         str = 'Stations worked:\n'
-        keylist = stats['CALLS'].keys()
-        for k in keylist:
-            str += stats['CALLS'][k] + '\n'
+        for k in stats['CALLS'].keys():
+            str += ('%s = %s\n'%(k[0], stats['CALLS'][k]))
         Returndata.append(str)
         
         Returndata.append('WILDCARD: '+stats['WILDCARD'])
         
         return Returndata
-
-
 
     def checkLog(self, logqsos):
        retval = False
@@ -292,10 +317,10 @@ BothAwards - Checks for:
 """
 class BothAwards(GenAward):
 
-    def __init__(self, qsolist=None):
+    def __init__(self, callsign=None, qsolist=None):
         self._showmeAward_ = ShowMeAward()
         self._missouriAward_ = MissouriAward()
-        self._bonusAward_ = BonusAward()
+#        self._bonusAward_ = BonusAward()
         self.KEYS = COMKEYS+SHOWMEKEYS+MOKEYS
         self.Award = self.init_award(self.KEYS)
         self.callset = self.combineLists(SHOWMECALLS, COMMONCALLS)
@@ -304,21 +329,18 @@ class BothAwards(GenAward):
 #                                                     self.Award, 
 #                                                     self.callset))
         if (qsolist):
-              self.appMain(qsolist)
-              
-    def parseSingleKey(self, sourceElement, targetElement):
-        retval = -1
-        for i in range(3):
-            if (sourceElement[i]):
-                if (targetElement == None):
-                   retval = i
-                   break
-        return retval
+              self.appMain(callsign, qsolist)
               
     def parseAwards(self):
        """
-       SHOWME only requires one call per letter (key)
+       parseAwards -
+       Fills the the _showme_.Award and _missouri_.Award elements
+       with call signs from the database self.Awards. As each 
+       self.Awards element is used, it is set to None to prevent
+       being used again.
        """
+       
+       #SHOWME only requires one call per letter (key)
        for thiskey in self._showmeAward_.KEYS:
            i = self.parseSingleKey(self.Award[thiskey], 
                                self._showmeAward_.Award[thiskey][0])
@@ -327,9 +349,7 @@ class BothAwards(GenAward):
                                   self.Award[thiskey][i]
                self.Award[thiskey][i] = None
                
-       """
-       MISSOURI requires two S keys and 2 I keys
-       """
+       #MISSOURI requires two S keys and two I keys
        for thiskey in self._missouriAward_.KEYS:
            if (thiskey in 'IS'):
                r = 2
@@ -343,9 +363,17 @@ class BothAwards(GenAward):
                                   self.Award[thiskey][i]
                    self.Award[thiskey][i] = None
        
-
+    """
+    Fill the self.Awards elements with callsigns from the qso
+    list passed in (logqsos) that match an element in the list
+    self.callset. This will become our database of available
+    calls for the SHOWME and MISSOURI awards.
+    
+    If the station happens to have worked all of the 1x1
+    stations, checkLog returns True.
+    """
     def checkLog(self, logqsos):
-       print('Running checkLog in class BothAwards')
+       #print('Running checkLog in class BothAwards')
        retval = False
        for qso in logqsos:
           #print(qso)
@@ -370,21 +398,34 @@ class BothAwards(GenAward):
           #print(self.award)
        return retval
 
-    def appMain(self, qsolist):
+    def appMain(self, callsign, qsolist):
         Bingo = self.checkLog(qsolist)
+        Bonus = BonusAward(qsolist)
         self.parseAwards()
         
         showmeStats = self._showmeAward_.qualify(SHOWMEMATCH,
-                               self._bonusAward_.Award['M'][0])
-        #print(showmeStats)
+                                          Bonus.Award['M'][0])
+#        showmeData = self._showmeAward_.showReport(SHOWMEMATCH,
+                                          Bonus.Award['M'][0],
+                                          'SHOWME','This Station')
+
         missouriStats = self._missouriAward_.qualify(MOMATCH,
-                               self._bonusAward_.Award['M'][0])
-        #print(missouriStats)
-        
-        print( self._showmeAward_.showReport(SHOWMEMATCH,
-                               self._bonusAward_.Award['M'][0]) )
+                                          Bonus.Award['M'][0])
+#        missouriData = self._missouriAward_.showReport(SHOWMEMATCH,
+                                       Bonus.Award['M'][0],
+                                       'MISSOURI','This Station')
+        """
+        for line in showmeData:
+            print(line)
+        for line in missouriData:
+            print(line)
         
         return [Bingo,self.Award]
+        """
+        return { 'SHOWME' : showmeStats,
+                 'MO' : missouriStats,
+                 'BONUS' : {'W0MA' : Bonus.Award['M'][0],
+                            'K0GQ' : Bonus.Award['G'][0]} }
 
 
 """
@@ -396,22 +437,14 @@ class ShowMe(MOQPCategory):
         if (pathname):
             self.appMain(pathname)
             
+            
     def scoreFile(self, pathname):
         log = self.parseLog(pathname)
         if log:
             if (log['ERRORS'] == []):
                 bawards = BothAwards()
-                print(bawards.appMain(log['QSOLIST']))
-                 
-#                award = ShowMeAward(log['QSOLIST'])
-#                awardm = MissouriAward(log['QSOLIST'])
-#                bonus = BonusAward()
-#                bonus.appMain(log['QSOLIST'])
-#                award = ShowMeAward()
-#                awardm = MissouriAward()
-#                print(award.appMain(log['QSOLIST']))
-#                print(awardm.appMain(log['QSOLIST']))
-#                print(bonus.Award['M'][0],bonus.Award['G'][0])
+                print(bawards.appMain(log['HEADER']['CALLSIGN'],
+                                                  log['QSOLIST']))
             else:
                 print('log file %s has errors' \
 				%(pathname))
