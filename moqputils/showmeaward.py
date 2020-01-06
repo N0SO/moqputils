@@ -406,14 +406,14 @@ class BothAwards(GenAward):
         showmeStats = self._showmeAward_.qualify(SHOWMEMATCH,
                                           Bonus.Award['M'][0])
 #        showmeData = self._showmeAward_.showReport(SHOWMEMATCH,
-                                          Bonus.Award['M'][0],
-                                          'SHOWME','This Station')
+#                                          Bonus.Award['M'][0],
+#                                          'SHOWME','This Station')
 
         missouriStats = self._missouriAward_.qualify(MOMATCH,
                                           Bonus.Award['M'][0])
 #        missouriData = self._missouriAward_.showReport(SHOWMEMATCH,
-                                       Bonus.Award['M'][0],
-                                       'MISSOURI','This Station')
+#                                       Bonus.Award['M'][0],
+#                                       'MISSOURI','This Station')
         """
         for line in showmeData:
             print(line)
@@ -443,8 +443,39 @@ class ShowMe(MOQPCategory):
         if log:
             if (log['ERRORS'] == []):
                 bawards = BothAwards()
-                print(bawards.appMain(log['HEADER']['CALLSIGN'],
-                                                  log['QSOLIST']))
+                result = (bawards.appMain(\
+                           log['HEADER']['CALLSIGN'],
+                           log['QSOLIST']))
+                print('%s%s%s' %(
+                           'Station\tSHOWME\tS\tH\tO\tW\tM\tE\t*',
+                           'MISSOURI\tM\tI\tS\tS\tO\tU\tR\tI\t',
+                           'W0MA\tK0GQ'))
+                print('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t' \
+                      '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' \
+                      '%s%s' \
+                        %(log['HEADER']['CALLSIGN'],
+                          result['SHOWME']['QUALIFY'],
+                          result['SHOWME']['CALLS']['S'],
+                          result['SHOWME']['CALLS']['H'],
+                          result['SHOWME']['CALLS']['O'],
+                          result['SHOWME']['CALLS']['W'],
+                          result['SHOWME']['CALLS']['M'],
+                          result['SHOWME']['CALLS']['E'],
+                          result['SHOWME']['WILDCARD'],
+                          result['MO']['QUALIFY'],
+                          result['MO']['CALLS']['M'],
+                          result['MO']['CALLS']['I0'],
+                          result['MO']['CALLS']['S0'],
+                          result['MO']['CALLS']['S1'],
+                          result['MO']['CALLS']['O'],
+                          result['MO']['CALLS']['U'],
+                          result['MO']['CALLS']['R'],
+                          result['MO']['CALLS']['I1'],
+                          result['MO']['CALLS']['*'],
+                          result['BONUS']['W0MA'],
+                          result['BONUS']['K0GQ']))
+                          
+                          
             else:
                 print('log file %s has errors' \
 				%(pathname))
