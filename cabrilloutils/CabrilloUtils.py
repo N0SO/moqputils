@@ -21,6 +21,9 @@ Update History:
 - Added CATEGORY-TIME tag in CABRILLOTAGS.
 - Method getQSOdata now returns a list of errors encountered
 - in thislog['ERRORS'] instead of just printing them.
+- V1.0.12
+- Added is_number method to handle frequencies entered 
+- with decimal.
 """
 
 class CabrilloUtils():
@@ -56,7 +59,7 @@ class CabrilloUtils():
              'QSO',
              'END-OF-LOG']
              
-    VERSION = '1.0.11'
+    VERSION = '1.0.12'
     PHONEMODES = 'PH SSB LSB USB FM DV'
     DIGIMODES = 'RY RTY RTTY FSK AFSK PSK PSK31 PSK64 DIGU DIGL DG FT8'
     MODES = 'CW' + PHONEMODES + DIGIMODES
@@ -98,6 +101,12 @@ class CabrilloUtils():
             data = None
         return data
         
+    def is_number(self, string):
+        try:
+            float(string)
+            return True
+        except ValueError:
+            return False
 
     def IsThisACabFile(self, data):
         cabfile = False
