@@ -446,13 +446,12 @@ class ShowMe(MOQPCategory):
                 result = (bawards.appMain(\
                            log['HEADER']['CALLSIGN'],
                            log['QSOLIST']))
-                print('%s%s%s' %(
-                           'Station\tSHOWME\tS\tH\tO\tW\tM\tE\t*',
-                           'MISSOURI\tM\tI\tS\tS\tO\tU\tR\tI\t',
-                           'W0MA\tK0GQ'))
+                print('STATION\tSHOWME\tS\tH\t O\tW\tM\tE\tWC\t' \
+                      'MISSOURI\tM\tI\tS\tS\t O\tU\tR\tI\tWC\t' \
+                      'W0MA\tK0GQ')
                 print('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t' \
                       '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' \
-                      '%s%s' \
+                      '%s\t%s' \
                         %(log['HEADER']['CALLSIGN'],
                           result['SHOWME']['QUALIFY'],
                           result['SHOWME']['CALLS']['S'],
@@ -471,7 +470,7 @@ class ShowMe(MOQPCategory):
                           result['MO']['CALLS']['U'],
                           result['MO']['CALLS']['R'],
                           result['MO']['CALLS']['I1'],
-                          result['MO']['CALLS']['*'],
+                          result['MO']['WILDCARD'],
                           result['BONUS']['W0MA'],
                           result['BONUS']['K0GQ']))
                           
