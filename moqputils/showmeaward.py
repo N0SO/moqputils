@@ -271,14 +271,15 @@ class MissouriAward(GenAward):
 
     def sumAward(self):
         retval = 0
+        #missouriCount = missoursCount = 0
         for k in self.KEYS:
             if (self.Award[k][0]):
                retval += 1
         """
         Account for the two I and S letters in MISSOURI
         """
-        if (self.Award['I'][1]): missouriCount +=1
-        if (self.Award['S'][1]): missouriCount +=1
+        #if (self.Award['I'][1]): missouriCount +=1
+        #if (self.Award['S'][1]): missoursCount +=1
         return retval
 
     def appMain(self, qsolist):
@@ -438,7 +439,7 @@ class ShowMe(MOQPCategory):
             self.appMain(pathname)
             
             
-    def scoreFile(self, pathname):
+    def scoreFile(self, pathname, HEADER=False):
         log = self.parseLog(pathname)
         if log:
             if (log['ERRORS'] == []):
@@ -446,11 +447,12 @@ class ShowMe(MOQPCategory):
                 result = (bawards.appMain(\
                            log['HEADER']['CALLSIGN'],
                            log['QSOLIST']))
-                print('STATION\tSHOWME\tS\tH\t O\tW\tM\tE\tWC\t' \
-                      'MISSOURI\tM\tI\tS\tS\t O\tU\tR\tI\tWC\t' \
-                      'W0MA\tK0GQ')
+                if (HEADER):
+                   print('STATION\tSHOWME AWARD\tS\tH\t O\tW\tM\tE\tWC\t' \
+                      'MISSOURI AWARD\tM\tI\tS\tS\t O\tU\tR\tI\tWC\t' \
+                      'W0MA BONUS\tK0GQ BONUS')
                 print('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t' \
-                      '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s' \
+                      '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t' \
                       '%s\t%s' \
                         %(log['HEADER']['CALLSIGN'],
                           result['SHOWME']['QUALIFY'],
@@ -483,21 +485,22 @@ class ShowMe(MOQPCategory):
             'File %s does not exist or is not in CABRILLO Format'\
                 %(pathname))
 
-    def scorefileList(self, pathname):
+    def scoreFileList(self, pathname):
         for (dirName, subdirList, fileList) in os.walk(pathname, 
                                                    topdown=True):
            if (fileList != ''): 
                Headers = True
                for fileName in fileList:
                    fullPath = ('%s/%s'%(dirName, fileName))
-                   self.scoreFile(fullPath)
+                   self.scoreFile(fullPath, Headers)
+                   if (Headers): Headers = False
 
     def appMain(self, pathname):
-        print('Input path: %s'%(pathname))
+        #print('Input path: %s'%(pathname))
         if (os.path.isfile(pathname)):
             self.scoreFile(pathname)
         else:
-            self.scorefileList(pathname)
+            self.scoreFileList(pathname)
 
 if __name__ == '__main__':
    app = ShowMeAward()

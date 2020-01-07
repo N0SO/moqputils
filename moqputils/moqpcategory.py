@@ -28,7 +28,7 @@ OVERLAY = 'ROOKIE'
 US = 'CT EMA ME NH RI VT WMA ENY NLI NNJ NNY SNJ WNY DE EPA MDC WPA '
 US += 'AL GA KY NC NFL SC SFL WCF TN VA PR VI AR LA MS NM NTX OK STX '
 US+= 'WTX EB LAX ORG SB SCV SDG SF SJV SV PAC AZ EWA ID MT NV OR UT '
-US+= 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD '
+US+= 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD CA '
 
 DX = 'DX'
 
@@ -97,11 +97,14 @@ class MOQPCategory(LogSummary):
        for line in cabdata:
           linecount += 1
           cabline = self.packLine(line)
+          #print('Raw CABDATA = %s'%(line))
           linesplit = cabline.split(':')
           lineparts = len(linesplit)
+          #print('%d Split data items: %s'%(lineparts, linesplit))
           if (lineparts >= 2):
              cabkey = linesplit[0].strip()
              recdata = linesplit[1].strip()
+             #print('cabkey =%s\nrecdata =%s\n'%(cabkey, recdata))
              if (lineparts > 2):
                 tagpos = cabline.find(':')
                 templine = cabline[tagpos:].replace(':','')
@@ -356,7 +359,9 @@ class MOQPCategory(LogSummary):
              Headers = True
              for fileName in fileList:
                 fullPath = ('%s/%s'%(dirName, fileName))
-                csvdata += self.exportcsvfile(fullPath, Headers)
+                result = self.exportcsvfile(fullPath, Headers)
+                if (result):
+                    csvdata += result
                 Headers = False
        return csvdata
        
@@ -365,7 +370,8 @@ class MOQPCategory(LogSummary):
        qsovalid = True
        valid_date_chars = set('0123456789/-')
        valid_call_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-')
-       if ( qso['FREQ'].isnumeric() ):
+       #if ( qso['FREQ'].isnumeric() ):
+       if ( self.is_number(qso['FREQ']) ):
           pass
        else:
           errorData.append( ('QSO FREQ Parameter invalid: %s'%(qso['FREQ'])) )
