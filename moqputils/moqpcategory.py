@@ -11,7 +11,7 @@ Update History:
 from logsummary import *
 import os
 
-VERSION = '0.2.2' 
+VERSION = '0.2.3' 
 FILELIST = './'
 ARGS = None
 
@@ -21,7 +21,7 @@ CANADA = 'MAR NL QC ONE ONN ONS GTA MB SK AB BC NT'
 
 STATIONS = 'FIXED MOBILE PORTABLE ROVER EXPEDITION HQ SCHOOL'
 
-MODES = 'SSB USB LSB FM PH CW RTTY DIG MIXED'
+MODES = 'SSB USB LSB FM PH CW RY RTTY DIG DIGI MIXED'
 
 OVERLAY = 'ROOKIE'
 
@@ -30,7 +30,7 @@ US += 'AL GA KY NC NFL SC SFL WCF TN VA PR VI AR LA MS NM NTX OK STX '
 US+= 'WTX EB LAX ORG SB SCV SDG SF SJV SV PAC AZ EWA ID MT NV OR UT '
 US+= 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD CA '
 
-DX = 'DX'
+DX = 'DX DK2 DL8 HA8 ON4'
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
@@ -242,6 +242,11 @@ class MOQPCategory(LogSummary):
           moqpcatstg = 'CW'
        elif (compstring == 'MIXED'):
           moqpcatstg = 'MIXED'
+       elif (compstring == 'RY' or \
+             compstring =='RTTY' or \
+             compstring == 'DIG' or \
+             compstring == 'DIGI'):
+          moqpcatstg = 'DIGITAL'
        return moqpcatstg
 
     def _combine_moqpcat_parts(self, moqpcatstg, newstring):
@@ -402,7 +407,8 @@ class MOQPCategory(LogSummary):
           errorData.append(  ('QSO MYCALL Parameter invalid: %s'%(qso['MYCALL'])) )
           qsovalid = False
 
-       if ( qso['MYREPORT'].isnumeric() ):
+       #if ( qso['MYREPORT'].isnumeric() ):
+       if ( self.is_number(qso['MYREPORT']) ):
           pass
        else:
           errorData.append(  ('QSO MYREPORT Parameter invalid: %s'%(qso['MYREPORT'])) )
@@ -421,7 +427,8 @@ class MOQPCategory(LogSummary):
           errorData.append(  ('QSO URCALL Parameter invalid: %s'%(qso['URCALL'])) )
           qsovalid = False
 
-       if ( qso['URREPORT'].isnumeric() ):
+#       if ( qso['URREPORT'].isnumeric() ):
+       if ( self.is_number(qso['URREPORT']) ):
           pass
        else:
           errorData.append(  ('QSO URREPORT Parameter invalid: %s'%(qso['URREPORT'])) )
