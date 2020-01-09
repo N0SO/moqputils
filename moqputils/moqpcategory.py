@@ -7,11 +7,14 @@ moqpcategory  - Determine which Missouri QSO Party Award
 Update History:
 * Thu Dec 09 2019 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.2.1 - Start tracking revs.               
+* Wed Jan 08 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.2.2 - Lots of tweaks while processing 2019 MOQP files:
+- Added code to category processing to handle DIGITAL               
 """
 from logsummary import *
 import os
 
-VERSION = '0.2.3' 
+VERSION = '0.2.2' 
 FILELIST = './'
 ARGS = None
 

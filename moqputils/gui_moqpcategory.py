@@ -24,7 +24,7 @@ import os.path
 import argparse
 from moqpcategory import MOQPCategory, COLUMNHEADERS
 
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 FILELIST = './'
 
 class gui_MOQPCategory(MOQPCategory):
@@ -129,13 +129,13 @@ class gui_MOQPCategory(MOQPCategory):
         if (colheader):
             window.insert(END, COLUMNHEADERS)
         window.insert(END, ('%s\t'%(log['HEADER']['CALLSIGN'])))
-        window.insert(END, ('%s\t\t\t'%(log['HEADER']['OPERATORS'])))
-        window.insert(END, ('%s\t\t'%(log['HEADER']['CATEGORY-STATION'])))
-        window.insert(END, ('%s\t\t'%(log['HEADER']['CATEGORY-OPERATOR'])))
-        window.insert(END, ('%s\t\t'%(log['HEADER']['CATEGORY-POWER'])))
-        window.insert(END, ('%s\t\t'%(log['HEADER']['CATEGORY-MODE'])))
-        window.insert(END, ('%s\t\t'%(log['HEADER']['LOCATION'])))
-        window.insert(END, ('%s\t\t'%(log['HEADER']['CATEGORY-OVERLAY'])))
+        window.insert(END, ('%s\t'%(log['HEADER']['OPERATORS'])))
+        window.insert(END, ('%s\t'%(log['HEADER']['CATEGORY-STATION'])))
+        window.insert(END, ('%s\t'%(log['HEADER']['CATEGORY-OPERATOR'])))
+        window.insert(END, ('%s\t'%(log['HEADER']['CATEGORY-POWER'])))
+        window.insert(END, ('%s\t'%(log['HEADER']['CATEGORY-MODE'])))
+        window.insert(END, ('%s\t'%(log['HEADER']['LOCATION'])))
+        window.insert(END, ('%s\t'%(log['HEADER']['CATEGORY-OVERLAY'])))
         window.insert(END, ('%s\t'%(log['QSOSUM']['CW'])))
         window.insert(END, ('%s\t'%(log['QSOSUM']['PH'])))
         window.insert(END, ('%s\t'%(log['QSOSUM']['DG'])))
