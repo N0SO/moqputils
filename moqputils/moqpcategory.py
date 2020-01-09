@@ -18,11 +18,14 @@ VERSION = '0.2.2'
 FILELIST = './'
 ARGS = None
 
-INSTATE = 'MO MISSOURI'
+#INSTATE = 'MO MISSOURI'
+INSTATE = ['MO', 'MISSOURI']
 
 CANADA = 'MAR NL QC ONE ONN ONS GTA MB SK AB BC NT'
 
-STATIONS = 'FIXED MOBILE PORTABLE ROVER EXPEDITION HQ SCHOOL'
+#STATIONS = 'FIXED MOBILE PORTABLE ROVER EXPEDITION HQ SCHOOL'
+STATIONS = ['FIXED', 'MOBILE','PORTABLE', 'ROVER','EXPEDITION',
+            'HQ','SCHOOL']
 
 MODES = 'SSB USB LSB FM PH CW RY RTTY DIG DIGI MIXED'
 
@@ -204,13 +207,13 @@ class MOQPCategory(LogSummary):
        compstring = log['HEADER']['CATEGORY-STATION'].strip()
        if (compstring in STATIONS):
            if (compstring == 'FIXED'):
-               moqpcatstg = ' FIXED'
+               moqpcatstg = 'FIXED'
            elif ( (compstring == 'MOBILE') \
                      or (compstring == 'ROVER') \
                      or compstring == 'PORTABLE'):
-               moqpcatstg = ' MOBILE'
+               moqpcatstg = 'MOBILE'
            elif (compstring == 'EXPEDITION'):
-               moqpcatstg = ' EXPEDITION'
+               moqpcatstg = 'EXPEDITION'
            elif (compstring == 'SCHOOL'):
                moqpcatstg = 'SCHOOL'
        return moqpcatstg
@@ -289,9 +292,61 @@ class MOQPCategory(LogSummary):
              if (moqpcatstg):
                 if (log['HEADER']['CATEGORY-OVERLAY'].strip() == 'ROOKIE'):
                     moqpcatstg += ' ROOKIE'                         
-
+          print('moqpcatstg =%s'%(moqpcatstg))
+          splitstg = moqpcatstg.split(' ')
+          print(splitstg)
        return moqpcatstg
        
+    def determineMOQPCatdict(self, log):
+       moqpcatdict = { 'LOCATION':'',
+                       'STATION':'',
+                       'POWER':'',
+                       'MODE':'',
+                       'ROOKIE':'' }
+
+       moqpcatstg = self._moqpcatloc_(log)
+       if (moqpcatstg):
+          moqpcatdict['LOCATION'] = moqpcatstg
+          
+          temp=self._moqpcatsta_(log)
+          moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+
+       if (moqpcatstg):
+          temp=self._moqpcatop_(log)
+          if temp == 'CHECKLOG':
+             moqpcatstg = 'CHECKLOG'
+          else:
+             moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+       
+             if (moqpcatstg):
+                temp=self._moqpcatpower_(log)
+                moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+
+             if (moqpcatstg):
+                temp=self._moqpcatmode_(log)
+                moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+
+             if (moqpcatstg):
+                if (log['QSOSUM']['DG'] > 0):
+                    moqpcatstg += '+DG'
+                if (log['QSOSUM']['VHF'] > 0):
+                    moqpcatstg += '+VHF'
+          
+             if (moqpcatstg):
+                if (log['HEADER']['CATEGORY-OVERLAY'].strip() == 'ROOKIE'):
+                    moqpcatstg += ' ROOKIE'                         
+          print('moqpcatstg =%s'%(moqpcatstg))
+          splitstg = moqpcatstg.split(' ')
+          print(splitstg)
+       return moqpcatstg
+
+
+
+
+
+
+
+
     """
     This method processes a single log file passed in filename
     and returns the summary ino in .CSV format to be printed
