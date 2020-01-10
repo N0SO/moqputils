@@ -41,7 +41,7 @@ DX = 'DX DK2 DL8 HA8 ON4'
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tTOTAL\tVHF QSO\t' + \
-                'MOQP CATEGORY\n'
+                'MOQP CATEGORY\tDIGITAL\tVHF\tROOKIE\n'
 
 
 class MOQPCategory(LogSummary):
@@ -261,91 +261,89 @@ class MOQPCategory(LogSummary):
           retstring = ('%s %s'%(moqpcatstg, newstring))
        return retstring    
 
-    def determineMOQPCatstg(self, log):
-       moqpcatstg = self._moqpcatloc_(log)
+    def determineMOQPCatstg(self, moqpcat):
+       if (moqpcat['OPERATOR'] =='CHECKLOG'):
+           moqpcatstg = 'CHECKLOG'
+           
+       elif (moqpcat['STATION'] == 'SCHOOL'):
+           moqpcatstg = ('%s %s'%(moqpcat['LOCATION'], 
+                                  moqpcat['STATION']))
 
-       if (moqpcatstg):
-          temp=self._moqpcatsta_(log)
-          moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+       elif ('CANADA' in moqpcat['LOCATION']):
+           moqpcatstg = 'CANADA'
 
-       if (moqpcatstg):
-          temp=self._moqpcatop_(log)
-          if temp == 'CHECKLOG':
-             moqpcatstg = 'CHECKLOG'
-          else:
-             moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
-       
-             if (moqpcatstg):
-                temp=self._moqpcatpower_(log)
-                moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+       elif (moqpcat['LOCATION'] == 'US'):
+           moqpcatstg = ('%s %s'%(moqpcat['LOCATION'],
+                                   moqpcat['OPERATOR']))
+           if (moqpcat['OPERATOR'] == 'MULTI-OP'):
+               pass
+           elif (moqpcat['OPERATOR'] == 'SINGLE-OP'):
+               moqpcatstg += (' %s'%(moqpcat['POWER']))
+ 
+       elif (moqpcat['LOCATION'] == 'MISSOURI'):
+           moqpcatstg = ('%s %s %s'%(moqpcat['LOCATION'],
+                                     moqpcat['STATION'],
+                                     moqpcat['OPERATOR']))
+                                     
+           if (moqpcat['STATION'] == 'FIXED'):
+               if(moqpcat['OPERATOR'] == 'MULTI-OP'):
+                   pass
+               elif (moqpcat['OPERATOR'] == 'SINGLE-OP'):
+                   moqpcatstg += (' %s'%(moqpcat['POWER']))
+                             
+           elif (moqpcat['STATION'] == 'EXPEDITION'):
+               if(moqpcat['OPERATOR'] == 'MULTI-OP'):
+                   pass
+               elif (moqpcat['OPERATOR'] == 'SINGLE-OP'):
+                   moqpcatstg += (' %s'%(moqpcat['POWER']))
 
-             if (moqpcatstg):
-                temp=self._moqpcatmode_(log)
-                moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
-
-             if (moqpcatstg):
-                if (log['QSOSUM']['DG'] > 0):
-                    moqpcatstg += '+DG'
-                if (log['QSOSUM']['VHF'] > 0):
-                    moqpcatstg += '+VHF'
-          
-             if (moqpcatstg):
-                if (log['HEADER']['CATEGORY-OVERLAY'].strip() == 'ROOKIE'):
-                    moqpcatstg += ' ROOKIE'                         
-          print('moqpcatstg =%s'%(moqpcatstg))
-          splitstg = moqpcatstg.split(' ')
-          print(splitstg)
+           elif (moqpcat['STATION'] == 'MOBILE'):
+               moqpcatstg = ('%s %s'%(moqpcat['LOCATION'],
+                                    moqpcat['STATION']))
+               if (moqpcat['POWER'] == 'HIGH POWER'):
+                   moqpcatstg += ' UNLIMITED'
+               else:
+                   moqpcatstg += (' %s'%(moqpcat['OPERATOR']))
+                   if (moqpcat['OPERATOR'] == 'MULTI-OP'):
+                       pass
+                   elif (moqpcat['OPERATOR'] == 'SINGLE-OP'):
+                       moqpcatstg += (' %s %s'% (moqpcat['POWER'],
+                                                 moqpcat['MODE']))
+                                     
        return moqpcatstg
        
     def determineMOQPCatdict(self, log):
        moqpcatdict = { 'LOCATION':'',
                        'STATION':'',
+                       'OPERATOR':'',
                        'POWER':'',
                        'MODE':'',
-                       'ROOKIE':'' }
+                       'ROOKIE':'',
+                       'VHF':'',
+                       'DIGITAL':'',
+                       'MOQPCAT':''}
 
-       moqpcatstg = self._moqpcatloc_(log)
-       if (moqpcatstg):
-          moqpcatdict['LOCATION'] = moqpcatstg
+       moqpcatdict['LOCATION'] = self._moqpcatloc_(log)
           
-          temp=self._moqpcatsta_(log)
-          moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
-
-       if (moqpcatstg):
-          temp=self._moqpcatop_(log)
-          if temp == 'CHECKLOG':
-             moqpcatstg = 'CHECKLOG'
-          else:
-             moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+       moqpcatdict['STATION']=self._moqpcatsta_(log)
        
-             if (moqpcatstg):
-                temp=self._moqpcatpower_(log)
-                moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+       moqpcatdict['OPERATOR']=self._moqpcatop_(log)
 
-             if (moqpcatstg):
-                temp=self._moqpcatmode_(log)
-                moqpcatstg = self._combine_moqpcat_parts(moqpcatstg, temp)
+       moqpcatdict['POWER']=self._moqpcatpower_(log)
 
-             if (moqpcatstg):
-                if (log['QSOSUM']['DG'] > 0):
-                    moqpcatstg += '+DG'
-                if (log['QSOSUM']['VHF'] > 0):
-                    moqpcatstg += '+VHF'
+       moqpcatdict['MODE']=self._moqpcatmode_(log)
+
+       if (log['QSOSUM']['DG'] > 0):
+           moqpcatdict['DIGITAL'] = '+DG'
+           
+       if (log['QSOSUM']['VHF'] > 0):
+           moqpcatdict['VHF'] = '+VHF'
           
-             if (moqpcatstg):
-                if (log['HEADER']['CATEGORY-OVERLAY'].strip() == 'ROOKIE'):
-                    moqpcatstg += ' ROOKIE'                         
-          print('moqpcatstg =%s'%(moqpcatstg))
-          splitstg = moqpcatstg.split(' ')
-          print(splitstg)
-       return moqpcatstg
-
-
-
-
-
-
-
+       if (log['HEADER']['CATEGORY-OVERLAY'].upper().strip() == 'ROOKIE'):
+           moqpcatdict['ROOKIE'] = ' ROOKIE'                         
+       moqpcatdict['MOQPCAT'] = self.determineMOQPCatstg(moqpcatdict)
+       #print(moqpcatdict)         
+       return moqpcatdict
 
     """
     This method processes a single log file passed in filename
@@ -401,7 +399,7 @@ class MOQPCategory(LogSummary):
        logsummary = self.processLogdict(filename)
        #print( logsummary['ERRORS'] )
        if (logsummary):
-          moqpcat = self.determineMOQPCatstg(logsummary)
+          moqpcat = self.determineMOQPCatdict(logsummary)
           fullSummary = dict()
           fullSummary['HEADER'] = logsummary['HEADER']
           fullSummary['QSOSUM'] = logsummary['QSOSUM']
