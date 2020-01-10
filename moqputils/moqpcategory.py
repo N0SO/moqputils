@@ -190,7 +190,7 @@ class MOQPCategory(LogSummary):
        return logSummary
 
     def _moqpcatloc_(self, log):
-       moqpcatstg = None
+       moqpcatstg = ''
        compstring = log['HEADER']['LOCATION'].strip()
        if(compstring in INSTATE):
           moqpcatstg = 'MISSOURI'
@@ -203,7 +203,7 @@ class MOQPCategory(LogSummary):
        return moqpcatstg
 
     def _moqpcatsta_(self, log):
-       moqpcatstg = None
+       moqpcatstg = ''
        compstring = log['HEADER']['CATEGORY-STATION'].strip()
        if (compstring in STATIONS):
            if (compstring == 'FIXED'):
@@ -219,7 +219,7 @@ class MOQPCategory(LogSummary):
        return moqpcatstg
 
     def _moqpcatop_(self, log):
-       moqpcatstg = None
+       moqpcatstg = ''
        compstring = log['HEADER']['CATEGORY-OPERATOR'].strip()
        if (compstring == 'SINGLE-OP'):
           moqpcatstg  = 'SINGLE-OP'
@@ -230,7 +230,7 @@ class MOQPCategory(LogSummary):
        return moqpcatstg
 
     def _moqpcatpower_(self, log):
-       moqpcatstg = None
+       moqpcatstg = ''
        compstring = log['HEADER']['CATEGORY-POWER'].strip()
        if (compstring == 'LOW' \
                  or compstring == 'HIGH' \
@@ -239,7 +239,7 @@ class MOQPCategory(LogSummary):
        return moqpcatstg
     
     def _moqpcatmode_(self, log):
-       moqpcatstg = None
+       moqpcatstg = ''
        compstring = log['HEADER']['CATEGORY-MODE'].strip()
        if (compstring == 'PH' \
                      or compstring == 'SSB'):
@@ -255,16 +255,14 @@ class MOQPCategory(LogSummary):
           moqpcatstg = 'DIGITAL'
        return moqpcatstg
 
-    def _combine_moqpcat_parts(self, moqpcatstg, newstring):
-       retstring = None
-       if (newstring):
-          retstring = ('%s %s'%(moqpcatstg, newstring))
-       return retstring    
-
     def determineMOQPCatstg(self, moqpcat):
+       moqpcatstg = 'UNKNOWN'
        if (moqpcat['OPERATOR'] =='CHECKLOG'):
            moqpcatstg = 'CHECKLOG'
            
+       elif (moqpcat['LOCATION'] == 'DX'):
+           moqpcatstg = 'DX'
+       
        elif (moqpcat['STATION'] == 'SCHOOL'):
            moqpcatstg = ('%s %s'%(moqpcat['LOCATION'], 
                                   moqpcat['STATION']))
@@ -334,13 +332,13 @@ class MOQPCategory(LogSummary):
        moqpcatdict['MODE']=self._moqpcatmode_(log)
 
        if (log['QSOSUM']['DG'] > 0):
-           moqpcatdict['DIGITAL'] = '+DG'
+           moqpcatdict['DIGITAL'] = 'DIGITAL'
            
        if (log['QSOSUM']['VHF'] > 0):
-           moqpcatdict['VHF'] = '+VHF'
+           moqpcatdict['VHF'] = 'VHF'
           
        if (log['HEADER']['CATEGORY-OVERLAY'].upper().strip() == 'ROOKIE'):
-           moqpcatdict['ROOKIE'] = ' ROOKIE'                         
+           moqpcatdict['ROOKIE'] = 'ROOKIE'                         
        moqpcatdict['MOQPCAT'] = self.determineMOQPCatstg(moqpcatdict)
        #print(moqpcatdict)         
        return moqpcatdict
@@ -377,7 +375,10 @@ class MOQPCategory(LogSummary):
            csvdata += ('%s\t'%(log['QSOSUM']['DG']))
            csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
            csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
-           csvdata += ('%s\n'%(log['MOQPCAT']))
+           csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
+           csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
+           csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
+           csvdata += ('%s'%(log['MOQPCAT']['ROOKIE']))
 
            for err in log['ERRORS']:
                if ( err != [] ):
