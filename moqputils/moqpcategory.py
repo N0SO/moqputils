@@ -12,6 +12,7 @@ Update History:
 - Added code to category processing to handle DIGITAL               
 """
 from logsummary import *
+from moqpmults import *
 import os
 
 VERSION = '0.2.2' 
@@ -96,6 +97,7 @@ class MOQPCategory(LogSummary):
        
     def getQSOdata(self, cabdata):
        thislog = dict()
+       mults = MOQPMults()
        qsos = []
        errorData = []
        header = self.makeHEADERdict()
@@ -120,6 +122,8 @@ class MOQPCategory(LogSummary):
                 #print('qso errors = %s'%(qso['ERRORS']))
                 if (qso['ERRORS'] == []):
                    qsos.append(qso['DATA'])
+                   #print(qso['DATA'])
+                   mults.setMult(qso['DATA']['URQTH'])
                 else:
                    errorData.append( \
                       ('QSO BUSTED, line %d: \"%s\" \n' \
@@ -137,7 +141,9 @@ class MOQPCategory(LogSummary):
                                                (linecount, cabline)) )
        thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
+       thislog['MULTS'] = mults.mults
        thislog['ERRORS'] = errorData
+       print(thislog['MULTS'], mults.sumMults())
        return thislog
 
     def processLog(self, fname):

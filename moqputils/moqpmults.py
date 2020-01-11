@@ -13,16 +13,11 @@ from contestmults import *
 
 VERSION = '0.0.1'
 
-MOCOUNTYMULTS = []
+MULTFILES = ['countymults.csv', 'statemults.csv', 'dxmults.csv']
 
 class MOQPMults(ContestMults):
-
     def __init__(self):
-        self.multList = self.combine_multLists([MOCOUNTYMULTS,
-                                                STATEMULTS,
-                                                PROVIDENCEMULTS,
-                                                ['DX'] ])
-        
-        self.mults = self.creat_mult_dict(self.multList)
-        
-        
+       self.mults = self.readmultlists(MULTFILES)
+
+    def getVersion(self):
+       return VERSION
