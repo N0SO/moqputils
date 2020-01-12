@@ -13,7 +13,9 @@ from contestmults import *
 
 VERSION = '0.0.1'
 
-MULTFILES = ['countymults.csv', 'statemults.csv', 'dxmults.csv']
+MULTFILES = ['shared/multlists/moqp-counties.csv',
+             'shared/multlists/moqp-us-states.csv',
+             'shared/multlists/moqp-dx.csv']
 
 class MOQPMults(ContestMults):
     def __init__(self):
