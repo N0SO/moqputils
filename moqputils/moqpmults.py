@@ -21,3 +21,4 @@ class MOQPMults(ContestMults):
 
     def getVersion(self):
        return VERSION
+

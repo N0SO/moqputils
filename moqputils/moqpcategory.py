@@ -42,7 +42,7 @@ DX = 'DX DK2 DL8 HA8 ON4'
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tTOTAL\tVHF QSO\t' + \
-                'MOQP CATEGORY\tDIGITAL\tVHF\tROOKIE\n'
+                'MULTS\tSCORE\tMOQP CATEGORY\tDIGITAL\tVHF\tROOKIE\n'
 
 
 class MOQPCategory(LogSummary):
@@ -141,9 +141,9 @@ class MOQPCategory(LogSummary):
                                                (linecount, cabline)) )
        thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
-       thislog['MULTS'] = mults.mults
+       thislog['MULTS'] = mults.sumMults()
        thislog['ERRORS'] = errorData
-       print(thislog['MULTS'], mults.sumMults())
+       #print(thislog['MULTS'], mults.sumMults())
        return thislog
 
     def processLog(self, fname):
@@ -192,6 +192,7 @@ class MOQPCategory(LogSummary):
           logSummary['QSOLIST'] = log['QSOLIST']
           logSummary['ERRORS'] = log['ERRORS']
           logSummary['QSOSUM'] = qsosummary
+          logSummary['MULTS'] = log['MULTS']
           
        return logSummary
 
@@ -381,6 +382,8 @@ class MOQPCategory(LogSummary):
            csvdata += ('%s\t'%(log['QSOSUM']['DG']))
            csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
            csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
+           csvdata += ('%s\t'%(log['MULTS']))         
+           csvdata += ('%s\t'%(log['SCORE']))         
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
@@ -407,9 +410,12 @@ class MOQPCategory(LogSummary):
        #print( logsummary['ERRORS'] )
        if (logsummary):
           moqpcat = self.determineMOQPCatdict(logsummary)
+          Score = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
           fullSummary = dict()
           fullSummary['HEADER'] = logsummary['HEADER']
           fullSummary['QSOSUM'] = logsummary['QSOSUM']
+          fullSummary['MULTS'] = logsummary['MULTS']
+          fullSummary['SCORE'] = Score
           fullSummary['MOQPCAT'] = moqpcat
           fullSummary['QSOLIST'] = logsummary['QSOLIST']
           fullSummary['ERRORS'] = logsummary['ERRORS']
@@ -516,7 +522,14 @@ class MOQPCategory(LogSummary):
               r = [qcount, qsoerrors]
               errorData.append(r)
        return errorData
-           
+
+    def calculate_score(self, qsosum, mults):
+        Score = 0
+        cwpoints = qsosum['CW'] * 2
+        digipoints = qsosum['DG'] * 2
+        qsopoints = cwpoints + digipoints + qsosum['PH']
+        Score = qsopoints * mults
+        return Score
  
     def appMain(self, pathname):
        csvdata = 'Nothing.'

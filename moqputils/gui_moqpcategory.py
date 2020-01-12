@@ -141,6 +141,8 @@ class gui_MOQPCategory(MOQPCategory):
         window.insert(END, ('%s\t'%(log['QSOSUM']['DG'])))
         window.insert(END, ('%s\t'%(log['QSOSUM']['QSOS'])))
         window.insert(END, ('%s\t'%(log['QSOSUM']['VHF'])))
+        window.insert(END, ('%s\t'%(log['MULTS'])))         
+        window.insert(END, ('%s\t'%(log['SCORE'])))        
         window.insert(END, ('%s\t'%(log['MOQPCAT']['MOQPCAT'])))
         window.insert(END, ('%s\t'%(log['MOQPCAT']['DIGITAL'])))
         window.insert(END, ('%s\t'%(log['MOQPCAT']['VHF'])))
