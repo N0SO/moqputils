@@ -1,10 +1,11 @@
 from moqpcategory import MOQPCategory
 import os
 from moqpdbconfig import *
+from showmeaward import BothAwards
 import MySQLdb
 
 
-VERSION = '0.0.1' 
+VERSION = '0.0.2' 
 
 
 class MOQPLoadLogs(MOQPCategory):
@@ -148,24 +149,77 @@ class MOQPLoadLogs(MOQPCategory):
                          ('"%s",'%(qsodata['URREPORT'])) +\
                          ('"%s")'%(qsodata['URQTH']))
 
-        """
-        print('%s  %s  %s  %s  %s  %s  %s  %s  %s' \
-                %(qso['FREQ'],
-                  qso['MODE'],
-                  qso['DATE'],
-                  qso['MYCALL'],
-                  qso['MYREPORT'],
-                  qso['MYQTH'],
-                  qso['URCALL'],
-                  qso['URREPORT'],
-                  qso['URQTH']))
-        """
-        print('Writeing QSO Data: %s'%(query))
+        print('Writeing QSO data Data: %s'%(query))
         cursor = db.cursor()
         cursor.execute(query)
         db.commit()
         qsoID = cursor.lastrowid
         return qsoID
+
+    def writeSummary(self, db, logID, log, smresult):
+        if (smresult['BONUS']['W0MA'] == 'W0MA'):
+            w0mabonus = 100
+        else:
+            w0mabonus = 0
+
+        if (smresult['BONUS']['K0GQ'] == 'K0GQ'):
+            k0gqbonus = 100
+        else:
+            k0gqbonus = 0
+
+        cabbonus = 0
+
+        if (log['MOQPCAT']['DIGITAL'] == 'DIGITAL'):
+            digital_log = True
+        else:
+            digital_log = False
+
+        if (log['MOQPCAT']['VHF'] == 'VHF'):
+            vhf_log = True
+        else:
+            vhf_log = False
+
+        if (log['MOQPCAT']['ROOKIE'] == 'ROOKIE'):
+            rookie_log = True
+        else:
+            rookie_log = False
+
+        query = """INSERT INTO SUMMARY(LOGID,
+                                       CWQSO,
+                                       PHQSO,
+                                       RYQSO,
+                                       VHFQSO,
+                                       MULTS,
+                                       QSOSCORE,
+                                       W0MABONUS,
+                                       K0GQBONUS,
+                                       CABBONUS,
+                                       MOQPCAT,
+                                       DIGITAL,
+                                       VHF,
+                                       ROOKIE)
+                      VALUES(""" + \
+                         ('"%d",'%(logID)) +\
+                         ('"%d",'%(log['QSOSUM']['CW'])) +\
+                         ('"%d",'%(log['QSOSUM']['PH'])) +\
+                         ('"%d",'%(log['QSOSUM']['DG'])) +\
+                         ('"%d",'%(log['QSOSUM']['VHF'])) +\
+                         ('"%d",'%(log['MULTS'])) +\
+                         ('"%d",'%(log['SCORE'])) +\
+                         ('"%d",'%(w0mabonus)) +\
+                         ('"%d",'%(k0gqbonus)) +\
+                         ('"%d",'%(cabbonus)) +\
+                         ('"%s",'%(log['MOQPCAT']['MOQPCAT'])) +\
+                         ('"%d",'%(digital_log)) +\
+                         ('"%d",'%(vhf_log)) +\
+                         ('"%d")'%(rookie_log))
+
+        print('Writeing summary data Data: %s'%(query))
+        cursor = db.cursor()
+        cursor.execute(query)
+        db.commit()
+        sumID = cursor.lastrowid
+        return sumID
         
     def write_qsolist(self, db, logID, qsolist):
         success = None
@@ -183,6 +237,12 @@ class MOQPLoadLogs(MOQPCategory):
 #        print(log)
 #        dir(log)
         if(log):
+            bawards = BothAwards()
+            smresult = (bawards.appMain(\
+                        log['HEADER']['CALLSIGN'],
+                        log['QSOLIST']))
+#           dir(result)
+#            print(result)
             print('MOQPLoadLogs: Importing %s...'%(fileName))    
             self.show_details(log)
             db = self.dbconnect(HOSTNAME, USER, PW, DBNAME)
@@ -195,6 +255,7 @@ class MOQPLoadLogs(MOQPCategory):
                               'QSOSTATUS')
             if (logID):
                 self.write_qsolist(db, logID, log['QSOLIST'])
+                self.writeSummary(db, logID, log, smresult)
             cursor.close()
             db.close()
 
