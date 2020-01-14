@@ -44,7 +44,13 @@ class GenAward():
     def init_award(self, KEYS):
         award = dict()
         for key in KEYS:
-            award[key] = {0:None, 1:None, 2:None}
+            award[key] = dict()
+            for i in range(3):
+                 award[key][i] = dict()
+                 award[key][i]['CALL'] = None
+                 award[key][i]['BAND'] = None 
+                 award[key][i]['MODE'] = None 
+                 award[key][i]['QTH'] = None 
         return award
 
     def combineLists(self, list1, list2):
@@ -131,6 +137,7 @@ class GenAward():
     """
     def parseSingleKey(self, sourceElement, targetElement):
         retval = -1
+        #print(sourceElement, targetElement)
         if (targetElement == None):
             for i in range(3):
                 if (sourceElement[i]):
@@ -233,31 +240,50 @@ class GenAward():
     """
     Collect all 1x1 QSOS in qsolist and
     return a list of dict object with:
-        CALL
-        BAND
-        MODE
+    {'CALL': {0: {'BAND': '20M', 'MODE': 'CW', 'QTH': 'GAS', 'USED': False}, 
+              1: {'BAND': '20M', 'MODE': 'CW', 'QTH': 'GAS', 'USED': False}, 
+              2: {'BAND': '80M', 'MODE': 'CW', 'QTH': 'GAS', 'USED': False},
+              .
+              .
+              .
+              N: {'BAND': '80M', 'MODE': 'CW', 'QTH': 'GAS', 'USED': False}},
+    
+    { CALL :  {1: {BAND, MODE, URQTH},
+               . 
+               . 
+               . 
+               {N: {BAND, MODE, QTH} }}
+       .
+       .
+       .          
     """
     def collect1x1qsos(self, qsolist, callList):
         qsos = dict()
 
         for call in callList:
             qsos[call] = dict()
-
-
-        
             qindex = 0
             for thisqso in qsolist:
                 if (call == thisqso['URCALL']):
-                    qsos[call][qindex] = dict()
-                    qsos[call][qindex]['BAND'] = self.getBand(thisqso['FREQ'])
-                    qsos[call][qindex]['MODE'] = thisqso['MODE']
-                    qsos[call][qindex]['QTH'] = thisqso['URQTH']
-                    qsos[call][qindex]['USED'] = False
-                    qindex += 1
+                    nextq = dict()
+                    nextq['BAND'] = self.getBand(thisqso['FREQ'])
+                    nextq['MODE'] = thisqso['MODE']
+                    nextq['QTH'] = thisqso['URQTH']
+                    nextq['USED'] = False
+                    # DUP check
+                    dup = False
+                    for dc in range(len(qsos[call])):
+                        if ( (nextq['BAND'] == qsos[call][dc]['BAND']) and
+                             (nextq['MODE'] == qsos[call][dc]['MODE']) and
+                             (nextq['QTH'] == qsos[call][dc]['QTH']) ):
+                            dup = True
+                    if ( dup == False ):
+                        #print ('DUPE!')
+                        qsos[call][qindex] = nextq
+                        qindex += 1
 
-        return qsos                    
-
-       
+        return qsos     
+        
 """
 ShowMeAward - Child class of GenAward class
               taylored for the 2019 MOQP SHOWME Award.
@@ -291,6 +317,26 @@ class ShowMeAward(GenAward):
                 calls[k] = ' '
         return {'COUNT':showmeCount,
                 'CALLS':calls}
+                
+    def parseAward(self, qsolist):
+        for call in self.callset:
+            print('Checking %s'%(call))
+            qcount = len(qsolist[call])
+            if ( (call in qsolist) and (qcount) ):
+                AKey = call[2]
+                print('Target = %s'%( self.Award[AKey][0]))
+                if (self.Award[AKey][0]):
+                    for i in range(qcount):
+                        print(i, qsolist[call][i])
+                        if (qsolist[call][i]['USED'] == False): 
+                            self.Award[AKey][0]['CALL'] = call
+                            self.Award[AKey][0]['BAND'] = qsolist[call][i]['BAND']
+                            self.Award[AKey][0]['MODE'] = qsolist[call][i]['MODE']
+                            self.Award[AKey][0]['QTH'] = qsolist[call][i]['QTH']
+                            qsolist[call][i]['USED'] = 'True'
+       
+        print('Award = %s\nqsolist = %s'%(self.Award, qsolist))                    
+        return None
 
     def appMain(self, qsolist):
         Bingo = self.checkLog(qsolist)
@@ -384,8 +430,9 @@ class BothAwards(GenAward):
 #        self._bonusAward_ = BonusAward()
         self.KEYS = COMKEYS+SHOWMEKEYS+MOKEYS
         self.Award = self.init_award(self.KEYS)
-        self.callset = self.combineLists(SHOWMECALLS, COMMONCALLS)
-        self.callset = self.combineLists(self.callset, MOCALLS)
+        self.callset = self.combineListoflists( [SHOWMECALLS, 
+                                                 COMMONCALLS,
+                                                 MOCALLS ] )
 #        print('Keys = %s\nAward = %s\ncallset = %s'%(self.KEYS,
 #                                                     self.Award, 
 #                                                     self.callset))
@@ -403,6 +450,7 @@ class BothAwards(GenAward):
        
        #SHOWME only requires one call per letter (key)
        for thiskey in self._showmeAward_.KEYS:
+           print('checking for key %s...'%(thiskey))
            i = self.parseSingleKey(self.Award[thiskey], 
                                self._showmeAward_.Award[thiskey][0])
            if ( i >= 0):
@@ -458,18 +506,40 @@ class BothAwards(GenAward):
           #print(qso)
           #print(self.award)
        return retval
+       
+    def show1x1QSOs(self, qsolist):
+        textData =[]
+        qkeys = qsolist.keys()
+        #print('qkeys = %s'%(qkeys))
+        for qkey in qsolist:
+            if (len(qsolist[qkey])):
+                qcount = len(qsolist[qkey])
+                for i in range(qcount):
+                   print('%s(%d): %s'%(qkey,i,qsolist[qkey][i]))
 
     def appMain(self, callsign, qsolist):
         callList = self.combineListoflists([COMMONCALLS,
                                             SHOWMECALLS,
+                                            MOCALLS,
                                             WILDCARDS])
         #print('callList =%s'%(callList))
         qso1x1 = self.collect1x1qsos(qsolist, callList)
         
-        print(qso1x1)
+        #print(qso1x1)
+        #self.show1x1QSOs(qso1x1)
         Bingo = self.checkLog(qsolist)
         Bonus = BonusAward(qsolist)
-        self.parseAwards()
+        self._showmeAward_.parseAward(qso1x1)
+        #print(self._showmeAward_.Award)
+        for thiskey in self._showmeAward_.KEYS:
+            #print('checking for key %s...'%(thiskey))
+            i = self.parseSingleKey(self.Award[thiskey], 
+                               self._showmeAward_.Award[thiskey][0])
+            if ( i >= 0):
+                self._showmeAward_.Award[thiskey][0] = \
+                                  self.Award[thiskey][i]
+                self.Award[thiskey][i] = None
+
         
         showmeStats = self._showmeAward_.qualify(SHOWMEMATCH,
                               [Bonus.Award['M'][0],Bonus.Award['G'][0]])
@@ -516,6 +586,7 @@ class ShowMe(MOQPCategory):
                 result = (bawards.appMain(\
                            log['HEADER']['CALLSIGN'],
                            log['QSOLIST']))
+                """
                 if (HEADER):
                    print('STATION\tSHOWME AWARD\tS\tH\t O\tW\tM\tE\tWC\t' \
                       'MISSOURI AWARD\tM\tI\tS\tS\t O\tU\tR\tI\tWC\t' \
@@ -545,10 +616,10 @@ class ShowMe(MOQPCategory):
                           result['BONUS']['W0MA'],
                           result['BONUS']['K0GQ']))
                           
-                          
             else:
                 print('log file %s has errors' \
 				%(pathname))
+                """
         else:
             print(\
             'File %s does not exist or is not in CABRILLO Format'\
