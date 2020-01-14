@@ -51,7 +51,15 @@ class MOQPLoadLogs(MOQPCategory):
                                   
         return connection
 
-        
+    def _write_query(self, db, query):
+        qstat = None
+        print('Writeing query Data: %s'%(query))
+        cursor = db.cursor()
+        cursor.execute(query)
+        db.commit()
+        qstat = cursor.lastrowid
+        return qstat
+       
     def write_header(self, db, header, catg, qsostatus):
         logID = None
 
@@ -116,11 +124,14 @@ class MOQPLoadLogs(MOQPCategory):
                         ('"%s",'%(header['END-OF-LOG'])) +\
                         ('"%s",'%(catg)) +\
                         ('"%s")'%(qsostatus))      
+        logID = self._write_query(db, query)
+        """
         #print('query = %s'%(query))
         cursor = db.cursor()
         cursor.execute(query)
         db.commit()
         logID = cursor.lastrowid
+        """
         return logID
         
     def write_qsodata(self, db, logID, qsodata):
@@ -149,11 +160,14 @@ class MOQPLoadLogs(MOQPCategory):
                          ('"%s",'%(qsodata['URREPORT'])) +\
                          ('"%s")'%(qsodata['URQTH']))
 
+        qsoID = self._write_query(db, query)
+        """
         print('Writeing QSO data Data: %s'%(query))
         cursor = db.cursor()
         cursor.execute(query)
         db.commit()
         qsoID = cursor.lastrowid
+        """
         return qsoID
 
     def writeSummary(self, db, logID, log, smresult):
@@ -214,13 +228,63 @@ class MOQPLoadLogs(MOQPCategory):
                          ('"%d",'%(vhf_log)) +\
                          ('"%d")'%(rookie_log))
 
-        print('Writeing summary data Data: %s'%(query))
-        cursor = db.cursor()
-        cursor.execute(query)
-        db.commit()
-        sumID = cursor.lastrowid
+        sumID = self._write_query(db, query)
         return sumID
         
+    def writeSHOWME(self, db, logID, smresult):
+
+        query = """INSERT INTO SHOWME(LOGID,
+                                       S,
+                                       H,
+                                       O,
+                                       W,
+                                       M,
+                                       E,
+                                       WC,
+                                       QUALIFY)
+                      VALUES(""" + \
+                         ('"%d",'%(logID)) +\
+                         ('"%s",'%(smresult['CALLS']['S'])) +\
+                         ('"%s",'%(smresult['CALLS']['H'])) +\
+                         ('"%s",'%(smresult['CALLS']['O'])) +\
+                         ('"%s",'%(smresult['CALLS']['W'])) +\
+                         ('"%s",'%(smresult['CALLS']['M'])) +\
+                         ('"%s",'%(smresult['CALLS']['E'])) +\
+                         ('"%s",'%(smresult['WILDCARD'])) +\
+                         ('"%d")'%(smresult['QUALIFY']))
+
+        sumID = self._write_query(db, query)
+        return sumID
+
+    def writeMO(self, db, logID, smresult):
+
+        query = """INSERT INTO MISSOURI(LOGID,
+                                       M,
+                                       I_1,
+                                       S_1,
+                                       S_2,
+                                       O,
+                                       U,
+                                       R,
+                                       I_2,
+                                       WC,
+                                       QUALIFY)
+                      VALUES(""" + \
+                         ('"%d",'%(logID)) +\
+                         ('"%s",'%(smresult['CALLS']['M'])) +\
+                         ('"%s",'%(smresult['CALLS']['I0'])) +\
+                         ('"%s",'%(smresult['CALLS']['S0'])) +\
+                         ('"%s",'%(smresult['CALLS']['S1'])) +\
+                         ('"%s",'%(smresult['CALLS']['O'])) +\
+                         ('"%s",'%(smresult['CALLS']['U'])) +\
+                         ('"%s",'%(smresult['CALLS']['R'])) +\
+                         ('"%s",'%(smresult['CALLS']['I1'])) +\
+                         ('"%s",'%(smresult['WILDCARD'])) +\
+                         ('"%d")'%(smresult['QUALIFY']))
+
+        sumID = self._write_query(db, query)
+        return sumID
+
     def write_qsolist(self, db, logID, qsolist):
         success = None
 
@@ -241,8 +305,8 @@ class MOQPLoadLogs(MOQPCategory):
             smresult = (bawards.appMain(\
                         log['HEADER']['CALLSIGN'],
                         log['QSOLIST']))
-#           dir(result)
-#            print(result)
+            print(dir(smresult))
+            print(smresult)
             print('MOQPLoadLogs: Importing %s...'%(fileName))    
             self.show_details(log)
             db = self.dbconnect(HOSTNAME, USER, PW, DBNAME)
@@ -256,6 +320,8 @@ class MOQPLoadLogs(MOQPCategory):
             if (logID):
                 self.write_qsolist(db, logID, log['QSOLIST'])
                 self.writeSummary(db, logID, log, smresult)
+                self.writeSHOWME(db, logID, smresult['SHOWME'])
+                self.writeMO(db, logID, smresult['MO'])
             cursor.close()
             db.close()
 

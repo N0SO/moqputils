@@ -25,7 +25,7 @@ WILDKEYS = 'MG'
 
 
 
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 
 """
 GenAward - Generic award class
@@ -53,6 +53,13 @@ class GenAward():
            retlist.append(i)
        for i in list2:
            retlist.append(i)
+       return retlist
+       
+    def combineListoflists(self, listofLists):
+       retlist = []
+       for lst in listofLists:
+           for e in lst:
+               retlist.append(e)
        return retlist
 
     """
@@ -114,7 +121,7 @@ class GenAward():
     sourceElement is s list of up to 3 callsigns (string format).
     targetElement is a single callsign (also string format).
     If the targetElement = None, one of three callsign from 
-    sourceElement[0 to 2] could may be needed. This method
+    sourceElement[0 to 2] may be needed. This method
     will return the sourceElement index [0 to 2] to the first
     callsign in the list that is not None.
     
@@ -198,6 +205,59 @@ class GenAward():
           #print(self.award)
        return retval
        
+    def getBand(self, freq):
+       band = None
+       nfreq = float(freq)
+       
+       if (nfreq >= 1800.0 and nfreq <= 2000.0):
+           band = '160M'
+       elif (nfreq >= 3500.0 and nfreq <= 4000.0):
+           band = '80M'
+       elif (nfreq >= 7000.0 and nfreq <= 7300.0):
+           band = '40M'
+       elif (nfreq >= 14000.0 and nfreq <= 14300.0):
+           band = '20M'
+       elif (nfreq >= 21000.0 and nfreq <= 214500.0):
+           band = '15M'
+       elif (nfreq >= 28000.0 and nfreq <= 29700.0):
+           band = '10M'
+       elif (nfreq >= 50000.0 and nfreq <= 54000.0):
+           band = '6M'
+       elif (nfreq >= 144000.0 and nfreq <= 148000.0):
+           band = '2M'
+       elif (nfreq >= 420000.0 and nfreq <= 450000.0):
+           band = '432'
+
+       return band
+       
+    """
+    Collect all 1x1 QSOS in qsolist and
+    return a list of dict object with:
+        CALL
+        BAND
+        MODE
+    """
+    def collect1x1qsos(self, qsolist, callList):
+        qsos = dict()
+
+        for call in callList:
+            qsos[call] = dict()
+
+
+        
+            qindex = 0
+            for thisqso in qsolist:
+                if (call == thisqso['URCALL']):
+                    qsos[call][qindex] = dict()
+                    qsos[call][qindex]['BAND'] = self.getBand(thisqso['FREQ'])
+                    qsos[call][qindex]['MODE'] = thisqso['MODE']
+                    qsos[call][qindex]['QTH'] = thisqso['URQTH']
+                    qsos[call][qindex]['USED'] = False
+                    qindex += 1
+
+        return qsos                    
+
+       
 """
 ShowMeAward - Child class of GenAward class
               taylored for the 2019 MOQP SHOWME Award.
@@ -228,7 +288,7 @@ class ShowMeAward(GenAward):
             if (self.Award[k][0] != None):
                 calls[k] = self.Award[k][0]
             else:
-                calls[k] = '*NOT WORKED*'
+                calls[k] = ' '
         return {'COUNT':showmeCount,
                 'CALLS':calls}
 
@@ -265,7 +325,7 @@ class MissouriAward(GenAward):
             if (self.Award[i1][i2] != None):
                 calls[k] = self.Award[i1][i2]
             else:
-                calls[k] = '*NOT WORKED*'
+                calls[k] = ' '
         return {'COUNT':Count,
                 'CALLS':calls}
 
@@ -400,18 +460,27 @@ class BothAwards(GenAward):
        return retval
 
     def appMain(self, callsign, qsolist):
+        callList = self.combineListoflists([COMMONCALLS,
+                                            SHOWMECALLS,
+                                            WILDCARDS])
+        #print('callList =%s'%(callList))
+        qso1x1 = self.collect1x1qsos(qsolist, callList)
+        
+        print(qso1x1)
         Bingo = self.checkLog(qsolist)
         Bonus = BonusAward(qsolist)
         self.parseAwards()
         
         showmeStats = self._showmeAward_.qualify(SHOWMEMATCH,
-                                          Bonus.Award['M'][0])
+                              [Bonus.Award['M'][0],Bonus.Award['G'][0]])
+#                                          Bonus.Award['M'][0])
 #        showmeData = self._showmeAward_.showReport(SHOWMEMATCH,
 #                                          Bonus.Award['M'][0],
 #                                          'SHOWME','This Station')
 
         missouriStats = self._missouriAward_.qualify(MOMATCH,
-                                          Bonus.Award['M'][0])
+                              [Bonus.Award['M'][0],Bonus.Award['G'][0]])
+#                                          Bonus.Award['M'][0])
 #        missouriData = self._missouriAward_.showReport(SHOWMEMATCH,
 #                                       Bonus.Award['M'][0],
 #                                       'MISSOURI','This Station')
