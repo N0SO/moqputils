@@ -282,7 +282,7 @@ class GenAward():
                         qsos[call][qindex] = nextq
                         qindex += 1
 
-        return qsos     
+        return qsos
         
 """
 ShowMeAward - Child class of GenAward class
@@ -303,7 +303,7 @@ class ShowMeAward(GenAward):
     def sumAward(self):
         retval = 0
         for k in self.KEYS:
-            if (self.Award[k][0]):
+            if (self.Award[k][0]['CALL']):
                retval += 1
         return retval
         
@@ -311,8 +311,8 @@ class ShowMeAward(GenAward):
         showmeCount = self.sumAward()
         calls = dict()
         for k in ['S','H','O','W','M','E']:
-            if (self.Award[k][0] != None):
-                calls[k] = self.Award[k][0]
+            if (self.Award[k][0]['CALL'] != None):
+                calls[k] = self.Award[k][0]['CALL']
             else:
                 calls[k] = ' '
         return {'COUNT':showmeCount,
@@ -320,14 +320,14 @@ class ShowMeAward(GenAward):
                 
     def parseAward(self, qsolist):
         for call in self.callset:
-            print('Checking %s'%(call))
+            #print('Checking %s'%(call))
             qcount = len(qsolist[call])
             if ( (call in qsolist) and (qcount) ):
-                AKey = call[2]
-                print('Target = %s'%( self.Award[AKey][0]))
+                AKey = call[2]  # 3rd char of 1x1 call
+                #print('Target = %s'%( self.Award[AKey][0]))
                 if (self.Award[AKey][0]):
                     for i in range(qcount):
-                        print(i, qsolist[call][i])
+                        #print(i, qsolist[call][i])
                         if (qsolist[call][i]['USED'] == False): 
                             self.Award[AKey][0]['CALL'] = call
                             self.Award[AKey][0]['BAND'] = qsolist[call][i]['BAND']
@@ -335,8 +335,8 @@ class ShowMeAward(GenAward):
                             self.Award[AKey][0]['QTH'] = qsolist[call][i]['QTH']
                             qsolist[call][i]['USED'] = 'True'
        
-        print('Award = %s\nqsolist = %s'%(self.Award, qsolist))                    
-        return None
+        #print('Award = %s\nqsolist = %s'%(self.Award, qsolist))                    
+        return qsolist
 
     def appMain(self, qsolist):
         Bingo = self.checkLog(qsolist)
@@ -368,8 +368,8 @@ class MissouriAward(GenAward):
             i2 = 0
             if (len(k) == 2):
                 i2 = 1
-            if (self.Award[i1][i2] != None):
-                calls[k] = self.Award[i1][i2]
+            if (self.Award[i1][i2]['CALL'] != None):
+                calls[k] = self.Award[i1][i2]['CALL']
             else:
                 calls[k] = ' '
         return {'COUNT':Count,
@@ -379,7 +379,7 @@ class MissouriAward(GenAward):
         retval = 0
         #missouriCount = missoursCount = 0
         for k in self.KEYS:
-            if (self.Award[k][0]):
+            if (self.Award[k][0]['CALL']):
                retval += 1
         """
         Account for the two I and S letters in MISSOURI
@@ -387,6 +387,29 @@ class MissouriAward(GenAward):
         #if (self.Award['I'][1]): missouriCount +=1
         #if (self.Award['S'][1]): missoursCount +=1
         return retval
+
+                
+    def parseAward(self, qsolist):
+        for call in self.callset:
+            print('Checking %s'%(call))
+            qcount = len(qsolist[call])
+            if ( (call in qsolist) and (qcount) ):
+                AKey = call[2]  # 3rd char of 1x1 call
+                #Allow for two I and S chars for MISSOURI
+                
+                print('Target = %s'%( self.Award[AKey][0]))
+                if (self.Award[AKey][0]):
+                    for i in range(qcount):
+                        print(i, qsolist[call][i])
+                        if (qsolist[call][i]['USED'] == False): 
+                            self.Award[AKey][0]['CALL'] = call
+                            self.Award[AKey][0]['BAND'] = qsolist[call][i]['BAND']
+                            self.Award[AKey][0]['MODE'] = qsolist[call][i]['MODE']
+                            self.Award[AKey][0]['QTH'] = qsolist[call][i]['QTH']
+                            qsolist[call][i]['USED'] = 'True'
+       
+        #print('Award = %s\nqsolist = %s'%(self.Award, qsolist))                    
+        return qsolist
 
     def appMain(self, qsolist):
         Bingo = self.checkLog(qsolist)
@@ -427,7 +450,7 @@ class BothAwards(GenAward):
     def __init__(self, callsign=None, qsolist=None):
         self._showmeAward_ = ShowMeAward()
         self._missouriAward_ = MissouriAward()
-#        self._bonusAward_ = BonusAward()
+        self._bonusAward_ = BonusAward()
         self.KEYS = COMKEYS+SHOWMEKEYS+MOKEYS
         self.Award = self.init_award(self.KEYS)
         self.callset = self.combineListoflists( [SHOWMECALLS, 
@@ -527,30 +550,40 @@ class BothAwards(GenAward):
         
         #print(qso1x1)
         #self.show1x1QSOs(qso1x1)
-        Bingo = self.checkLog(qsolist)
+        #Bingo = self.checkLog(qsolist)
         Bonus = BonusAward(qsolist)
-        self._showmeAward_.parseAward(qso1x1)
+        qso1x1 = self._showmeAward_.parseAward(qso1x1)
         #print(self._showmeAward_.Award)
-        for thiskey in self._showmeAward_.KEYS:
-            #print('checking for key %s...'%(thiskey))
-            i = self.parseSingleKey(self.Award[thiskey], 
-                               self._showmeAward_.Award[thiskey][0])
-            if ( i >= 0):
-                self._showmeAward_.Award[thiskey][0] = \
-                                  self.Award[thiskey][i]
-                self.Award[thiskey][i] = None
-
+        #self.show1x1QSOs(qso1x1)
         
-        showmeStats = self._showmeAward_.qualify(SHOWMEMATCH,
-                              [Bonus.Award['M'][0],Bonus.Award['G'][0]])
-#                                          Bonus.Award['M'][0])
+        wildcard =''
+        for call in WILDCARDS:
+            if (call in qso1x1):
+                if (len(qso1x1[call])>0):
+                    if (qso1x1[call][0]['USED'] == False):
+                        wildcard = call
+                        qso1x1[call][0]['USED'] = True
+                        break
+        #self.show1x1QSOs(qso1x1)
+
+        showmeStats = self._showmeAward_.qualify(SHOWMEMATCH, wildcard)
+        #print(showmeStats)
 #        showmeData = self._showmeAward_.showReport(SHOWMEMATCH,
 #                                          Bonus.Award['M'][0],
 #                                          'SHOWME','This Station')
 
-        missouriStats = self._missouriAward_.qualify(MOMATCH,
-                              [Bonus.Award['M'][0],Bonus.Award['G'][0]])
-#                                          Bonus.Award['M'][0])
+        wildcard =''
+        for call in WILDCARDS:
+            if call in qso1x1:
+                if (len(qso1x1[call])>0):
+                    if(qso1x1[call][0]['USED'] == False):
+                        wildcard = call
+                        qso1x1[call][0]['USED'] = True
+                        break
+
+        qso1x1 = self._missouriAward_.parseAward(qso1x1)
+        missouriStats = self._missouriAward_.qualify(MOMATCH, wildcard)
+#        print(missouriStats)
 #        missouriData = self._missouriAward_.showReport(SHOWMEMATCH,
 #                                       Bonus.Award['M'][0],
 #                                       'MISSOURI','This Station')
@@ -564,8 +597,8 @@ class BothAwards(GenAward):
         """
         return { 'SHOWME' : showmeStats,
                  'MO' : missouriStats,
-                 'BONUS' : {'W0MA' : Bonus.Award['M'][0],
-                            'K0GQ' : Bonus.Award['G'][0]} }
+                 'BONUS' : {'W0MA' : Bonus.Award['M'][0]['CALL'],
+                            'K0GQ' : Bonus.Award['G'][0]['CALL']} }
 
 
 """
@@ -586,7 +619,7 @@ class ShowMe(MOQPCategory):
                 result = (bawards.appMain(\
                            log['HEADER']['CALLSIGN'],
                            log['QSOLIST']))
-                """
+                #print(result)
                 if (HEADER):
                    print('STATION\tSHOWME AWARD\tS\tH\t O\tW\tM\tE\tWC\t' \
                       'MISSOURI AWARD\tM\tI\tS\tS\t O\tU\tR\tI\tWC\t' \
@@ -619,7 +652,6 @@ class ShowMe(MOQPCategory):
             else:
                 print('log file %s has errors' \
 				%(pathname))
-                """
         else:
             print(\
             'File %s does not exist or is not in CABRILLO Format'\
