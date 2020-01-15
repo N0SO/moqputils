@@ -25,7 +25,7 @@ WILDKEYS = 'MG'
 
 
 
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 
 """
 GenAward - Generic award class
@@ -134,7 +134,6 @@ class GenAward():
     The caller is responsible for copying the data from
     sourceElement[i] to targetElement, then setting 
     sourceElement[i] = None
-    """
     def parseSingleKey(self, sourceElement, targetElement):
         retval = -1
         #print(sourceElement, targetElement)
@@ -144,6 +143,25 @@ class GenAward():
                     retval = i
                     break
         return retval
+        """
+    def parseSingleKey(self, call, AKey, qsolist):
+        #print(self.Award[AKey][0])
+        if (self.Award[AKey][0]['CALL'] == None):
+            qcount = len(qsolist[call])
+            for i in range(qcount):
+                #print(i, qsolist[call][i])
+                if (qsolist[call][i]['USED'] == False): 
+                    self.Award[AKey][0]['CALL'] = call
+                    self.Award[AKey][0]['BAND'] = qsolist[call][i]['BAND']
+                    self.Award[AKey][0]['MODE'] = qsolist[call][i]['MODE']
+                    self.Award[AKey][0]['QTH'] = qsolist[call][i]['QTH']
+                    qsolist[call][i]['USED'] = 'True'
+                    #print('Needed %s for %s: BAND:%s, MODE:%s, QTH:%s'%(call, AKey, 
+                                              #self.Award[AKey][0]['BAND'],
+                                              #self.Award[AKey][0]['MODE'],
+                                              #self.Award[AKey][0]['QTH']))
+                    break
+        return qsolist
               
     """
     Does this log qualify for the award?
@@ -284,6 +302,17 @@ class GenAward():
 
         return qsos
         
+    def show1x1QSOs(self, qsolist):
+        textData =[]
+        qkeys = qsolist.keys()
+        #print('qkeys = %s'%(qkeys))
+        for qkey in qsolist:
+            if (len(qsolist[qkey])):
+                qcount = len(qsolist[qkey])
+                for i in range(qcount):
+                   print('%s(%d): %s'%(qkey,i,qsolist[qkey][i]))
+
+        
 """
 ShowMeAward - Child class of GenAward class
               taylored for the 2019 MOQP SHOWME Award.
@@ -324,17 +353,11 @@ class ShowMeAward(GenAward):
             qcount = len(qsolist[call])
             if ( (call in qsolist) and (qcount) ):
                 AKey = call[2]  # 3rd char of 1x1 call
-                #print('Target = %s'%( self.Award[AKey][0]))
-                if (self.Award[AKey][0]):
+                #print('Target = %s'%( self.Award[AKey][0]['CALL']))
+                if (self.Award[AKey][0]['CALL'] == None):
                     for i in range(qcount):
                         #print(i, qsolist[call][i])
-                        if (qsolist[call][i]['USED'] == False): 
-                            self.Award[AKey][0]['CALL'] = call
-                            self.Award[AKey][0]['BAND'] = qsolist[call][i]['BAND']
-                            self.Award[AKey][0]['MODE'] = qsolist[call][i]['MODE']
-                            self.Award[AKey][0]['QTH'] = qsolist[call][i]['QTH']
-                            qsolist[call][i]['USED'] = 'True'
-       
+                        qsolist = self.parseSingleKey(call, AKey, qsolist)
         #print('Award = %s\nqsolist = %s'%(self.Award, qsolist))                    
         return qsolist
 
@@ -351,7 +374,7 @@ MissouriAward - Child class of GenAward class
 class MissouriAward(GenAward):
 
     def __init__(self, qsolist=None):
-       self.KEYS = COMKEYS+MOKEYS
+       self.KEYS = ['M','I0','S0','S1','O','U','R','I1']
        self.Award = self.init_award(self.KEYS)
        self.callset = self.combineLists(MOCALLS, COMMONCALLS)
 #       print('Keys = %s\nAward = %s\ncallset = %s'%(self.KEYS,
@@ -364,12 +387,8 @@ class MissouriAward(GenAward):
         Count = self.sumAward()
         calls = dict()
         for k in ['M','I0','S0','S1','O','U','R','I1']:
-            i1 = k[0]
-            i2 = 0
-            if (len(k) == 2):
-                i2 = 1
-            if (self.Award[i1][i2]['CALL'] != None):
-                calls[k] = self.Award[i1][i2]['CALL']
+            if (self.Award[k][0]['CALL'] != None):
+                calls[k] = self.Award[k][0]['CALL']
             else:
                 calls[k] = ' '
         return {'COUNT':Count,
@@ -388,27 +407,61 @@ class MissouriAward(GenAward):
         #if (self.Award['S'][1]): missoursCount +=1
         return retval
 
-                
+    """
+    Parse list of 1x1 calls looking for:
+       1x1 calls who's suffix (i.e. 3rd char of call)
+       matches one of the key entries in self.KEYS.
+
+    If a match is found in self.KEYS, AND the
+    1x1 call list entry is not marked as USED
+    (qsolist[call][i]['USED'] == False) then
+    copy the call data elements (BAND, MODE, QTH)
+    to self.Award[key] and mark the call as used
+    in the 1x1 call list.
+    
+    The updated 1x1 call list is returned to the 
+    caller and should be used to replace the one
+    passed in.
+    """
     def parseAward(self, qsolist):
         for call in self.callset:
-            print('Checking %s'%(call))
+            #print('Checking %s'%(call))
             qcount = len(qsolist[call])
             if ( (call in qsolist) and (qcount) ):
                 AKey = call[2]  # 3rd char of 1x1 call
                 #Allow for two I and S chars for MISSOURI
+                repeat = True
+                #print ('preloop')
+                while (repeat):
+                    #print('looping, AKey = %s'%(AKey))
+                    if ( (AKey == 'I') or (AKey == 'S') ):
+                        dual = True
+                        if (AKey == 'I'): 
+                            if (self.Award['I0'][0]['CALL'] == None):
+                                AKey ='I0'
+                            elif (self.Award['I1'][0]['CALL'] == None):
+                                AKey = 'I1'
+                            else:
+                                AKey = None
+                        elif (AKey =='S'): 
+                            if (self.Award['S0'][0]['CALL'] == None):
+                                AKey ='S0'
+                            elif (self.Award['S1'][0]['CALL'] == None):
+                                AKey = 'S1'
+                            else:
+                                AKey = None
+                    #print (AKey)
+                    if (AKey):
+                        #print(self.Award)
+                        #print('Target = %s'%( self.Award[AKey][0]))
+                        qsolist = self.parseSingleKey(call, AKey, qsolist)
+                        if (AKey in ['M','S1','O','U','R','I1']):
+                            repeat = False
+                        elif (AKey == 'I0'): AKey = 'I1'
+                        elif (AKey == 'S0'): AKey = 'S1'
+                    else: repeat = False
                 
-                print('Target = %s'%( self.Award[AKey][0]))
-                if (self.Award[AKey][0]):
-                    for i in range(qcount):
-                        print(i, qsolist[call][i])
-                        if (qsolist[call][i]['USED'] == False): 
-                            self.Award[AKey][0]['CALL'] = call
-                            self.Award[AKey][0]['BAND'] = qsolist[call][i]['BAND']
-                            self.Award[AKey][0]['MODE'] = qsolist[call][i]['MODE']
-                            self.Award[AKey][0]['QTH'] = qsolist[call][i]['QTH']
-                            qsolist[call][i]['USED'] = 'True'
-       
-        #print('Award = %s\nqsolist = %s'%(self.Award, qsolist))                    
+        #self.show1x1QSOs(qsolist)
         return qsolist
 
     def appMain(self, qsolist):
@@ -530,16 +583,6 @@ class BothAwards(GenAward):
           #print(self.award)
        return retval
        
-    def show1x1QSOs(self, qsolist):
-        textData =[]
-        qkeys = qsolist.keys()
-        #print('qkeys = %s'%(qkeys))
-        for qkey in qsolist:
-            if (len(qsolist[qkey])):
-                qcount = len(qsolist[qkey])
-                for i in range(qcount):
-                   print('%s(%d): %s'%(qkey,i,qsolist[qkey][i]))
-
     def appMain(self, callsign, qsolist):
         callList = self.combineListoflists([COMMONCALLS,
                                             SHOWMECALLS,
@@ -651,7 +694,7 @@ class ShowMe(MOQPCategory):
                           
             else:
                 print('log file %s has errors' \
-				%(pathname))
+                %(pathname))
         else:
             print(\
             'File %s does not exist or is not in CABRILLO Format'\
