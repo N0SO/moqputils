@@ -10,12 +10,15 @@ Update History:
 * Wed Jan 08 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.2.2 - Lots of tweaks while processing 2019 MOQP files:
 - Added code to category processing to handle DIGITAL               
+* Thu Jan 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.2.3 - Added frequency band verifiaction to qso_valid method.
 """
 from logsummary import *
 from moqpmults import *
+from generalaward import GenAward
 import os
 
-VERSION = '0.2.2' 
+VERSION = '0.2.3' 
 FILELIST = './'
 ARGS = None
 
@@ -444,9 +447,14 @@ class MOQPCategory(LogSummary):
        qsovalid = True
        valid_date_chars = set('0123456789/-')
        valid_call_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-')
+       genaward = GenAward()
        #if ( qso['FREQ'].isnumeric() ):
        if ( self.is_number(qso['FREQ']) ):
-          pass
+          if (genaward.getBand(qso['FREQ'])):
+              pass
+          else:
+              errorData.append( \
+              ('QSO FREQ Parameter out of band: %s'%(qso['FREQ'])) )
        else:
           errorData.append( ('QSO FREQ Parameter invalid: %s'%(qso['FREQ'])) )
           qsovalid = False
