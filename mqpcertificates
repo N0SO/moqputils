@@ -22,7 +22,11 @@ Update History:
 - MISSOURI for 2019) Need to write method to prevent 
 - same call being used for both awards and account for
 - bonus stations.
-
+* Thu Jan 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.2.0 - Split each award class into a separate file.
+- Renamed showme script (this file) to mqpcertificates
+- Created moqputils/moqpcertificates.py for command
+- line processing.
 """
 
 import os.path
@@ -41,11 +45,12 @@ for mypath in DEVMODPATH:
 #print('Python path = %s'%(sys.path))
         
 DESCRIPTION = \
-"""showme  - Determine which Missouri QSO Party stations 
-          qualify for the ShowMe and/or MISSOURI awards
-
+"""mqpcertificates  
+      - Determine which Missouri QSO Party stations 
+        qualify for the ShowMe and/or MISSOURI awards.
+        Also captures BONUS stations.
                 
-          Based on 2019 MOQP Rules
+        Based on 2019 MOQP Rules
 """
 
 EPILOG = \
@@ -73,8 +78,8 @@ if __name__ == '__main__':
    
    if (args.args.inputpath):
        print(args.args.inputpath)
-       from showmeaward import ShowMe
-       app = ShowMe(args.args.inputpath)
+       from moqpcertificates import MOQPCertificates
+       app = MOQPCertificates(args.args.inputpath)
    else:
        from showme_ui import ui
        app=ui()
