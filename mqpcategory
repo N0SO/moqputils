@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 mqpcategory  - Determine which Missouri QSO Party Award
                category a Cabrillo Format log file is in.

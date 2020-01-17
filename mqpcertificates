@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 """
 ShowMe  - Determine which Missouri QSO Party stations 
           qualify for the ShowMe and/or MISSOURI awards

@@ -120,16 +120,7 @@ class GenAward():
     The caller is responsible for copying the data from
     sourceElement[i] to targetElement, then setting 
     sourceElement[i] = None
-    def parseSingleKey(self, sourceElement, targetElement):
-        retval = -1
-        #print(sourceElement, targetElement)
-        if (targetElement == None):
-            for i in range(3):
-                if (sourceElement[i]):
-                    retval = i
-                    break
-        return retval
-        """
+    """
     def parseSingleKey(self, call, AKey, qsolist):
         #print(self.Award[AKey][0])
         if (self.Award[AKey][0]['CALL'] == None):
@@ -232,11 +223,14 @@ class GenAward():
            band = '15M'
        elif (nfreq >= 28000.0 and nfreq <= 29700.0):
            band = '10M'
-       elif (nfreq >= 50000.0 and nfreq <= 54000.0):
+       elif ( (nfreq >= 50000.0 and nfreq <= 54000.0) or \
+               (nfreq == 50.0) ):
            band = '6M'
-       elif (nfreq >= 144000.0 and nfreq <= 148000.0):
+       elif ( (nfreq >= 144000.0 and nfreq <= 148000.0) or \
+              (nfreq == 144.0) ):
            band = '2M'
-       elif (nfreq >= 420000.0 and nfreq <= 450000.0):
+       elif ( (nfreq >= 420000.0 and nfreq <= 450000.0) or \
+              (nfreq == 432.0) ):
            band = '432'
 
        return band

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 """
 loadlogs - Load cabrillo log files into SQL database.
                 

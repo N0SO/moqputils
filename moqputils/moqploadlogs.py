@@ -1,7 +1,7 @@
 from moqpcategory import MOQPCategory
 import os
 from moqpdbconfig import *
-from showmeaward import BothAwards
+from bothawards import BothAwards
 import MySQLdb
 
 
@@ -171,12 +171,12 @@ class MOQPLoadLogs(MOQPCategory):
         return qsoID
 
     def writeSummary(self, db, logID, log, smresult):
-        if (smresult['BONUS']['W0MA'] == 'W0MA'):
+        if (smresult['BONUS']['W0MA']):
             w0mabonus = 100
         else:
             w0mabonus = 0
 
-        if (smresult['BONUS']['K0GQ'] == 'K0GQ'):
+        if (smresult['BONUS']['K0GQ']):
             k0gqbonus = 100
         else:
             k0gqbonus = 0
