@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from moqpcategory import MOQPCategory
 import os
 from moqpdbconfig import *
@@ -37,7 +38,7 @@ class MOQPLoadLogs(MOQPCategory):
                       qso['URQTH']))
             
     def show_details(self, log):
-        print(log.keys())
+        #print(log.keys())
         self.show_header_details(log['HEADER'])
         self.show_qso_details(log['QSOLIST'])
         print('CATEGORY: %s'%(log['MOQPCAT']['MOQPCAT']))
@@ -62,6 +63,18 @@ class MOQPLoadLogs(MOQPCategory):
        
     def write_header(self, db, header, catg, qsostatus):
         logID = None
+
+        if (len(header['CREATED-BY']) > 50):
+            #limit CREATED-BY to 50 chars
+            header['CREATED-BY'] = header['CREATED-BY'][:49]
+
+        if (len(header['CLUB']) > 50):
+            #limit CLUB NAME to 120 chars
+            header['CLUB'] = header['CLUB'][:119]
+
+        if (len(header['SOAPBOX']) >120):
+            #Limit soapbox to 120
+            header['SOAPBOX'] = header['SOAPBOX'][:119] 
 
         query = """INSERT INTO logheader(START,
                       CALLSIGN,
@@ -181,7 +194,7 @@ class MOQPLoadLogs(MOQPCategory):
         else:
             k0gqbonus = 0
 
-        cabbonus = 0
+        cabbonus = 100
 
         if (log['MOQPCAT']['DIGITAL'] == 'DIGITAL'):
             digital_log = True
@@ -296,7 +309,7 @@ class MOQPLoadLogs(MOQPCategory):
                 print('Error writing QSO data!')
                 break
             
-    def appMain(self, fileName):
+    def oneFile(self, fileName):
         log = self.parseLog(fileName)
 #        print(log)
 #        dir(log)
@@ -305,8 +318,8 @@ class MOQPLoadLogs(MOQPCategory):
             smresult = (bawards.appMain(\
                         log['HEADER']['CALLSIGN'],
                         log['QSOLIST']))
-            print(dir(smresult))
-            print(smresult)
+            #print(dir(smresult))
+            #print(smresult)
             print('MOQPLoadLogs: Importing %s...'%(fileName))    
             self.show_details(log)
             db = self.dbconnect(HOSTNAME, USER, PW, DBNAME)
@@ -324,6 +337,22 @@ class MOQPLoadLogs(MOQPCategory):
                 self.writeMO(db, logID, smresult['MO'])
             cursor.close()
             db.close()
+
+    def fileList(self, pathname):
+        for (dirName, subdirList, fileList) in os.walk(pathname, 
+                                                   topdown=True):
+           if (fileList != ''): 
+               for fileName in fileList:
+                   fullPath = ('%s/%s'%(dirName, fileName))
+                   #print('Loading: %s'%(fullPath))
+                   self.oneFile(fullPath)
+
+    def appMain(self, pathname):
+       if (os.path.isfile(pathname)):
+          self.oneFile(pathname)
+       else:
+          self.fileList(pathname)
+
 
 if __name__ == '__main__':
    args = get_args()
