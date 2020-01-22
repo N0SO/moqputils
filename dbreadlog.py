@@ -3,6 +3,9 @@ import MySQLdb
 import os.path
 import sys
 from datetime import datetime
+from datetime import date
+from datetime import time
+from datetime import timedelta
 
 VERSION = '0.0.2' 
 
@@ -16,6 +19,7 @@ for mypath in DEVMODPATH:
 #print('Python path = %s'%(sys.path))
 
 from moqpdbconfig import *
+from genaward import GenAward
 
 class MOQPDBUtils():
 
@@ -85,6 +89,128 @@ class MOQPDBUtils():
         thislogqsos = self.read_query(query)
 
         return thislogqsos
+        
+    def qsoqslCheck(self, myqso, urqso):
+        qslstat = None
+        gutil = GenAward()
+        """
+        TBD - compare date/time, BAND, MODE, REPORT, QTH
+        """
+        myqtime = self.logtimes(myqso['DATE'], myqso['TIME'])
+        urqtime = self.logtimes(urqso['DATE'], urqso['TIME'])
+        myqband = gutil.getBand(myqso['FREQ'])
+        urqband = gutil.getBand(urqso['FREQ'])
+        
+        if (myqtime >= urqtime):
+            timediff = myqtime - urqtime
+        else:
+            timediff = urqtime - myqtime
+        
+        if ( (timediff <= 20) and \
+             (myqband == urqband) and \
+             (myqso['MODE'] == urqso['MODE']) and \
+             (myqso['URCALL'] == urqso['MYCALL']) and \             
+             (myqso['QTH'] == urqso['QTH']) and \
+             (myqso['URREPORT'] != '') )
+            qslstat = True
+        
+        return qslstat
+        
+    def logqslCheck(self, call, loglist = None):
+        statList = None
+
+        if (loglist):
+            all_logs = loglist
+        else:
+            query =  "SELECT `ID`, `CALLSIGN` FROM `logheader` WHERE 1"
+            all_logs = self.read_query(query)
+        
+        callID = self.CallinLogs(call, all_logs)
+        
+        if (callID):
+            myqsos = self.fetchlogQSOS(callID)
+            if (myqsos):
+                statList = []
+                for qso in myqsos:
+                    qsostat = dict()
+                    nextCall = qso['URCALL']
+                    nextID = self.CallinLogs(nextCall, all_logs)
+                    if (nextID):
+                        print('Fetching QSOs for %s, LOGID %d'%(qso['URCALL'], nextID))
+                        query= ("SELECT * FROM `QSOS` WHERE ( (`LOGID` = %d) AND (`URCALL` IN ('%s')) )"%(nextID, call) )
+                        print(query)
+                        urqsos = mydb.read_query(query)
+                        if (urqsos):
+                            print('Source QSO from %s:\n%s'%(call, qso))
+                            print('Possible QSLs from %s:\n%s'%(qso['URCALL'], urqsos))
+                            """
+                            Code to determine/mark QSLs and set QSO VALID status goes here.
+                            Need to determine: Is QSO already QSL? - mark valid if so
+                            verify DATE/TIME, BAND, MODE, REPORT, QTH - mark QSL and valid if match
+                            Mark invalid if no match
+                            """
+                            qslstatus = None
+                            qslIndex = 0
+                            while ( (qslstatus == None) and \
+                                    (qslIndex < len(urqsos)) ):
+                                qslstatus = self.qsoqslCheck(qso,
+                                                urqsos[qslIndex])
+                                if (qslstatus):
+                                    qsostat['STATUS']='QSL'
+                                else:
+                                    qsostat['STATUS']='BUSTED'
+                                qsostat['MYQSO'] = qso['ID']
+                                qsostst['URQSO'] = urqsos[qslIndex]['ID']
+                                statList.append(qsostat)
+                                
+                                qslIndex += 1
+                                    
+                        else: #(if urqsos)
+                        """
+                        No qsos for nextCall in database.log for QSO with station qso['URCALL']
+                        """
+                        print('For %s QSO %d, No matching QSOS for station %s in database.'%(call, qso['ID'], nextCall))
+                        qsostat['STATUS']='NO URCALL QSOS'
+                        qsostat['MYQSO'] = qso['ID']
+                        qsostst['URQSO'] = None
+                        statList.append(qsostat)
+                        
+                        
+                    else: #(if nextID)
+                        """
+                        No log for QSO with station qso['URCALL']
+                        """
+                        print('For %s QSO %d, No log for station %s in database.'%(call, qso['ID'], nextCall))
+                        qsostat['STATUS']='NO URCALL LOG'
+                        qsostat['MYQSO'] = qso['ID']
+                        qsostst['URQSO'] = None
+                        statList.append(qsostat)
+            
+            else: #(if myqsos)
+                """
+                The call for supplier parameter call is in
+                the database, but no QSOs are recorded.
+                Return None for status
+                """
+                print('No QSOS for %s in database.'%(call))
+        
+        else: #(if callID)   
+            """
+            No log for supplied parameter call in the database.
+            Return None status
+            """
+            print('%s not in database.'%(call))
+            
+        return statList
+        
+        
+    def CallinLogs(self, call, loglist):
+        nextID = None
+        for nextlog in all_logs:
+          if (nextlog['CALLSIGN'] == call):
+            nextID = nextlog['ID']
+            break
+        return nextID
 
     def logtimes(self, logdate, logtime):
        datefmts = ['%Y-%m-%d', '%Y/%m/%d', '%Y%m%d']
@@ -126,24 +252,6 @@ if __name__ == '__main__':
     print(testobj)
     exit()
     """
-    """
-    mydb = MySQLdb.connect (
-      host=HOSTNAME,
-      user=USER,
-      passwd=PW,
-      database=DBNAME
-    )
-
-    #mycursor = mydb.cursor()
-    mycursor = mydb.cursor(MySQLdb.cursors.DictCursor)
-    
-    
-
-    mycursor.execute("SELECT `ID`, `CALLSIGN` FROM `logheader` WHERE 1")
-
-    all_logs = mycursor.fetchall()
-    !!!PUT TRIPLETICKS HERE!!!
-    """
     
     mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
     mydb.setCursorDict()
@@ -153,31 +261,14 @@ if __name__ == '__main__':
     #print(all_logs)
 
     for thislog in all_logs:
-        #print('thislog = %s'%(thislog))
-        thislogqsos = mydb.fetchlogQSOS(thislog['ID'])
-        #print(thislogqsos)
-        #exit()
-        nextID = None
-        for qso in thislogqsos:
-            for nextlog in all_logs:
-              if (nextlog['CALLSIGN'] == qso['URCALL']):
-                nextID = nextlog['ID']
-                query= ("SELECT * FROM `QSOS` WHERE ( (`LOGID` = %d) AND (`URCALL` IN ('%s')) )"%(nextID, thislog['CALLSIGN']) )
-                print(query)
-                qslqsos = mydb.read_query(query)
-                print(qso)
-                print(qslqsos)
-                exit()
+        qslresult = mydb.logqslCheck(thislog['CALLSIGN'], 
+                                                    all_logs)
 
-                for qsl in qslqsos:
-                    if qsl['URCALL'] == thislog['CALLSIGN']:
-                        print('%s\n%s'%(qsl, qso))
-        if (nextID):
-            print('Fetching QSOs for %s, LOGID %d'%(qso['URCALL'], nextID))
-            break
-        else:
-            print('%s not in database.'%(qso['URCALL']))
-        #query = ("SELECT * FROM `QSOS` WHERE `URCALL` IN (`%s`)"%(thislog['CALLSIGN']) )
-        query = ("SELECT * FROM `QSOS` WHERE `LOGID` = %d"%(thislog['ID']) )
-        break 
-
+        if (qslresult):
+            print('STATION %s, LOGID %d:'%(thislog['CALLSIGN'],
+                                           thislog['ID'] ))
+            for qsl in qslresult:
+                print('STATUS: %s\tMYQSO: %d\tURQSO: %d'% \
+                       (qsl['STATUS'],
+                        qsl['MYQSO'],
+                        qsl['URQSO'] ))
