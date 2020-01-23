@@ -19,7 +19,7 @@ for mypath in DEVMODPATH:
 #print('Python path = %s'%(sys.path))
 
 from moqpdbconfig import *
-from genaward import GenAward
+from generalaward import GenAward
 
 class MOQPDBUtils():
 
@@ -89,6 +89,21 @@ class MOQPDBUtils():
         thislogqsos = self.read_query(query)
 
         return thislogqsos
+
+    def padtime(self, timestg):
+        count = len(timestg)
+        if (count < 4):
+            pads = 4 - count
+            padtime =''
+            for i in range(pads):
+                padtime += '0'
+            padtime += timestg
+        elif (count > 4):
+            padtime = timestg[:3]
+        else:
+            padtime = timestg
+        return padtime
+
         
     def qsoqslCheck(self, myqso, urqso):
         qslstat = None
@@ -96,22 +111,38 @@ class MOQPDBUtils():
         """
         TBD - compare date/time, BAND, MODE, REPORT, QTH
         """
+
+        count = len(myqso['TIME'])
+        if (count != 4):
+            newtime = self.padtime(myqso['TIME'])
+            print('Time string wrong length - changing %s to %s...'%(myqso['TIME'], newtime))
+            myqso['TIME'] = newtime
+            
+        count = len(urqso['TIME'])
+        if (count != 4):
+            newtime = self.padtime(urqso['TIME'])
+            print('Time string wrong length - changing %s to %s...'%(urqso['TIME'], newtime))
+            urqso['TIME'] = newtime
+            
         myqtime = self.logtimes(myqso['DATE'], myqso['TIME'])
         urqtime = self.logtimes(urqso['DATE'], urqso['TIME'])
         myqband = gutil.getBand(myqso['FREQ'])
         urqband = gutil.getBand(urqso['FREQ'])
         
-        if (myqtime >= urqtime):
+        if (myqtime > urqtime):
             timediff = myqtime - urqtime
         else:
             timediff = urqtime - myqtime
         
-        if ( (timediff <= 20) and \
+        print(timediff)
+        print(timedelta(minutes=45))
+        
+        if ( (timediff < timedelta(minutes=30) ) and \
              (myqband == urqband) and \
              (myqso['MODE'] == urqso['MODE']) and \
-             (myqso['URCALL'] == urqso['MYCALL']) and \             
-             (myqso['QTH'] == urqso['QTH']) and \
-             (myqso['URREPORT'] != '') )
+             (myqso['URCALL'] == urqso['MYCALL']) and \
+             (myqso['URQTH'] == urqso['MYQTH']) and \
+             (myqso['URREPORT'] != '') ):
             qslstat = True
         
         return qslstat
@@ -157,23 +188,23 @@ class MOQPDBUtils():
                                                 urqsos[qslIndex])
                                 if (qslstatus):
                                     qsostat['STATUS']='QSL'
-                                else:
-                                    qsostat['STATUS']='BUSTED'
-                                qsostat['MYQSO'] = qso['ID']
-                                qsostst['URQSO'] = urqsos[qslIndex]['ID']
-                                statList.append(qsostat)
+                                    qsostat['MYQSO'] = qso
+                                    qsostat['URQSO'] = urqsos[qslIndex]
+                                    statList.append(qsostat)
+                                #else:
+                                #    qsostat['STATUS']='BUSTED'
                                 
                                 qslIndex += 1
                                     
                         else: #(if urqsos)
-                        """
-                        No qsos for nextCall in database.log for QSO with station qso['URCALL']
-                        """
-                        print('For %s QSO %d, No matching QSOS for station %s in database.'%(call, qso['ID'], nextCall))
-                        qsostat['STATUS']='NO URCALL QSOS'
-                        qsostat['MYQSO'] = qso['ID']
-                        qsostst['URQSO'] = None
-                        statList.append(qsostat)
+                            """
+                            No qsos for nextCall in database.log for QSO with station qso['URCALL']
+                            """
+                            print('For %s QSO %d, No matching QSOS for station %s in database.'%(call, qso['ID'], nextCall))
+                            qsostat['STATUS']='NO URCALL QSOS'
+                            qsostat['MYQSO'] = qso
+                            qsostat['URQSO'] = None
+                            statList.append(qsostat)
                         
                         
                     else: #(if nextID)
@@ -182,8 +213,8 @@ class MOQPDBUtils():
                         """
                         print('For %s QSO %d, No log for station %s in database.'%(call, qso['ID'], nextCall))
                         qsostat['STATUS']='NO URCALL LOG'
-                        qsostat['MYQSO'] = qso['ID']
-                        qsostst['URQSO'] = None
+                        qsostat['MYQSO'] = qso
+                        qsostat['URQSO'] = None
                         statList.append(qsostat)
             
             else: #(if myqsos)
@@ -206,27 +237,27 @@ class MOQPDBUtils():
         
     def CallinLogs(self, call, loglist):
         nextID = None
-        for nextlog in all_logs:
+        for nextlog in loglist:
           if (nextlog['CALLSIGN'] == call):
             nextID = nextlog['ID']
             break
         return nextID
 
     def logtimes(self, logdate, logtime):
-       datefmts = ['%Y-%m-%d', '%Y/%m/%d', '%Y%m%d']
+       datefmts = ['%Y-%m-%d', '%Y/%m/%d', '%Y%m%d', '%m-%d-%Y', '%m/%d/%Y']
        timefmts = ['%H%M', '%H:%M', '%H %M']
        logtimeobj = None
 
        #Date
        d=0
-       while (d<2):
+       while (d<5):
            try:
                datefstg = datefmts[d]
                dateobj=datetime.strptime(logdate, datefstg)
                #print(dateobj)
-               d=3
+               d=5
            except:
-               print('Format %s did not work for date %s.'%(datefstg, logdate))
+               #print('Format %s did not work for date %s.'%(datefstg, logdate))
                d += 1
 
        #time
@@ -238,7 +269,7 @@ class MOQPDBUtils():
                #print(timeobj)
                t=3
            except:
-              print('Format %s did not work for time %s.'%(timefstg, logtime))
+              #print('Format %s did not work for time %s.'%(timefstg, logtime))
               t += 1
 
        logtimeobj = datetime.strptime(logdate+' '+logtime, datefstg+' '+timefstg)
@@ -256,6 +287,7 @@ if __name__ == '__main__':
     mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
     mydb.setCursorDict()
     
+    """
     query =  "SELECT `ID`, `CALLSIGN` FROM `logheader` WHERE 1"
     all_logs = mydb.read_query(query)
     #print(all_logs)
@@ -263,12 +295,43 @@ if __name__ == '__main__':
     for thislog in all_logs:
         qslresult = mydb.logqslCheck(thislog['CALLSIGN'], 
                                                     all_logs)
-
-        if (qslresult):
-            print('STATION %s, LOGID %d:'%(thislog['CALLSIGN'],
-                                           thislog['ID'] ))
+    """
+    qslresult = mydb.logqslCheck('W0S')
+    if (qslresult):
+#            print('STATION %s, LOGID %d:'%(thislog['CALLSIGN'],
+#                                           thislog['ID'] ))
             for qsl in qslresult:
-                print('STATUS: %s\tMYQSO: %d\tURQSO: %d'% \
-                       (qsl['STATUS'],
-                        qsl['MYQSO'],
-                        qsl['URQSO'] ))
+#                print('STATUS: %s\tMYQSO: %s\tURQSO: %s'% \
+#                       (qsl['STATUS'],
+#                        qsl['MYQSO'],
+#                        qsl['URQSO'] ))
+                print('%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s'%( \
+                             qsl['MYQSO']['ID'],
+                             qsl['MYQSO']['FREQ'],                             
+                             qsl['MYQSO']['MODE'],
+                             qsl['MYQSO']['DATE'],
+                             qsl['MYQSO']['TIME'],
+                             qsl['MYQSO']['MYCALL'],
+                             qsl['MYQSO']['MYREPORT'],
+                             qsl['MYQSO']['MYQTH'],
+                             qsl['MYQSO']['URCALL'],
+                             qsl['MYQSO']['URREPORT'],
+                             qsl['MYQSO']['URQTH'],
+                             qsl['STATUS']))
+                if (qsl['STATUS'] == 'QSL'):
+                    print('%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n'%( \
+                             qsl['URQSO']['ID'],
+                             qsl['URQSO']['FREQ'],                             
+                             qsl['URQSO']['MODE'],
+                             qsl['URQSO']['DATE'],
+                             qsl['URQSO']['TIME'],
+                             qsl['URQSO']['MYCALL'],
+                             qsl['URQSO']['MYREPORT'],
+                             qsl['URQSO']['MYQTH'],
+                             qsl['URQSO']['URCALL'],
+                             qsl['URQSO']['URREPORT'],
+                             qsl['URQSO']['URQTH']))
+                else:
+                    print('%s\n'%(qsl['STATUS'])) 
+
+
