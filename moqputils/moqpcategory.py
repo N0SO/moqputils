@@ -12,13 +12,17 @@ Update History:
 - Added code to category processing to handle DIGITAL               
 * Thu Jan 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.2.3 - Added frequency band verifiaction to qso_valid method.
+* Fri Jan 24 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.3.0 - Copied method processQSOList from logsummay.py.
+- This ended dependancy on logsummary in preparation for
+- making a child class to read all QSO data from SQL database.
 """
-from logsummary import *
+from CabrilloUtils import *
 from moqpmults import *
 from generalaward import GenAward
 import os
 
-VERSION = '0.2.3' 
+VERSION = '0.3.0' 
 FILELIST = './'
 ARGS = None
 
@@ -48,7 +52,7 @@ COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'MULTS\tSCORE\tMOQP CATEGORY\tDIGITAL\tVHF\tROOKIE\n'
 
 
-class MOQPCategory(LogSummary):
+class MOQPCategory(CabrilloUtils):
 
     QSOTAGS = ['FREQ', 'MODE', 'DATE', 'TIME', 'MYCALL',
                'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH']
@@ -148,6 +152,45 @@ class MOQPCategory(LogSummary):
        thislog['ERRORS'] = errorData
        #print(thislog['MULTS'], mults.sumMults())
        return thislog
+
+    def processQSOList(self,  data):
+      """
+      Process and return summary data from a list of
+      QSO dictionary objects.
+      """
+      summary = dict()
+      summary['QSOS'] = 0
+      summary['CW'] = 0
+      summary['PH'] = 0
+      summary['VHF'] = 0
+      summary['DG'] = 0
+      
+      for thisqso in data:
+      
+         summary['QSOS'] += 1
+                        
+         try:
+             tfreq = thisqso['FREQ']
+             freq = float(tfreq)
+         except:
+             freq = 0.0
+         if ((freq >= 144000.0) or (tfreq in self.VHFFREQ) ):
+             summary['VHF'] += 1
+                                   
+         mode = thisqso['MODE'].upper()
+         if ('CW' in mode):
+             summary['CW'] += 1
+         elif (mode in self.PHONEMODES):
+             summary['PH'] += 1
+         elif (mode in self.DIGIMODES):
+             summary['DG'] += 1
+         else:
+             badmodeline = ('QSO:')
+             for tag in self.QSOTAGS:
+                 badmodeline += (' %s'%(data[tag]))
+             print('UNDEFINED MODE: %s -- QSO data = %s'%(mode, badmodeline))
+
+      return  summary
 
     def processLog(self, fname):
        category = None
