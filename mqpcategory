@@ -54,6 +54,8 @@ class get_args():
         parser.add_argument('-v', '--version', action='version', version = VERSION)
         parser.add_argument('-c', '--callsign', default=None,
             help='CALLSIGN in MOQP database to summarize.')
+        parser.add_argument('-a', '--allcalls', default='allcalls',
+            help='Summarize all logs in MOQP database.')
         parser.add_argument('-i', '--inputpath', default=None,
             help='Specifies the path to the folder that contains the log files to summarize.')
         return parser.parse_args()
@@ -69,6 +71,9 @@ if __name__ == '__main__':
    elif (args.args.callsign):
        from moqpdbcategory import MOQPDBCategory
        app = MOQPDBCategory(args.args.callsign)
+   elif (args.args.allcalls):
+       from moqpdbcategory import MOQPDBCategory
+       app = MOQPDBCategory('allcalls')
    else:
        from gui_moqpcategory import gui_MOQPCategory
        app=gui_MOQPCategory()

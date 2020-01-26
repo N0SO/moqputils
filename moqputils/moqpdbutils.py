@@ -7,7 +7,7 @@ from datetime import date
 from datetime import time
 from datetime import timedelta
 
-VERSION = '0.0.2' 
+VERSION = '0.0.3' 
 
 DEVMODPATH = ['moqputils', 'cabrilloutils']
 # If the development module source paths exist, 
@@ -20,6 +20,8 @@ for mypath in DEVMODPATH:
 
 from moqpdbconfig import *
 from generalaward import GenAward
+from CabrilloUtils import CabrilloUtils
+
 
 class MOQPDBUtils():
 
@@ -137,7 +139,9 @@ class MOQPDBUtils():
         
     def qsoqslCheck(self, myqso, urqso):
         qslstat = False
+        logerrors = []
         gutil = GenAward()
+        cabutil = CabrilloUtils()
         """
         TBD - compare date/time, BAND, MODE, REPORT, QTH
         """
@@ -158,23 +162,41 @@ class MOQPDBUtils():
         urqtime = self.logtimes(urqso['DATE'], urqso['TIME'])
         myqband = gutil.getBand(myqso['FREQ'])
         urqband = gutil.getBand(urqso['FREQ'])
-        
+        #temp = urqso['MYCALL']
+        urqsomycall = cabutil.stripCallsign(urqso['MYCALL'])
+        #temp = myqso['URCALL']
+        myqsourcall = cabutil.stripCallsign(myqso['URCALL'])
+
         if (myqtime > urqtime):
             timediff = myqtime - urqtime
         else:
             timediff = urqtime - myqtime
         
-        #print(timediff)
-        #print(timedelta(minutes=45))
+        print('MYQSO: %s\nURQSO: %s'%(myqso, urqso))
+        print('Time difference: %s, MYCALL: %s, URCALL:%s'%(timediff, myqsourcall, urqsomycall))
         
         if ( (timediff < timedelta(minutes=30) ) and \
              (myqband == urqband) and \
              (myqso['MODE'] == urqso['MODE']) and \
-             (myqso['URCALL'] == urqso['MYCALL']) and \
+             (myqsourcall == urqsomycall) and \
              (myqso['URQTH'] == urqso['MYQTH']) and \
              (myqso['URREPORT'] != '') ):
             qslstat = True
-        
+            print('QSL!\n')
+        else:
+            if (timediff < timedelta(minutes=30)):
+                logerrors.append('Log time diff: %s greater than 30 min.'%(timediff))
+            if (myqband != urqband):
+                logerrors.append('BAND does not match')
+            if (myqsourcall != urqsomycall):
+                logerrors.append('CALLSIGN %s in URREPORT does not match CALLSIGN %s in MYREPORT.'%(myqsourcall, urqsomycall))
+            if (myqso['URQTH'] != urqso['MYQTH']):
+                logerrors.append('QTH %s in URREPORT does not match QTH %s in MYREPORT'%(myqso['URQTH'], urqso['MYQTH']))
+            if (myqso['URREPORT'] == ''):
+                logerrors.append('REPORT %s is looks bogus'%(myqso['URREPORT']))
+            for line in logerrors:
+                print(line)    
+            print('NO MATCH\n')        
         return qslstat
         
     def logqslCheck(self, call, loglist = None):
@@ -337,7 +359,7 @@ class MOQPDBUtils():
             logID = nextlog['ID']
             break
         return logID
-        
+
     def showQSO(self, qso):
         fmt = '%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s'
         qsoLine = (fmt %( qso['ID'],

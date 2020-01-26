@@ -84,9 +84,11 @@ class MOQPDBCategory(MOQPCategory):
        """
        fullSummary = None
        logsummary = self.processLogdict(callsign)
-       #print( logsummary['ERRORS'] )
+       #print('parseLog: parsing errors: \n%s'%(logsummary['ERRORS'] ))
+       #print(logsummary)
        if (logsummary):
           moqpcat = self.determineMOQPCatdict(logsummary)
+          #print(moqpcat)
           Score = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
           fullSummary = dict()
           fullSummary['HEADER'] = logsummary['HEADER']
@@ -134,24 +136,67 @@ class MOQPDBCategory(MOQPCategory):
         mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
         mydb.setCursorDict()
         mults = MOQPMults()
-        #Need some test here to make sure DB opened correctly.
         #Fetch log header
         logID = mydb.CallinLogDB(callsign)
-        if (callID):
+        if (logID):
             log=dict()
-            header = mydb.read_query( \
-                "SELECT * FROM `logheader` WHERE `ID=%s`"%(logID))
-            qsos = mydb.read_query("SELECT * FROM `QSOS` WHERE ( (`LOGID=%S`) AND  (`VALID`=%s`) )"%(logID, '1'))
+            dbheader = mydb.read_query( \
+                "SELECT * FROM `logheader` WHERE ID=%d"%(logID))
+            header = self.getLogHeader(dbheader)
+            #print(header)
+            qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=%s) )"%(logID, 1))
             for qso in qsos:
                 mults.setMult(qso['URQTH'])
+            #print('mults = %d'%(mults.sumMults()))
             log['HEADER'] = header
             log['QSOLIST'] = qsos
             log['MULTS'] = mults.sumMults()
             log['ERRORS'] = []
-            
         return log
+
+    def getLogHeader(self, dbheader):
+        header = self.makeHEADERdict()
+        header['START-OF-LOG'] = dbheader[0]['START']
+        header['CALLSIGN'] = dbheader[0]['CALLSIGN']
+        header['CREATED-BY'] = dbheader[0]['CREATEDBY']
+        header['LOCATION'] = dbheader[0]['LOCATION']
+        header['CONTEST'] = dbheader[0]['CONTEST']
+        header['NAME'] = dbheader[0]['NAME']
+        header['ADDRESS'] = dbheader[0]['ADDRESS']
+        header['ADDRESS-CITY'] = dbheader[0]['CITY']
+        header['ADDRESS-STATE-PROVINCE'] = dbheader[0]['STATEPROV']
+        header['ADDRESS-POSTALCODE'] = dbheader[0]['ZIPCODE']
+        header['ADDRESS-COUNTRY'] = dbheader[0]['COUNTRY']
+        header['EMAIL'] = dbheader[0]['EMAIL']
+        header['CATEGORY-ASSISTED'] = dbheader[0]['CATASSISTED']
+        header['CATEGORY-BAND'] = dbheader[0]['CATBAND']
+        header['CATEGORY-MODE'] = dbheader[0]['CATMODE']
+        header['CATEGORY-OPERATOR'] = dbheader[0]['CATOPERATOR']
+        header['CATEGORY-OVERLAY'] = dbheader[0]['CATOVERLAY']
+        header['CATEGORY-POWER'] = dbheader[0]['CATPOWER']
+        header['CATEGORY-STATION'] = dbheader[0]['CATSTATION']
+        header['CATEGORY-TRANSMITTER'] = dbheader[0]['CATXMITTER']
+        header['CATEGORY-TIME'] = ''
+        header['CERTIFICATE'] = dbheader[0]['CERTIFICATE']
+        header['OPERATORS'] = dbheader[0]['OPERATORS']
+        header['CLAIMED-SCORE'] = dbheader[0]['CLAIMEDSCORE']
+        header['CLUB'] = dbheader[0]['CLUB']
+        header['IOTA-ISLAND-NAME'] = dbheader[0]['IOTAISLANDNAME']
+        header['OFFTIME'] = dbheader[0]['OFFTIME']
+        header['SOAPBOX'] = dbheader[0]['SOAPBOX']
+        return header
 
     def appMain(self, callsign):
        csvdata = 'Nothing.'
-       csvdata = self.exportcsvfile(callsign)
-       print(csvdata)
+       if (callsign == 'allcalls'):
+           mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+           mydb.setCursorDict()
+           loglist = mydb.read_query( \
+              "SELECT ID, CALLSIGN FROM logheader WHERE 1")
+           for nextlog in loglist:
+               print('callsign = %s'%(nextlog['CALLSIGN']))
+               csvdata = self.exportcsvfile(nextlog['CALLSIGN'])        
+               print(csvdata)
+       else:
+           csvdata = self.exportcsvfile(callsign)
+           print(csvdata)
