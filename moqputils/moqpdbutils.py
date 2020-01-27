@@ -19,8 +19,9 @@ for mypath in DEVMODPATH:
 #print('Python path = %s'%(sys.path))
 
 from moqpdbconfig import *
-from generalaward import GenAward
+#from generalaward import GenAward
 from CabrilloUtils import CabrilloUtils
+from bonusaward import BonusAward
 
 
 class MOQPDBUtils():
@@ -122,6 +123,62 @@ class MOQPDBUtils():
         theseqsos = self.read_query(query)
         return theseqsos
 
+    def fetchLogHeader(self, call):
+        header = None
+        logID = self.CallinLogDB(call)
+        if (logID):
+            header = self.read_query( \
+                "SELECT * FROM `logheader` WHERE ID=%d"%(logID))
+        return header
+
+    def fetchCABHeader(self, call):
+        """ 
+        Fetch log file header for call from database.
+        """
+        header = None
+        dheader = None
+        dbheader = self.fetchLogHeader(call)
+        if dbheader:
+            cab = CabrilloUtils()
+            header = cab.makeHEADERdict()
+            header['START-OF-LOG'] = dbheader[0]['START']
+            header['CALLSIGN'] = dbheader[0]['CALLSIGN']
+            header['CREATED-BY'] = dbheader[0]['CREATEDBY']
+            header['LOCATION'] = dbheader[0]['LOCATION']
+            header['CONTEST'] = dbheader[0]['CONTEST']
+            header['NAME'] = dbheader[0]['NAME']
+            header['ADDRESS'] = dbheader[0]['ADDRESS']
+            header['ADDRESS-CITY'] = dbheader[0]['CITY']
+            header['ADDRESS-STATE-PROVINCE'] = dbheader[0]['STATEPROV']
+            header['ADDRESS-POSTALCODE'] = dbheader[0]['ZIPCODE']
+            header['ADDRESS-COUNTRY'] = dbheader[0]['COUNTRY']
+            header['EMAIL'] = dbheader[0]['EMAIL']
+            header['CATEGORY-ASSISTED'] = dbheader[0]['CATASSISTED']
+            header['CATEGORY-BAND'] = dbheader[0]['CATBAND']
+            header['CATEGORY-MODE'] = dbheader[0]['CATMODE']
+            header['CATEGORY-OPERATOR'] = dbheader[0]['CATOPERATOR']
+            header['CATEGORY-OVERLAY'] = dbheader[0]['CATOVERLAY']
+            header['CATEGORY-POWER'] = dbheader[0]['CATPOWER']
+            header['CATEGORY-STATION'] = dbheader[0]['CATSTATION']
+            header['CATEGORY-TRANSMITTER'] = dbheader[0]['CATXMITTER']
+            header['CATEGORY-TIME'] = ''
+            header['CERTIFICATE'] = dbheader[0]['CERTIFICATE']
+            header['OPERATORS'] = dbheader[0]['OPERATORS']
+            header['CLAIMED-SCORE'] = dbheader[0]['CLAIMEDSCORE']
+            header['CLUB'] = dbheader[0]['CLUB']
+            header['IOTA-ISLAND-NAME'] = dbheader[0]['IOTAISLANDNAME']
+            header['OFFTIME'] = dbheader[0]['OFFTIME']
+            header['SOAPBOX'] = dbheader[0]['SOAPBOX']
+        return header
+
+    def fetchValidQSOS(self, call):
+        thislogqsos = None
+        logID = self.CallinLogDB(call)
+        query= ("SELECT * FROM `QSOS` WHERE ( (`LOGID`=%d) AND (VALID=1) )"%(logID) )
+        #print(query)
+        thislogqsos = self.read_query(query)
+        return thislogqsos
+ 
     def padtime(self, timestg):
         count = len(timestg)
         if (count < 4):
@@ -140,7 +197,7 @@ class MOQPDBUtils():
     def qsoqslCheck(self, myqso, urqso):
         qslstat = False
         logerrors = []
-        gutil = GenAward()
+        gutil = BonusAward()
         cabutil = CabrilloUtils()
         """
         TBD - compare date/time, BAND, MODE, REPORT, QTH
@@ -149,22 +206,20 @@ class MOQPDBUtils():
         count = len(myqso['TIME'])
         if (count != 4):
             newtime = self.padtime(myqso['TIME'])
-            print('Time string wrong length - changing %s to %s...'%(myqso['TIME'], newtime))
+            print('QSO %d: Time string wrong length - changing %s to %s...'%(myqso['ID'], myqso['TIME'], newtime))
             myqso['TIME'] = newtime
             
         count = len(urqso['TIME'])
         if (count != 4):
             newtime = self.padtime(urqso['TIME'])
-            print('Time string wrong length - changing %s to %s...'%(urqso['TIME'], newtime))
+            print('QSO %d: Time string wrong length - changing %s to %s...'%(urqso['ID'], urqso['TIME'], newtime))
             urqso['TIME'] = newtime
             
         myqtime = self.logtimes(myqso['DATE'], myqso['TIME'])
         urqtime = self.logtimes(urqso['DATE'], urqso['TIME'])
         myqband = gutil.getBand(myqso['FREQ'])
         urqband = gutil.getBand(urqso['FREQ'])
-        #temp = urqso['MYCALL']
         urqsomycall = cabutil.stripCallsign(urqso['MYCALL'])
-        #temp = myqso['URCALL']
         myqsourcall = cabutil.stripCallsign(myqso['URCALL'])
 
         if (myqtime > urqtime):
@@ -172,8 +227,8 @@ class MOQPDBUtils():
         else:
             timediff = urqtime - myqtime
         
-        print('MYQSO: %s\nURQSO: %s'%(myqso, urqso))
-        print('Time difference: %s, MYCALL: %s, URCALL:%s'%(timediff, myqsourcall, urqsomycall))
+        #print('MYQSO: %s\nURQSO: %s'%(myqso, urqso))
+        #print('Time difference: %s, MYCALL: %s, URCALL:%s'%(timediff, myqsourcall, urqsomycall))
         
         if ( (timediff < timedelta(minutes=30) ) and \
              (myqband == urqband) and \
@@ -182,10 +237,12 @@ class MOQPDBUtils():
              (myqso['URQTH'] == urqso['MYQTH']) and \
              (myqso['URREPORT'] != '') ):
             qslstat = True
-            print('QSL!\n')
+            #print('QSL!\n')
         else:
-            if (timediff < timedelta(minutes=30)):
-                logerrors.append('Log time diff: %s greater than 30 min.'%(timediff))
+            logerrors.append('%s...'%(self.showQSO(urqso)))
+            #logerrors.append('for MYQSO %d, tried URQSO: %d...'%(myqso['ID'], urqso['ID']))
+            if (timediff > timedelta(minutes=30)):
+                logerrors.append('Log time diff: %s > than 30 min.'%(timediff))
             if (myqband != urqband):
                 logerrors.append('BAND does not match')
             if (myqsourcall != urqsomycall):
@@ -193,11 +250,11 @@ class MOQPDBUtils():
             if (myqso['URQTH'] != urqso['MYQTH']):
                 logerrors.append('QTH %s in URREPORT does not match QTH %s in MYREPORT'%(myqso['URQTH'], urqso['MYQTH']))
             if (myqso['URREPORT'] == ''):
-                logerrors.append('REPORT %s is looks bogus'%(myqso['URREPORT']))
-            for line in logerrors:
-                print(line)    
-            print('NO MATCH\n')        
-        return qslstat
+                logerrors.append('REPORT %s looks bogus'%(myqso['URREPORT']))
+        if (logerrors == []):
+            logerrors = None
+        return { 'QSLSTAT':qslstat,
+                 'QSLERR':logerrors }
         
     def logqslCheck(self, call, loglist = None):
         statList = None
@@ -235,15 +292,20 @@ class MOQPDBUtils():
                             qslstatus = None
                             qslIndex = 0
                             urqsoCount = len(urqsos)
+                            urqsoerrors = []
                             while ( (qslstatus == None) and \
                                     (qslIndex < urqsoCount) ):
-                                qslstatus = self.qsoqslCheck(qso,
+                                qsostatus = self.qsoqslCheck(qso,
                                                 urqsos[qslIndex])
+                                qslstatus = qsostatus['QSLSTAT']
                                 if (qslstatus):
                                     qsostat['STATUS']='QSL'
                                     qsostat['MYQSO'] = qso
                                     qsostat['URQSO'] = urqsos[qslIndex]
                                     statList.append(qsostat)
+                                else: # Save reason for no match this QSO
+                                    for ln in qsostatus['QSLERR']:
+                                        urqsoerrors.append(ln)
                                 qslIndex += 1
 
                             if (qslstatus == False):
@@ -253,14 +315,14 @@ class MOQPDBUtils():
                                 """
                                 qsostat['STATUS']='BUSTED'
                                 qsostat['MYQSO'] = qso
-                                qsostat['URQSO'] = None
+                                qsostat['URQSO'] = urqsoerrors
                                 statList.append(qsostat)
                                     
                         else: #(if urqsos)
                             """
                             No qsos for nextCall in database.log for QSO with station qso['URCALL']
                             """
-                            print('For %s QSO %d, No matching QSOS for station %s in database.'%(call, qso['ID'], nextCall))
+                            #print('For %s QSO %d, No matching QSOS for station %s in database.'%(call, qso['ID'], nextCall))
                             qsostat['STATUS']='NO URCALL QSOS'
                             qsostat['MYQSO'] = qso
                             qsostat['URQSO'] = None
@@ -271,7 +333,7 @@ class MOQPDBUtils():
                         """
                         No log for QSO with station qso['URCALL']
                         """
-                        print('For %s QSO %d, No log for station %s in database.'%(call, qso['ID'], nextCall))
+                        #print('For %s QSO %d, No log for station %s in database.'%(call, qso['ID'], nextCall))
                         qsostat['STATUS']='NO URCALL LOG'
                         qsostat['MYQSO'] = qso
                         qsostat['URQSO'] = None
@@ -377,6 +439,7 @@ class MOQPDBUtils():
         return qsoLine
 
     def showQSLdetails(self, qsl):
+        #print(qsl)
         reportData = []
         nextLine = self.showQSO(qsl['MYQSO'])
         if (qsl['STATUS'] == 'QSL'): nextLine += '\tQSL'
@@ -384,7 +447,15 @@ class MOQPDBUtils():
         if (qsl['STATUS'] == 'QSL'):
             nextLine = self.showQSO(qsl['URQSO'])
         else:
-            nextLine = ('NO CORROSPONDING QSO DATA AVAILABLE: %s'%(qsl['STATUS'])) 
+            if (qsl['STATUS'] == 'BUSTED'):
+                """Show result of QSOs compared"""
+                #print('BUSTED: %s'%(qsl['URQSO']))
+                nextLine = ''
+                for qsotry in qsl['URQSO']:
+                    nextLine += qsotry +'\n'
+                #print('BUSTEDP: %s'%(nextline))
+            else:
+                nextLine = ('NO CORROSPONDING QSO DATA AVAILABLE: %s'%(qsl['STATUS'])) 
         reportData.append(nextLine)
         return reportData
     
@@ -426,6 +497,93 @@ class MOQPDBUtils():
 
        logtimeobj = datetime.strptime(logdate+' '+logtime, datefstg+' '+timefstg)
        return logtimeobj
+
+    def writeSummary(self, log, cabBonus):
+        ba = BonusAward(log['QSOLIST'])
+        #print(ba.Award)
+        sumID = None
+        if (ba.Award['W0MA']['INLOG']):
+            w0mabonus = 100
+        else:
+            w0mabonus = 0
+
+        if (ba.Award['K0GQ']['INLOG']):
+            k0gqbonus = 100
+        else:
+            k0gqbonus = 0
+
+        cabbonus = cabBonus
+
+        if (log['MOQPCAT']['DIGITAL'] == 'DIGITAL'):
+            digital_log = 1
+        else:
+            digital_log = 0
+
+        if (log['MOQPCAT']['VHF'] == 'VHF'):
+            vhf_log = 1
+        else:
+            vhf_log = 0
+
+        if (log['MOQPCAT']['ROOKIE'] == 'ROOKIE'):
+            rookie_log = 1
+        else:
+            rookie_log = 0
+
+        #Does a record for this log exist already?
+        logID = self.CallinLogDB(log['HEADER']['CALLSIGN'])
+        logsum = self.read_query("SELECT * FROM SUMMARY WHERE LOGID=%s"%(logID))
+        #print('logsum=%s'%(logsum))
+        if (logsum):
+            sumID = logsum[0]['ID']
+            #print('sumID=%s'%(sumID))
+            #update totals and score
+            query = 'UPDATE SUMMARY SET CWQSO=%s, PHQSO=%s, RYQSO=%s, VHFQSO=%s, MULTS=%s, QSOSCORE=%s WHERE ID=%s'% \
+                    (log['QSOSUM']['CW'], log['QSOSUM']['PH'], log['QSOSUM']['DG'], 
+                     log['QSOSUM']['VHF'], log['MULTS'], log['SCORE'], sumID)
+            ures = self.write_query(query)
+            #update bonus stats
+            query = 'UPDATE SUMMARY SET W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s WHERE ID=%s'% \
+                    (w0mabonus, k0gqbonus, cabbonus, sumID)
+            ures = self.write_query(query)
+            query = "UPDATE SUMMARY SET MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s WHERE ID=%s"% \
+                    (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, sumID)
+            ures = self.write_query(query)
+            """
+            query = "UPDATE SUMMARY SET (LOGID=%s, CWQSO=%s, PHQSO=%s, RYQSO=%s, VHFQSO=%s, MULTS=%s, QSOSCORE=%s, W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s, ID=%s)" % \
+                   (logID, log['QSOSUM']['CW'], log['QSOSUM']['PH'], log['QSOSUM']['DG'], log['QSOSUM']['VHF'], log['MULTS'], log['SCORE'], w0mabonus, k0gqbonus, cabbonus, log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, sumID)
+            """
+        else:
+            query = "INSERT INTO SUMMARY LOGID=%s, \
+                                        CWQSO=%s, \
+                                        PHQSO=%s, \
+                                        RYQSO=%s, \
+                                        VHFQSO=%s, \
+                                        MULTS=%s, \
+                                        QSOSCORE=%s, \
+                                        W0MABONUS=%s, \
+                                        K0GQBONUS=%s, \
+                                        CABBONUS=%s, \
+                                        MOQPCAT=%s, \
+                                        DIGITAL=%s, \
+                                        VHF=%s, \
+                                        ROOKIE=%s" % \
+                         (logID,
+                         log['QSOSUM']['CW'],
+                         log['QSOSUM']['PH'],
+                         log['QSOSUM']['DG'],
+                         log['QSOSUM']['VHF'],
+                         log['MULTS'],
+                         log['SCORE'],
+                         w0mabonus,
+                         k0gqbonus,
+                         cabbonus,
+                         log['MOQPCAT']['MOQPCAT'],
+                         digital_log,
+                         vhf_log,
+                         rookie_log)
+        #print('\n\n\n\nUpdating SUMMARY - query = %s'%(query))
+        ures = self.write_query(query)
+        return sumID
        
        
 
@@ -435,7 +593,7 @@ if __name__ == '__main__':
     mydb.setCursorDict()
 
     qslresult = mydb.logqslCheck('N0SO')
-
+    print(qslresult)
     if (qslresult):
         qslreport = mydb.showQSLs(qslresult)
         for qreport in qslreport:

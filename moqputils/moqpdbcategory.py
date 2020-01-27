@@ -38,6 +38,12 @@ class MOQPDBCategory(MOQPCategory):
        """
        csvdata = None
        log = self.parseLog(callsign)
+       """
+       print (log.keys())
+       print(log['QSOSUM'].keys())
+       print(log['MULTS'])
+       print(log['MOQPCAT']['MOQPCAT'])
+       """
        if (log):
        
            if (Headers): 
@@ -73,6 +79,12 @@ class MOQPDBCategory(MOQPCategory):
        else:
           csvdata = ('No log data in databas for .'%callsign)
        print(csvdata)  
+       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+       mydb.setCursorDict()
+       mydb.writeSummary(log, 100)
+
+
+
         
     def parseLog(self, callsign, Headers=True):
        """

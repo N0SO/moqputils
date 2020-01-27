@@ -68,6 +68,8 @@ class get_args():
                                description = DESCRIPTION,
                                            epilog = EPILOG)
         parser.add_argument('-v', '--version', action='version', version = VERSION)
+        parser.add_argument("-c", "--callsign", default=None,
+            help="Summarize log data from database for CALLSIGN .")
         parser.add_argument("-i", "--inputpath", default=None,
             help="Specifies the path to the folder that contains the log files to summarize.")
         return parser.parse_args()
@@ -80,6 +82,10 @@ if __name__ == '__main__':
        print(args.args.inputpath)
        from moqpcertificates import MOQPCertificates
        app = MOQPCertificates(args.args.inputpath)
+   elif (args.args.callsign):
+       #print(args.args.callsign)
+       from moqpdbcertificates import MOQPDBCertificates
+       app = MOQPDBCertificates(args.args.callsign)
    else:
        from showme_ui import ui
        app=ui()
