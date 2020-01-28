@@ -205,9 +205,11 @@ class MOQPDBCategory(MOQPCategory):
            mydb.setCursorDict()
            loglist = mydb.read_query( \
               "SELECT ID, CALLSIGN FROM logheader WHERE 1")
+           Headers = True
            for nextlog in loglist:
-               print('callsign = %s'%(nextlog['CALLSIGN']))
-               csvdata = self.exportcsvfile(nextlog['CALLSIGN'])        
+               #print('callsign = %s'%(nextlog['CALLSIGN']))
+               csvdata = self.exportcsvfile(nextlog['CALLSIGN'], Headers)        
+               Headers = False
                print(csvdata)
        else:
            csvdata = self.exportcsvfile(callsign)
