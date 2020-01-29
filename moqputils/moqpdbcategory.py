@@ -19,8 +19,16 @@ Update History:
 
 from moqpcategory import *
 from moqpdbutils import *
+from bonusaward import BonusAward
 
 VERSION = '0.0.1' 
+
+COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
+                'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
+                'CW QSO\tPH QSO\tRY QSO\tQSO COUNT\tVHF QSO\t' + \
+                'MULTS\tQSO SCORE\tW0MA BONUS\tK0RGQ BONUS\t' + \
+                'CABFILE BONUS\tSCORE\tMOQP CATEGORY\t' +\
+                'DIGITAL\tVHF\tROOKIE\n'
 
 class MOQPDBCategory(MOQPCategory):
     def __init__(self, callsign = None):
@@ -66,7 +74,11 @@ class MOQPDBCategory(MOQPCategory):
            csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
            csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
            csvdata += ('%s\t'%(log['MULTS']))         
-           csvdata += ('%s\t'%(log['SCORE']))         
+           csvdata += ('%s\t'%(log['SCORE']['SCORE']))         
+           csvdata += ('%s\t'%(log['SCORE']['W0MA']))         
+           csvdata += ('%s\t'%(log['SCORE']['K0GQ']))         
+           csvdata += ('%s\t'%(log['SCORE']['CABFILE']))         
+           csvdata += ('%s\t'%(log['SCORE']['TOTAL']))         
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
@@ -79,9 +91,6 @@ class MOQPDBCategory(MOQPCategory):
        else:
           csvdata = ('No log data in databas for .'%callsign)
        print(csvdata)  
-       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-       mydb.setCursorDict()
-       mydb.writeSummary(log, 100)
 
 
 
@@ -95,21 +104,40 @@ class MOQPDBCategory(MOQPCategory):
        Using dictionary objects
        """
        fullSummary = None
+       cabBonus=100
        logsummary = self.processLogdict(callsign)
        #print('parseLog: parsing errors: \n%s'%(logsummary['ERRORS'] ))
        #print(logsummary)
        if (logsummary):
           moqpcat = self.determineMOQPCatdict(logsummary)
           #print(moqpcat)
-          Score = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
+          ba=BonusAward(logsummary['QSOLIST'])
+          if (ba.Award['W0MA']['INLOG']):
+              w0mabonus = 100
+          else:
+              w0mabonus = 0
+          if (ba.Award['K0GQ']['INLOG']):
+              k0gqbonus = 100
+          else:
+              k0gqbonus = 0
+          qsoScore = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
+          bonuspoints = { 'W0MA':w0mabonus,
+                          'K0GQ':k0gqbonus,
+                          'CABFILE': cabBonus,
+                          'SCORE':qsoScore,
+                          'TOTAL':(qsoScore + w0mabonus + k0gqbonus + cabBonus) }
+          
           fullSummary = dict()
           fullSummary['HEADER'] = logsummary['HEADER']
           fullSummary['QSOSUM'] = logsummary['QSOSUM']
           fullSummary['MULTS'] = logsummary['MULTS']
-          fullSummary['SCORE'] = Score
+          fullSummary['SCORE'] = bonuspoints
           fullSummary['MOQPCAT'] = moqpcat
           fullSummary['QSOLIST'] = logsummary['QSOLIST']
           fullSummary['ERRORS'] = logsummary['ERRORS']
+          mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+          mydb.setCursorDict()
+          mydb.writeSummary(fullSummary)
        else:
           print('No log in database for call %s.'%(filename))
        return fullSummary

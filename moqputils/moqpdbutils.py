@@ -19,9 +19,8 @@ for mypath in DEVMODPATH:
 #print('Python path = %s'%(sys.path))
 
 from moqpdbconfig import *
-#from generalaward import GenAward
+from generalaward import GenAward
 from CabrilloUtils import CabrilloUtils
-from bonusaward import BonusAward
 
 
 class MOQPDBUtils():
@@ -197,7 +196,7 @@ class MOQPDBUtils():
     def qsoqslCheck(self, myqso, urqso):
         qslstat = False
         logerrors = []
-        gutil = BonusAward()
+        gutil = GenAward()
         cabutil = CabrilloUtils()
         """
         TBD - compare date/time, BAND, MODE, REPORT, QTH
@@ -498,21 +497,8 @@ class MOQPDBUtils():
        logtimeobj = datetime.strptime(logdate+' '+logtime, datefstg+' '+timefstg)
        return logtimeobj
 
-    def writeSummary(self, log, cabBonus):
-        ba = BonusAward(log['QSOLIST'])
-        #print(ba.Award)
+    def writeSummary(self, log):
         sumID = None
-        if (ba.Award['W0MA']['INLOG']):
-            w0mabonus = 100
-        else:
-            w0mabonus = 0
-
-        if (ba.Award['K0GQ']['INLOG']):
-            k0gqbonus = 100
-        else:
-            k0gqbonus = 0
-
-        cabbonus = cabBonus
 
         if (log['MOQPCAT']['DIGITAL'] == 'DIGITAL'):
             digital_log = 1
@@ -539,11 +525,11 @@ class MOQPDBUtils():
             #update totals and score
             query = 'UPDATE SUMMARY SET CWQSO=%s, PHQSO=%s, RYQSO=%s, VHFQSO=%s, MULTS=%s, QSOSCORE=%s WHERE ID=%s'% \
                     (log['QSOSUM']['CW'], log['QSOSUM']['PH'], log['QSOSUM']['DG'], 
-                     log['QSOSUM']['VHF'], log['MULTS'], log['SCORE'], sumID)
+                     log['QSOSUM']['VHF'], log['MULTS'], log['SCORE']['SCORE'], sumID)
             ures = self.write_query(query)
             #update bonus stats
-            query = 'UPDATE SUMMARY SET W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s WHERE ID=%s'% \
-                    (w0mabonus, k0gqbonus, cabbonus, sumID)
+            query = 'UPDATE SUMMARY SET W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, SCORE=%s WHERE ID=%s'% \
+                    (log['SCORE']['W0MA'], log['SCORE']['K0GQ'], log['SCORE']['CABFILE'], log['SCORE']['TOTAL'], sumID)
             ures = self.write_query(query)
             query = "UPDATE SUMMARY SET MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s WHERE ID=%s"% \
                     (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, sumID)
