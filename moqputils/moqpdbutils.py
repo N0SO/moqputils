@@ -60,15 +60,16 @@ class MOQPDBUtils():
     def setCursorDict(self):
         self.cursor = self.mydb.cursor(MySQLdb.cursors.DictCursor)
         
-    def write_query(self, query):
+    def write_query(self, query, commit = True):
         qstat = None
         #if (db == None): db = self.mydb
         try:
             self.cursor.execute(query)
-            self.mydb.commit()
-            qstat = self.cursor.lastrowid
-            #qresult = self.cursor.fetchall()
-            #print(qresult)
+            if (commit):
+                self.mydb.commit()
+                qstat = self.cursor.lastrowid
+                #qresult = self.cursor.fetchall()
+                #print(qresult)
         except Exception as e:
             print ("write_query Error %s executing query: %sn"%\
                                            (e.args,query))  
@@ -84,6 +85,15 @@ class MOQPDBUtils():
             "read_query Error %s reading results from query:\n %s"%\
                                               (e.args,query))
         return qresult
+        
+    def fetchLogList(self):
+    """
+    Return a list o all calls in database with LOGID.
+    """
+    loglist = None
+    loglist = self.read_query( \
+               "SELECT ID, CALLSIGN FROM logheader WHERE 1")
+    return loglist
 
     def fetchlogQSOS(self, callID):
         thislogqsos = None        
@@ -177,6 +187,24 @@ class MOQPDBUtils():
         #print(query)
         thislogqsos = self.read_query(query)
         return thislogqsos
+        
+    def fetchValidLog(self, call):
+    """
+    Fetch log header with a list of valid QSOs.
+    returns a log dictionary objetct:
+      { HEADER: logheader (in dict() format)
+      { OQSOLIST: qsos - A list of valid QSOs 
+    """
+        header = self.fetchCABHeader(call)
+        qsos = self.fetchValidQSOS(call)
+        return { 'HEADER':header, 'QSOLIST':qsos }
+
+    def fetchLogSummary(self, call):
+        logsum = None
+        logID = self.CallinLog(call)
+        query = "SELECT * FROM SUMMARY WHERE LOGID=%s"%(logID)
+        logsum = self.read_query(query)
+        return logsum
  
     def padtime(self, timestg):
         count = len(timestg)

@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """
 moqpdbcategory  - Same features as moqpcategory, except read
-                  all data froman SQL database. The main
-                  difference rom the moqpcategory class is 
-                  all of the file read/write methods have been
+                  all log header and QSO data from an SQL 
+                  database. The data is printed for display
+                  as just as the MOQPCategory data is, but
+                  the resulting report is also written to the
+                  SUMMARY table in the database.
+
+                  The main dfference from the moqpcategory class 
+                  is all of the file read/write methods have been
                   over ridden by same name methods that read
-                  data from and SQL database and update recors
-                  in the same database.
+                  data from and SQL database and update records
+                  in the same database SUMMARY table.
                   
                   QSO Validation (QSL, time check, etc) should
                   already have been performed on the data.
@@ -91,9 +96,6 @@ class MOQPDBCategory(MOQPCategory):
        else:
           csvdata = ('No log data in databas for .'%callsign)
        print(csvdata)  
-
-
-
         
     def parseLog(self, callsign, Headers=True):
        """
