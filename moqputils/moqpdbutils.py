@@ -87,13 +87,13 @@ class MOQPDBUtils():
         return qresult
         
     def fetchLogList(self):
-    """
-    Return a list o all calls in database with LOGID.
-    """
-    loglist = None
-    loglist = self.read_query( \
+        """
+        Return a list o all calls in database with LOGID.
+        """
+        loglist = None
+        loglist = self.read_query( \
                "SELECT ID, CALLSIGN FROM logheader WHERE 1")
-    return loglist
+        return loglist
 
     def fetchlogQSOS(self, callID):
         thislogqsos = None        
@@ -189,22 +189,22 @@ class MOQPDBUtils():
         return thislogqsos
         
     def fetchValidLog(self, call):
-    """
-    Fetch log header with a list of valid QSOs.
-    returns a log dictionary objetct:
-      { HEADER: logheader (in dict() format)
-      { OQSOLIST: qsos - A list of valid QSOs 
-    """
+        """
+        Fetch log header with a list of valid QSOs.
+        returns a log dictionary objetct:
+           { HEADER: logheader (in dict() format)
+           { OQSOLIST: qsos - A list of valid QSOs 
+        """
         header = self.fetchCABHeader(call)
         qsos = self.fetchValidQSOS(call)
         return { 'HEADER':header, 'QSOLIST':qsos }
 
     def fetchLogSummary(self, call):
         logsum = None
-        logID = self.CallinLog(call)
+        logID = self.CallinLogDB(call)
         query = "SELECT * FROM SUMMARY WHERE LOGID=%s"%(logID)
         logsum = self.read_query(query)
-        return logsum
+        return logsum[0]
  
     def padtime(self, timestg):
         count = len(timestg)

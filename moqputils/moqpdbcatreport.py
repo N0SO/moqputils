@@ -85,13 +85,13 @@ class MOQPDBCatReport():
 
        else:
           csvdata = ('No log data in databas for .'%callsign)
-       print(csvdata)  
+       return csvdata
 
     def getLog(self, mydb, call):
         log = dict()
         logdata = mydb.fetchValidLog(call)
         log['HEADER']= logdata['HEADER']
-        log['QSOLIST' = logdata['QSOLIST']
+        log['QSOLIST'] = logdata['QSOLIST']
         logdata = mydb.fetchLogSummary(call)
         log['SUMMARY'] = logdata
         return log
@@ -101,8 +101,8 @@ class MOQPDBCatReport():
         csvData = None
         logID = mydb.CallinLogDB(callsign)
         if (logID):
-            log = self.getLog(callsign)
-            csvData = exportcsvdata(log, Headers)
+            log = self.getLog(mydb, callsign)
+            csvData = self.exportcsvdata(log, Headers)
             #print(csvData)
         else:
            csvData = ('No log data for call %s.'%(callsign))
@@ -115,6 +115,7 @@ class MOQPDBCatReport():
         if (loglist):
             Headers = True
             for nextlog in loglist:
+                #print(nextlog)
                 csvdata += self.processOne(mydb, 
                                nextlog['CALLSIGN'], Headers)
                 Headers = False
