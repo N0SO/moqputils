@@ -1,40 +1,38 @@
 #!/usr/bin/env python3
 """
-moqpdbcatreport - Same features as moqpcategory, except read
-                  all data from an SQL database. The log file
-                  header is fetched fron the LOGHEADER table,
-                  the SUMMARY is fetched from the SUMMARY table,
-                  and a CSV report is created and displayed.
-                  
-                  QSO Validation (QSL, time check, etc) should
-                  already have been performed on the data, and
-                  the SUMMARY row for this log should have been
-                  updated before running this report.
-                
-                  Based on 2019 MOQP Rules.
+moqpdbclubreport - Fetches a list of logs that have something
+                   other than NULL in the Cabrillo Header field
+                   CLUB. The log SUMMARY table entries for the
+                   corrosponding logs is fetched and displayed
+                   in the same format as MOQPDBCatReport, with
+                   the CLUB field added. The result is output
+                   in .csv format for further refinement in a
+                   spreadsheet program such as Excel or
+                   libreoffice.
+
+                   Inherits from MOQPDBCatReport
+
+                   Based on 2019 MOQP Rules.
                   
 Update History:
-* Thu Jan 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+* Fri Jan 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
 """
 
-from moqpdbutils import *
+from moqpdbcatreport import *
 
 
 VERSION = '0.0.1' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
-                'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
+                'POWER\tMODE\tLOCATION\tOVERLAY\tCLUB\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tQSO COUNT\tVHF QSO\t' + \
                 'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
                 'CABFILE BONUS\tSCORE\tMOQP CATEGORY\t' +\
                 'DIGITAL\tVHF\tROOKIE\n'
 
-class MOQPDBCatReport():
-    def __init__(self, callsign = None):
-        if (callsign):
-            self.appMain(callsign)
-
+class MOQPDBClubReport(MOQPDBCatReport):
+           
     def exportcsvdata(self, log, Headers=True):
        """
        This method processes a single log file passed in filename
@@ -67,6 +65,7 @@ class MOQPDBCatReport():
            csvdata += ('%s\t'%(log['HEADER']['CATEGORY-MODE']))
            csvdata += ('%s\t'%(log['HEADER']['LOCATION']))
            csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OVERLAY']))
+           csvdata += ('%s\t'%(log['HEADER']['CLUB']))
            csvdata += ('%s\t'%(log['SUMMARY']['CWQSO']))
            csvdata += ('%s\t'%(log['SUMMARY']['PHQSO']))
            csvdata += ('%s\t'%(log['SUMMARY']['RYQSO']))
@@ -87,31 +86,14 @@ class MOQPDBCatReport():
           csvdata = ('No log data in databas for .'%callsign)
        return csvdata
 
-    def getLog(self, mydb, call):
-        log = dict()
-        logdata = mydb.fetchValidLog(call)
-        log['HEADER']= logdata['HEADER']
-        log['QSOLIST'] = logdata['QSOLIST']
-        logdata = mydb.fetchLogSummary(call)
-        log['SUMMARY'] = logdata
-        return log
-       
-        
-    def processOne(self, mydb, callsign, Headers = True):
-        csvData = None
-        logID = mydb.CallinLogDB(callsign)
-        if (logID):
-            log = self.getLog(mydb, callsign)
-            csvData = self.exportcsvdata(log, Headers)
-            #print(csvData)
-        else:
-           csvData = ('No log data for call %s.'%(callsign))
-        return csvData
-           
     def processAll(self, mydb):
         csvdata = []
         headers = True
-        loglist = mydb.fetchLogList()
+        loglist = mydb.read_query( \
+               "SELECT ID, CALLSIGN FROM logheader WHERE CLUB!=''")
+        #loglist = mydb.fetchLogList()
+        #print(loglist)
+        #print(len(loglist))
         if (loglist):
             Headers = True
             for nextlog in loglist:
@@ -122,15 +104,14 @@ class MOQPDBCatReport():
                 Headers = False
             #print(csvdata)
             return csvdata
-    
+        else:
+            print('No logs.')
+
     def appMain(self, callsign):
-       csvdata = 'No Data.'
+       csvdata = ['No Data.']
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
-       if (callsign == 'allcalls'):
-           csvdata = self.processAll(mydb)
-           for csvLine in csvdata:
-               print(csvLine)
-       else:
-           csvdata = self.processOne(mydb, callsign)
-           print(csvdata)
+       csvdata = self.processAll(mydb)
+       for csvLine in csvdata:
+           print(csvLine)
+

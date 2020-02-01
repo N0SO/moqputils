@@ -8,12 +8,15 @@ moqpreports  - Utility to generate MOQP reports
 Update History:
 * Thu Jan 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 -First interation
+* Thu Jan 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Working version - adding option to launch club reports.
+- Added logic to lauch MOQPDBCatReport or MOQPDBClubReport.
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.0.1'
+VERSION = '0.1.0'
 ARGS = None
 
 DEVMODPATH = ['moqputils', 'cabrilloutils']
@@ -50,7 +53,9 @@ class get_args():
         parser.add_argument('-c', '--callsign', default='allcalls',
             help="CALLSIGN in MOQP database to summarize. "+ \
                  "Entering 'ALLCALLS' will run the report "+ \
-                 "on all calls in the database.")
+                 "on all calls in the database. Entering "+ \
+                 "'CLUB' will run the report on calls that"+ \
+                 " put a club name in the CABRILLO CLUB field.")
         args = parser.parse_args()
         #print(args)
         return args
@@ -59,8 +64,12 @@ if __name__ == '__main__':
    args = get_args()
    
    if (args.args.callsign):
-       from moqpdbcatreport import MOQPDBCatReport
-       app = MOQPDBCatReport(args.args.callsign)
+       if (args.args.callsign == 'club'):
+           from moqpdbclubreport import MOQPDBClubReport
+           app = MOQPDBClubReport(args.args.callsign)
+       else:
+           from moqpdbcatreport import MOQPDBCatReport
+           app = MOQPDBCatReport(args.args.callsign)
    else:
        from gui_reports import reports_ui
        app=gui_reports()
