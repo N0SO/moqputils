@@ -29,24 +29,33 @@ class MOQPDBUtils():
                        user = None, 
                        passwd = None, 
                        database = None):
-       if (host):
-           self.mydb = self.connectDB(host, 
-                                      user, 
-                                      passwd, 
-                                      database)
+       if (host==None):
+           host = HOSTNAME
+           user = USER
+           passwd = PW
+           database = DBNAME
+
+       self.mydb = self.connectDB(host, 
+                                  user, 
+                                  passwd, 
+                                  database)
+       if (self.mydb):
            self.setCursor()
-       self.cursor = None
+           #self.cursor = None
+       else:
+          print("Error connecting to %s database %s:\n%s"%(host, dbname, e))
           
     def connectDB(self, host, 
                         user, 
                         passwd, 
                         database):
+        mydb = None
         try:                 
             mydb = MySQLdb.connect(
-              host=HOSTNAME,
-              user=USER,
-              passwd=PW,
-              database=DBNAME
+              host,
+              user,
+              passwd,
+              database
             )
         except Exception as e:
             print ("Error connecting to database %s: %s"%\
