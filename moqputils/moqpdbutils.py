@@ -7,7 +7,7 @@ from datetime import date
 from datetime import time
 from datetime import timedelta
 
-VERSION = '0.0.3' 
+VERSION = '0.0.4' 
 
 DEVMODPATH = ['moqputils', 'cabrilloutils']
 # If the development module source paths exist, 
@@ -318,19 +318,20 @@ class MOQPDBUtils():
                         #urqsos = mydb.read_query(query)
                         urqsos = self.fetchIDQSOSwithCall(nextID, call)
                         if (urqsos):
-                            """
+                            
                             print('Source QSO from %s:\n%s'%(call, 
                                                self.showQSO(qso)))
                             print('Possible QSLs from %s:\n'%(qso['URCALL']))
                             for nq in urqsos:
                                 print(self.showQSO(nq))
-                            """
-                            qslstatus = None
+                            
+                            qslstatus = False
                             qslIndex = 0
                             urqsoCount = len(urqsos)
                             urqsoerrors = []
-                            while ( (qslstatus == None) and \
+                            while ( (qslstatus == False) and \
                                     (qslIndex < urqsoCount) ):
+                                #print('Checking:\n%s\n%s\n\n'%(qso, urqsos[qslIndex]))
                                 qsostatus = self.qsoqslCheck(qso,
                                                 urqsos[qslIndex])
                                 qslstatus = qsostatus['QSLSTAT']
@@ -343,6 +344,7 @@ class MOQPDBUtils():
                                     for ln in qsostatus['QSLERR']:
                                         urqsoerrors.append(ln)
                                 qslIndex += 1
+                                #print(qslIndex, qslstatus)
 
                             if (qslstatus == False):
                                 """
