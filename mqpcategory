@@ -80,8 +80,8 @@ if __name__ == '__main__':
        from moqpdbdigital import MOQPDBDigital
        app = MOQPDBDigital(args.args.digital)
    elif (args.args.vhf):
-       from moqpdbdigital import MOQPDBVhf
-       app = MOQPDBDigital(args.args.vhf)
+       from moqpdbvhf import MOQPDBVhf
+       app = MOQPDBVhf(args.args.vhf)
    else:
        from gui_moqpcategory import gui_MOQPCategory
        app=gui_MOQPCategory()

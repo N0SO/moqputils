@@ -28,7 +28,7 @@ COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\t' + \
                 'VHF QSO\t' + \
                 'MULTS\tQSO SCORE\tW0MA BONUS\tK0RGQ BONUS\t' + \
-                'CABFILE BONUS\tSCORE\tMOQP CATEGORY\n' +\
+                'CABFILE BONUS\tSCORE\tMOQP CATEGORY\n'
 
 class MOQPDBVhf(MOQPDBCategory):
     def __init__(self, callsign = None):
@@ -152,7 +152,7 @@ class MOQPDBVhf(MOQPDBCategory):
             header = self.getLogHeader(dbheader)
             #print(header)
             #get digital QSOS only!
-            qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=1) AND FREQ>=50000 )"%(logID))
+            qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=1) AND (FREQ>=50000) )"%(logID))
             for qso in qsos:
                 mults.setMult(qso['URQTH'])
             #print('mults = %d'%(mults.sumMults()))
