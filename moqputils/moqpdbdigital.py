@@ -178,7 +178,7 @@ class MOQPDBDigital(MOQPDBCategory):
            for nextlog in loglist:
                #print('callsign = %s'%(nextlog['CALLSIGN']))
                csvdata = self.exportcsvfile(nextlog['CALLSIGN'], HEADER)
-               Headers = False
+               HEADER = False
                if (csvdata):
                    print(csvdata)
        else:
