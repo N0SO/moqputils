@@ -95,7 +95,7 @@ class MOQPDBCategory(MOQPCategory):
        
        else:
           csvdata = ('No log data in databas for .'%callsign)
-       print(csvdata)  
+       return csvdata 
         
     def parseLog(self, callsign, Headers=True):
        """
@@ -106,7 +106,6 @@ class MOQPDBCategory(MOQPCategory):
        Using dictionary objects
        """
        fullSummary = None
-       cabBonus=100
        logsummary = self.processLogdict(callsign)
        #print('parseLog: parsing errors: \n%s'%(logsummary['ERRORS'] ))
        #print(logsummary)
@@ -122,10 +121,11 @@ class MOQPDBCategory(MOQPCategory):
               k0gqbonus = 100
           else:
               k0gqbonus = 0
+          cabBonus = logsummary['HEADER']['CABBONUS']
           qsoScore = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
           bonuspoints = { 'W0MA':w0mabonus,
                           'K0GQ':k0gqbonus,
-                          'CABFILE': cabBonus,
+                          'CABFILE':cabBonus,
                           'SCORE':qsoScore,
                           'TOTAL':(qsoScore + w0mabonus + k0gqbonus + cabBonus) }
           
@@ -226,6 +226,8 @@ class MOQPDBCategory(MOQPCategory):
         header['IOTA-ISLAND-NAME'] = dbheader[0]['IOTAISLANDNAME']
         header['OFFTIME'] = dbheader[0]['OFFTIME']
         header['SOAPBOX'] = dbheader[0]['SOAPBOX']
+        # Added to handle cabrillo file bonus status stored in logheaders table
+        header['CABBONUS'] = dbheader[0]['CABBONUS']
         return header
 
     def appMain(self, callsign):

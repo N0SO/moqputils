@@ -23,13 +23,15 @@ from moqpdbcatreport import *
 
 
 VERSION = '0.0.1' 
-
+"""
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\tCLUB\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tQSO COUNT\tVHF QSO\t' + \
                 'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
                 'CABFILE BONUS\tSCORE\tMOQP CATEGORY\t' +\
                 'DIGITAL\tVHF\tROOKIE\n'
+"""
+COLUMNHEADERS = 'CALLSIGN\tOPS\tCLUB\tSCORE\n'
 
 class MOQPDBClubReport(MOQPDBCatReport):
            
@@ -59,28 +61,28 @@ class MOQPDBClubReport(MOQPDBCatReport):
 
            csvdata += ('%s\t'%(log['HEADER']['CALLSIGN']))
            csvdata += ('%s\t'%(log['HEADER']['OPERATORS']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-STATION']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OPERATOR']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-POWER']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-MODE']))
-           csvdata += ('%s\t'%(log['HEADER']['LOCATION']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OVERLAY']))
+           #csvdata += ('%s\t'%(log['HEADER']['CATEGORY-STATION']))
+           #csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OPERATOR']))
+           #csvdata += ('%s\t'%(log['HEADER']['CATEGORY-POWER']))
+           #csvdata += ('%s\t'%(log['HEADER']['CATEGORY-MODE']))
+           #csvdata += ('%s\t'%(log['HEADER']['LOCATION']))
+           #csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OVERLAY']))
            csvdata += ('%s\t'%(log['HEADER']['CLUB']))
-           csvdata += ('%s\t'%(log['SUMMARY']['CWQSO']))
-           csvdata += ('%s\t'%(log['SUMMARY']['PHQSO']))
-           csvdata += ('%s\t'%(log['SUMMARY']['RYQSO']))
-           csvdata += ('%d\t'%(qsocount))
-           csvdata += ('%s\t'%(log['SUMMARY']['VHFQSO']))
-           csvdata += ('%s\t'%(log['SUMMARY']['MULTS']))         
-           csvdata += ('%s\t'%(log['SUMMARY']['QSOSCORE']))         
-           csvdata += ('%s\t'%(log['SUMMARY']['W0MABONUS']))         
-           csvdata += ('%s\t'%(log['SUMMARY']['K0GQBONUS']))         
-           csvdata += ('%s\t'%(log['SUMMARY']['CABBONUS']))         
+           # csvdata += ('%s\t'%(log['SUMMARY']['CWQSO']))
+           #csvdata += ('%s\t'%(log['SUMMARY']['PHQSO']))
+           #csvdata += ('%s\t'%(log['SUMMARY']['RYQSO']))
+           #csvdata += ('%d\t'%(qsocount))
+           #csvdata += ('%s\t'%(log['SUMMARY']['VHFQSO']))
+           #csvdata += ('%s\t'%(log['SUMMARY']['MULTS']))         
+           #csvdata += ('%s\t'%(log['SUMMARY']['QSOSCORE']))         
+           #csvdata += ('%s\t'%(log['SUMMARY']['W0MABONUS']))         
+           #csvdata += ('%s\t'%(log['SUMMARY']['K0GQBONUS']))         
+           #csvdata += ('%s\t'%(log['SUMMARY']['CABBONUS']))         
            csvdata += ('%s\t'%(log['SUMMARY']['SCORE']))         
-           csvdata += ('%s\t'%(log['SUMMARY']['MOQPCAT']))
-           csvdata += ('%s\t'%(log['SUMMARY']['DIGITAL']))
-           csvdata += ('%s\t'%(log['SUMMARY']['VHF']))
-           csvdata += ('%s\t'%(log['SUMMARY']['ROOKIE']))
+           #csvdata += ('%s\t'%(log['SUMMARY']['MOQPCAT']))
+           #csvdata += ('%s\t'%(log['SUMMARY']['DIGITAL']))
+           #csvdata += ('%s\t'%(log['SUMMARY']['VHF']))
+           #csvdata += ('%s\t'%(log['SUMMARY']['ROOKIE']))
 
        else:
           csvdata = ('No log data in databas for .'%callsign)
@@ -90,7 +92,7 @@ class MOQPDBClubReport(MOQPDBCatReport):
         csvdata = []
         headers = True
         loglist = mydb.read_query( \
-               "SELECT ID, CALLSIGN FROM logheader WHERE CLUB!=''")
+               "SELECT ID, CALLSIGN FROM logheader WHERE CLUB!='' ORDER BY CLUB ASC")
         #loglist = mydb.fetchLogList()
         #print(loglist)
         #print(len(loglist))

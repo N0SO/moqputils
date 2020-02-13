@@ -573,10 +573,6 @@ class MOQPDBUtils():
             query = "UPDATE SUMMARY SET MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s WHERE ID=%s"% \
                     (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, sumID)
             ures = self.write_query(query)
-            """
-            query = "UPDATE SUMMARY SET (LOGID=%s, CWQSO=%s, PHQSO=%s, RYQSO=%s, VHFQSO=%s, MULTS=%s, QSOSCORE=%s, W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s, ID=%s)" % \
-                   (logID, log['QSOSUM']['CW'], log['QSOSUM']['PH'], log['QSOSUM']['DG'], log['QSOSUM']['VHF'], log['MULTS'], log['SCORE'], w0mabonus, k0gqbonus, cabbonus, log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, sumID)
-            """
         else:
             query = "INSERT INTO SUMMARY LOGID=%s, \
                                         CWQSO=%s, \
