@@ -12,13 +12,16 @@ Update History:
 - V0.1.0 
 - Added this file (mqpcategory) and moved the MOQPCategory
 - and GUI into the moqputils module directory.
+* Thu Feb 13 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 
+- Added mqpdbxxx to the menus
 
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 ARGS = None
 
 DEVMODPATH = ['moqputils', 'cabrilloutils']
@@ -53,11 +56,11 @@ class get_args():
                                            epilog = EPILOG)
         parser.add_argument('-v', '--version', action='version', version = VERSION)
         parser.add_argument('-c', '--callsign', default=None,
-            help='CALLSIGN in MOQP database to summarize.')
+            help='CALLSIGN in MOQP database to summarize. Entering allcalls = all calls in database')
         parser.add_argument('-d', '--digital', default=None,
-            help='Summarize all digital logs in MOQP database.')
-        parser.add_argument('-u', '--vhf', default=None,
-            help='Summarize all VHF logs in MOQP database.')
+            help='Summarize digital QSOs only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
+        parser.add_argument('-U', '--vhf', default=None,
+            help='Summarize VHF QSOs only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
         parser.add_argument('-i', '--inputpath', default=None,
             help='Specifies the path to the folder that contains the log files to summarize.')
         return parser.parse_args()
@@ -77,8 +80,8 @@ if __name__ == '__main__':
        from moqpdbdigital import MOQPDBDigital
        app = MOQPDBDigital(args.args.digital)
    elif (args.args.vhf):
-       from moqpdbvhf import MOQPDVhf
-       app = MOQPDBVhf(args.args.vhf)             
+       from moqpdbdigital import MOQPDBVhf
+       app = MOQPDBDigital(args.args.vhf)
    else:
        from gui_moqpcategory import gui_MOQPCategory
        app=gui_MOQPCategory()
