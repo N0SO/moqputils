@@ -54,7 +54,9 @@ class get_args():
         parser.add_argument('-v', '--version', action='version', version = VERSION)
         parser.add_argument('-c', '--callsign', default=None,
             help='CALLSIGN in MOQP database to summarize.')
-        parser.add_argument('-a', '--allcalls', default='allcalls',
+        parser.add_argument('-d', '--digital', default=None,
+            help='Summarize all logs in MOQP database.')
+        parser.add_argument('-v', '--vhf', default=None,
             help='Summarize all logs in MOQP database.')
         parser.add_argument('-i', '--inputpath', default=None,
             help='Specifies the path to the folder that contains the log files to summarize.')
@@ -71,9 +73,12 @@ if __name__ == '__main__':
    elif (args.args.callsign):
        from moqpdbcategory import MOQPDBCategory
        app = MOQPDBCategory(args.args.callsign)
-   elif (args.args.allcalls):
-       from moqpdbcategory import MOQPDBCategory
-       app = MOQPDBCategory('allcalls')
+   elif (args.args.digital):
+       from moqpdbdigital import MOQPDBDigital
+       app = MOQPDBDigital(args.args.digital)
+   elif (args.args.vhf):
+       from moqpdbvhf import MOQPDVhf
+       app = MOQPDBVhfargs.args.vhf)             
    else:
        from gui_moqpcategory import gui_MOQPCategory
        app=gui_MOQPCategory()
