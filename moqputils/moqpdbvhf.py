@@ -89,8 +89,7 @@ class MOQPDBVhf(MOQPDBCategory):
                    csvdata += err
        
        else:
-          csvdata = ('No log data in databas for .'%callsign)
-       return csvdata 
+          csvdata = None
 
     def parseLog(self, callsign, Headers=True):
        """
@@ -176,7 +175,8 @@ class MOQPDBVhf(MOQPDBCategory):
                #print('callsign = %s'%(nextlog['CALLSIGN']))
                csvdata = self.exportcsvfile(nextlog['CALLSIGN'], Headers)        
                Headers = False
-               print(csvdata)
+               if (csvdata):
+                   print(csvdata)
        else:
            csvdata = self.exportcsvfile(callsign)
            print(csvdata)

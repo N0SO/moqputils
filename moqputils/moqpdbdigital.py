@@ -152,7 +152,7 @@ class MOQPDBDigital(MOQPDBCategory):
             header = self.getLogHeader(dbheader)
             #print(header)
             #get digital QSOS only!
-            qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=1) AND MODE='RY' )"%(logID))
+            qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=1) AND MODE IN ('RY', 'DI', 'DG', 'PSK31','FT8','FT4') )"%(logID))
             if (qsos == () ):
                 log=None
             else:
