@@ -174,7 +174,7 @@ class MOQPCategory(CabrilloUtils):
              freq = float(tfreq)
          except:
              freq = 0.0
-         if ((freq >= 144000.0) or (tfreq in self.VHFFREQ) ):
+         if ((freq >= 50000.0) or (tfreq in self.VHFFREQ) ):
              summary['VHF'] += 1
                                    
          mode = thisqso['MODE'].upper()
