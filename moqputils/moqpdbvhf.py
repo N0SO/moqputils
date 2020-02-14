@@ -27,7 +27,7 @@ VERSION = '0.0.1'
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\t' + \
                 'VHF QSO\t' + \
-                'MULTS\tQSO SCORE\tW0MA BONUS\tK0RGQ BONUS\t' + \
+                'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
                 'CABFILE BONUS\tSCORE\tMOQP CATEGORY\n'
 
 class MOQPDBVhf(MOQPDBCategory):
@@ -90,6 +90,7 @@ class MOQPDBVhf(MOQPDBCategory):
        
        else:
           csvdata = None
+       return csvdata
 
     def parseLog(self, callsign, Headers=True):
        """
@@ -134,8 +135,8 @@ class MOQPDBVhf(MOQPDBCategory):
           #mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
           #mydb.setCursorDict()
           #mydb.writeSummary(fullSummary)
-       else:
-          print('No log in database for call %s.'%(filename))
+       #else:
+       #   print('No log in database for call %s.'%(filename))
        return fullSummary
 
     def getLogFile(self, callsign):
@@ -152,14 +153,21 @@ class MOQPDBVhf(MOQPDBCategory):
             header = self.getLogHeader(dbheader)
             #print(header)
             #get digital QSOS only!
-            qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=1) AND (FREQ>=50000) )"%(logID))
-            for qso in qsos:
-                mults.setMult(qso['URQTH'])
-            #print('mults = %d'%(mults.sumMults()))
-            log['HEADER'] = header
-            log['QSOLIST'] = qsos
-            log['MULTS'] = mults.sumMults()
-            log['ERRORS'] = []
+            #qsoqry = "SELECT * FROM QSOS WHERE LOGID=%s AND VALID=1"%(logID)
+            qsoqry = "SELECT * FROM `QSOS` WHERE VALID=1 AND LOGID=%s AND (FREQ IN ('50','144','432') OR FREQ>=50000)"%(logID)
+            #print(qsoqry)
+            qsos = mydb.read_query(qsoqry)
+            #print('qso count = %d, qsos:\n%s'%(len(qsos), qsos))
+            if (len(qsos) >0):
+                for qso in qsos:
+                    mults.setMult(qso['URQTH'])
+                #print('mults = %d'%(mults.sumMults()))
+                log['HEADER'] = header
+                log['QSOLIST'] = qsos
+                log['MULTS'] = mults.sumMults()
+                log['ERRORS'] = []
+            else:
+                log = None
         return log
 
 
@@ -170,12 +178,12 @@ class MOQPDBVhf(MOQPDBCategory):
            mydb.setCursorDict()
            loglist = mydb.read_query( \
               "SELECT ID, CALLSIGN FROM logheader WHERE 1")
-           Headers = True
+           HEADER = True
            for nextlog in loglist:
                #print('callsign = %s'%(nextlog['CALLSIGN']))
-               csvdata = self.exportcsvfile(nextlog['CALLSIGN'], Headers)        
-               Headers = False
+               csvdata = self.exportcsvfile(nextlog['CALLSIGN'], HEADER)        
                if (csvdata):
+                   HEADER = False
                    print(csvdata)
        else:
            csvdata = self.exportcsvfile(callsign)

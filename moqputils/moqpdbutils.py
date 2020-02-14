@@ -35,6 +35,7 @@ class MOQPDBUtils():
            passwd = PW
            database = DBNAME
 
+       #print('Attempting connection to: %s as:%s pw:%s db:%s'%(host, user, passwd, database))
        self.mydb = self.connectDB(host, 
                                   user, 
                                   passwd, 
@@ -43,7 +44,7 @@ class MOQPDBUtils():
            self.setCursor()
            #self.cursor = None
        else:
-          print("Error connecting to %s database %s:\n%s"%(host, dbname, e))
+          print("Error connecting to %s database %s:\n%s"%(host, database, e))
           
     def connectDB(self, host, 
                         user, 
