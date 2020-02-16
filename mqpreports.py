@@ -50,18 +50,24 @@ class get_args():
                                description = DESCRIPTION,
                                            epilog = EPILOG)
         parser.add_argument('-v', '--version', action='version', version = VERSION)
-        parser.add_argument('-c', '--callsign', default='allcalls',
+        parser.add_argument('-c', '--callsign', default=None,
             help="CALLSIGN in MOQP database to summarize. "+ \
                  "Entering 'ALLCALLS' will run the report "+ \
                  "on all calls in the database. Entering "+ \
                  "'CLUB' will run the report on calls that"+ \
                  " put a club name in the CABRILLO CLUB field.")
+        parser.add_argument('-l', '--logreport', default=None,
+            help="CALLSIGN in MOQP database to summarize. "+ \
+                 "Entering 'ALLCALLS' will run the report "+ \
+                 "on all calls in the database. Entering ")
         args = parser.parse_args()
         #print(args)
         return args
 
 if __name__ == '__main__':
    args = get_args()
+
+   #print (args.args)
    
    if (args.args.callsign):
        if (args.args.callsign == 'club'):
@@ -70,6 +76,9 @@ if __name__ == '__main__':
        else:
            from moqpdbcatreport import MOQPDBCatReport
            app = MOQPDBCatReport(args.args.callsign)
+   elif (args.args.logreport):
+       from logreport import LogReport
+       app = LogReport(args.args.logreport)
    else:
        from gui_reports import reports_ui
        app=gui_reports()

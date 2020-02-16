@@ -61,6 +61,8 @@ class get_args():
             help='Summarize digital QSOs only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
         parser.add_argument('-U', '--vhf', default=None,
             help='Summarize VHF QSOs only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
+        parser.add_argument('-C', '--county', default=None,
+            help='Summarize MISSOURI COUNTIES only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
         parser.add_argument('-i', '--inputpath', default=None,
             help='Specifies the path to the folder that contains the log files to summarize.')
         return parser.parse_args()
@@ -82,6 +84,9 @@ if __name__ == '__main__':
    elif (args.args.vhf):
        from moqpdbvhf import MOQPDBVhf
        app = MOQPDBVhf(args.args.vhf)
+   elif (args.args.county):
+       from moqpdbcountyrpt import MOQPDBCountyRpt
+       app = MOQPDBCountyRpt(args.args.county)
    else:
        from gui_moqpcategory import gui_MOQPCategory
        app=gui_MOQPCategory()

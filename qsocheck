@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+import os.path
+import sys
+import argparse
+
+VERSION = '0.1.1' 
+
+DEVMODPATH = ['moqputils', 'cabrilloutils']
+# If the development module source paths exist, 
+# add them to the python path
+for mypath in DEVMODPATH:
+    if ( os.path.exists(mypath) and \
+                       (os.path.isfile(mypath) == False) ):
+        sys.path.insert(0,mypath)
+#print('Python path = %s'%(sys.path))
+
+from moqpdbutils import *
+
+DESCRIPTION = \
+"""qsocheck  - Check validity of each QSO in the database. Set QSO
+               record VALID flag if QSO is valid per 2019 rules.
+"""
+
+EPILOG = \
+"""
+Running with no parameters will launch the GUI.
+"""
+
+class get_args():
+    def __init__(self):
+        if __name__ == '__main__':
+            self.args = self.getargs()
+            
+    def getargs(self):
+        parser = argparse.ArgumentParser(\
+                               description = DESCRIPTION,
+                                           epilog = EPILOG)
+        parser.add_argument('-v', '--version', action='version', version = VERSION)
+        parser.add_argument('-c', '--callsign', default=None,
+            help='Verify QSOS for CALLSIGN in MOQP database.')
+        parser.add_argument('-a', '--allcalls', default='allcalls',
+            help='Verify QSOs for all logs in MOQP database.')
+        """
+        parser.add_argument('-i', '--inputpath', default=None,
+            help='Specifies the path to the folder that contains the log files to summarize.')
+        """
+        return parser.parse_args()
+
+
+def checkOneCall(call):
+    qslresult = mydb.logqslCheck(call)
+    #print(qslresult)
+    if (qslresult):
+        qslreport = mydb.showQSLs(qslresult)
+        for qreport in qslreport:
+            print(qreport[0])
+            print(qreport[1])
+            print()
+       
+if __name__ == '__main__':
+    mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+    mydb.setCursorDict()
+    args = get_args()
+    if (args.args.callsign):
+        checkOneCall(args.args.callsign)
+    elif (args.args.allcalls):
+        loglist = mydb.read_query( \
+              "SELECT ID, CALLSIGN FROM logheader WHERE 1")
+        for nextlog in loglist:
+            checkOneCall(nextlog['CALLSIGN'])
+    else:
+       print('Nothing to do.')   
+     
+
+                
+
+            
