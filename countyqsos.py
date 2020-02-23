@@ -4,12 +4,23 @@ countyqsos - A summary of QSOs by mode, with
 county, state, providence and DX counts
 """
 import datetime
+import os, sys
 import argparse
-from CabrilloUtils import *
 
-VERSION = '1.0.3'
-COUNTYLIST = 'Countylist.csv'
+VERSION = '1.0.4'
+COUNTYLIST = './shared/multlists/Countylist.csv'
 ARGS = None
+
+DEVMODPATH = ['moqputils', 'cabrilloutils']
+# If the development module source paths exist, 
+# add them to the python path
+for mypath in DEVMODPATH:
+    if ( os.path.exists(mypath) and \
+                       (os.path.isfile(mypath) == False) ):
+        sys.path.insert(0,mypath)
+#print('Python path = %s'%(sys.path))
+
+from CabrilloUtils import *
 
 class get_args():
     def __init__(self):
