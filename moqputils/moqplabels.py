@@ -26,7 +26,7 @@ AWARDLIST = ['Missouri Fixed Multi-Op',
 'Missouri Mobile Single-Op LP',
 'Missouri Mobile Single-Op LP CW',
 'Missouri Mobile Single-Op LP Phone',
-'Non-Missouri US Single Operator HP','
+'Non-Missouri US Single Operator HP',
 'Non-Missouri US Single Operator LP',
 'Non-Missouri US Single Operator QRP',
 'Non-Missouri US Multi-Op',
