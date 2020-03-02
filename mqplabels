@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+"""
+moqplabels  - Utility to help with publishing and distribution
+              of MOQP certificates and lables
+              
+              Lots more documentation needed!
+                
+               Based on 2019 MOQP Rules
+
+Update History:
+* Fri Feb 28 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.1 -First interation
+- Added 
+* Thu Jan 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Working version - adding option to launch club reports.
+- Added logic to lauch MOQPDBCatReport or MOQPDBClubReport.
+"""
+
+import os.path
+import sys
+import argparse
+VERSION = '0.0.1'
+ARGS = None
+
+DEVMODPATH = ['moqputils', 'cabrilloutils']
+# If the development module source paths exist, 
+# add them to the python path
+for mypath in DEVMODPATH:
+    if ( os.path.exists(mypath) and \
+                       (os.path.isfile(mypath) == False) ):
+        sys.path.insert(0,mypath)
+#print('Python path = %s'%(sys.path))
+        
+DESCRIPTION = \
+"""moqpreports  - Generate reports for MOQP
+                  from database.
+                
+                   Based on 2019 MOQP Rules
+"""
+
+EPILOG = \
+"""
+Running with no parameters will launch the GUI.
+"""
+
+class get_args():
+    def __init__(self):
+        if __name__ == '__main__':
+            self.args = self.getargs()
+            
+    def getargs(self):
+        parser = argparse.ArgumentParser(\
+                               description = DESCRIPTION,
+                                           epilog = EPILOG)
+        parser.add_argument('-v', '--version', action='version', version = VERSION)
+        parser.add_argument('-c', '--category', default=None,
+            help="Create a list of the 1st and 2nd place "+ \
+                  "winners in each MOQPCATEGORY.")
+        parser.add_argument('-s', '--showme', default=None,
+            help="Create a list of the SHOWME certificate winners.")
+        parser.add_argument('-m', '--missouri', default=None,
+            help="Create a list of the MISSOURI certificate winners.")
+        parser.add_argument('-p', '--provstate', default=None,
+            help="Create a list of the STATE/PROV certificate winners.")
+        args = parser.parse_args()
+        #print(args)
+        return args
+
+if __name__ == '__main__':
+   args = get_args()
+
+   #print (args.args)
+   
+   if (args.args.category):
+       from moqplabels import CATEGORYLabels
+       app = CATEGORYLabels()
+   elif (args.args.showme):
+       from moqplabels import SHOWMELabels
+       app = SHOWMELabels('SHOWME')
+   elif (args.args.missouri):
+       from moqplabels import SHOWMELabels
+       app = SHOWMELabels('MISSOURI')
+   elif (args.args.provstate):
+       print("Running STATELabels...")
+       from moqplabels import STATELabels
+       app = STATELabels()
+   else:
+       from gui_reports import labels_ui
+       app=gui_reports()
+        

@@ -59,7 +59,7 @@ class MOQPDBCountyCountRpt():
 
     def processAll(self, mydb):
         ctys=MOQPDBCountyCount()
-        query = "SELECT * FROM `QSOS` WHERE VALID=1"
+        query = "SELECT * FROM `QSOS` WHERE 1"
         qsolist = mydb.read_query(query)
         print("Total number of valid QSOS: %d"%(len(qsolist)))
         for qso in qsolist:
