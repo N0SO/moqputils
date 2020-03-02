@@ -26,19 +26,19 @@ AWARDLIST = ['Missouri Fixed Multi-Op',
 'Missouri Mobile Single-Op LP',
 'Missouri Mobile Single-Op LP CW',
 'Missouri Mobile Single-Op LP Phone',
-'Non-'Missouri US Single Operator HP','
-'Non-'Missouri US Single Operator LP',
-'Non-'Missouri US Single Operator QRP',
-'Non-'Missouri US Multi-Op',
+'Non-Missouri US Single Operator HP','
+'Non-Missouri US Single Operator LP',
+'Non-Missouri US Single Operator QRP',
+'Non-Missouri US Multi-Op',
 'Canada',
 'DX',
 'Missouri Rookie',
 'Missouri School Club',
 'Missouri clubs',
 'Missouri Digital',
-'Non 'Missouri Digital',
+'Non Missouri Digital',
 'Missouri VHF',
-'Non-'Missouri VHF',
+'Non-Missouri VHF',
 'Highest Number of Counties' ]
 
 SHOWMEHEADERS =    'AWARD\tSTATION\tOPERATORS\t'+ \
