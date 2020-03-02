@@ -13,6 +13,34 @@ from moqpdbutils import *
 
 VERSION = '0.0.1'
 
+AWARDLIST = ['Missouri Fixed Multi-Op',
+'Missouri Fixed Single-Op HP',
+'Missouri Fixed Single-Op LP',
+'Missouri Fixed Single-Op QRP',
+'Missouri Expedition Multi-Op',
+'Missouri Expedition Single-Op HP',
+'Missouri Expedition Single-Op LP',
+'Missouri Expedition Single-Op QRP',
+'Missouri Mobile Unlimited',
+'Missouri Mobile Multi-Op (LP)',
+'Missouri Mobile Single-Op LP',
+'Missouri Mobile Single-Op LP CW',
+'Missouri Mobile Single-Op LP Phone',
+'Non-'Missouri US Single Operator HP','
+'Non-'Missouri US Single Operator LP',
+'Non-'Missouri US Single Operator QRP',
+'Non-'Missouri US Multi-Op',
+'Canada',
+'DX',
+'Missouri Rookie',
+'Missouri School Club',
+'Missouri clubs',
+'Missouri Digital',
+'Non 'Missouri Digital',
+'Missouri VHF',
+'Non-'Missouri VHF',
+'Highest Number of Counties' ]
+
 SHOWMEHEADERS =    'AWARD\tSTATION\tOPERATORS\t'+ \
                    'NAME\tADDRESS\tCITY\tSTATE\tZIP\t'+ \
                    'COUNTRY\tEMAIL'
