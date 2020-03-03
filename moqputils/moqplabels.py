@@ -13,33 +13,33 @@ from moqpdbutils import *
 
 VERSION = '0.0.1'
 
-AWARDLIST = ['Missouri Fixed Multi-Op',
-'Missouri Fixed Single-Op HP',
-'Missouri Fixed Single-Op LP',
-'Missouri Fixed Single-Op QRP',
-'Missouri Expedition Multi-Op',
-'Missouri Expedition Single-Op HP',
-'Missouri Expedition Single-Op LP',
-'Missouri Expedition Single-Op QRP',
-'Missouri Mobile Unlimited',
-'Missouri Mobile Multi-Op (LP)',
-'Missouri Mobile Single-Op LP',
-'Missouri Mobile Single-Op LP CW',
-'Missouri Mobile Single-Op LP Phone',
-'Non-Missouri US Single Operator HP',
-'Non-Missouri US Single Operator LP',
-'Non-Missouri US Single Operator QRP',
-'Non-Missouri US Multi-Op',
-'Canada',
-'DX',
-'Missouri Rookie',
-'Missouri School Club',
-'Missouri clubs',
-'Missouri Digital',
-'Non Missouri Digital',
-'Missouri VHF',
-'Non-Missouri VHF',
-'Highest Number of Counties' ]
+AWARDLIST = ['MISSOURI FIXED MULTI-OP',
+    'MISSOURI FIXED SINGLE-OP HIGH POWER',
+    'MISSOURI FIXED SINGLE-OP LOW POWER',
+    'MISSOURI FIXED SINGLE-OP QRP POWER',
+    'MISSOURI EXPEDITION MULTI-OP',
+    'MISSOURI EXPEDITION SINGLE-OP HIGH POWER',
+    'MISSOURI EXPEDITION SINGLE-OP LOW POWER',
+    'MISSOURI EXPEDITION SINGLE-OP QRP POWER',
+    'Missouri Mobile Unlimited',
+    'Missouri Mobile Multi-Op LOW POWER',
+    'Missouri Mobile Single-Op LOW POWER',
+    'Missouri Mobile Single-Op LOW POWER CW',
+    'Missouri Mobile Single-Op LOW POWER Phone',
+    'US Single Operator HIGH POWER',
+    'US Single Operator LOW POWER',
+    'US Single Operator QRP POWER',
+    'US Multi-Op',
+    'Canada',
+    'DX',
+    'Missouri Rookie',
+    'Missouri School Club',
+    'Missouri clubs',
+    'Missouri Digital',
+    'Non Missouri Digital',
+    'Missouri VHF',
+    'Non-Missouri VHF',
+    'Highest Number of Counties' ]
 
 SHOWMEHEADERS =    'AWARD\tSTATION\tOPERATORS\t'+ \
                    'NAME\tADDRESS\tCITY\tSTATE\tZIP\t'+ \
@@ -176,11 +176,13 @@ class CATEGORYLabels():
        return tsvdata
     
            
-    def processOne(self, mydb, cat):
+    def processOne(self, mydb, cati):
     
+       cat = cati.upper()
        sumlist = mydb.read_query("SELECT * FROM SUMMARY WHERE MOQPCAT='%s' ORDER BY (SCORE) DESC"%(cat))
        tsvdata = []
-       tsvdata.append(self.processHeader(mydb, 
+       if (len(sumlist)>0):
+           tsvdata.append(self.processHeader(mydb, 
                                          "FIRST PLACE", 
                                          cat, 
                                          sumlist[0]['LOGID']) )
@@ -189,6 +191,8 @@ class CATEGORYLabels():
                                          "SECOND PLACE", 
                                          cat, 
                                          sumlist[1]['LOGID']) )
+       if (len(sumlist) == 0):
+           tsvdata =['\t%s\tNO ENTRY'%(cat)]
        return tsvdata
        
     def AwardDisplay(self, AwardList):
@@ -198,11 +202,13 @@ class CATEGORYLabels():
     def appMain(self):
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
-       CATLIST = mydb.read_query("SELECT DISTINCT MOQPCAT FROM SUMMARY WHERE 1")
+       #CATLIST = mydb.read_query("SELECT DISTINCT MOQPCAT FROM SUMMARY WHERE 1")
        self.AwardList.append(CATCOLUMNHEADERS)
-       for CAT in CATLIST:
+       #for CAT in CATLIST:
+       for CAT in AWARDLIST:
            #print(CAT['MOQPCAT'])
-           tsvdata = self.processOne(mydb, CAT['MOQPCAT'])
+           #tsvdata = self.processOne(mydb, CAT['MOQPCAT'])
+           tsvdata = self.processOne(mydb, CAT)
            for line in tsvdata: 
                self.AwardList.append(line)
        self.AwardDisplay(self.AwardList) 
