@@ -1,16 +1,43 @@
 # moqputils
-Collection of tools for processing Missouri QSO Party log files. This will replace the csv2cab repository.
+Collection of tools for processing Missouri QSO Party log files. 
+The set has now grown from the single csv2cab utility to an entire
+suite of utilities that was used to score the 2019 Missouri QSO 
+Party. Expanded utilities include:
+   csv2cab - The original CSV to CABRILLO utility.
+   
+   loadlogs - Load logfiles into a MySQL database. Log headers 
+              are read and recorded in a table, then QSOs from
+              the log are read into a QSOs table. This will 
+              qllow additional utilities to do things like 
+              validate QSOs and generate contest wide stats.
+              
+   qsocheck - Check all QSOs in the MySQL database QSO table
+              for validity. Also checks for corrosponding QSO
+              with the other station. The QOS will be marked
+              VALID if all QSO checks pass, or the reason the
+              qsochecker thinks i't invalid will be recoreded.
+              Does the date/time match the
+              defined contest period? Is the band valid?
+              is the mode valid? Callsigns valid? signal
+              report valid for mode?
+
+   mqpcategory - Utilities to summarize and categorize a single 
+                 log or set of logs.
+              
+
+
+This suite is python based, it will run on any platform that supports
+python V3.x (currently using 3.6). 
 
 csv2cab
-Convert the Missouri QSO Party Excel logging form MOQP_log.xls 
-to a Cabrillo file ready for submission.
-
 The BEARS-STL provide a spreadsheet template useful for logging 
 contacts during the Missouri QSO Party. The form may be downloaded
 from our website: http://w0ma.org/index.php/missouri-qso-party.
+This is the original utility that converts the Missouri QSO Party 
+Excel logging form MOQP_log.xls to a Cabrillo file ready for submission.
 
-This utility is python based, it will run on any platform that supports
-python V2.7
+
+
 
 To use this utility:
 1. Download the spreadsheet form from the link above.
