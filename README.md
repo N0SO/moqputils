@@ -103,13 +103,13 @@ USAGE:
              -i INPUTPATH, --inputpath INPUTPATH
               Specifies the path to the folder that contains the log files to summarize.      
               
-Scoring the QSO Party, step by step.
+SCORING THE QSO PARTY, STEP-BY-STEP.
     1. Install the utilities as described above.
     2. Setup a new MySQL database to hold your data. We recommend using phpMyAdmin
        and importing the sample database.
     3. Open a terminal window in the moqputils folder.
     4. Note where the raw CABRILLO format log files reside. They MUST BE in CABRILLO format.
-    5. You can pre-check logfiles for errors by running:
+    5. You can pre-check each logfile for errors by running:
            python ./mqpcategory -i path-to-log-file
        This will check the logfile without loading it into the database and show you
        a report in CSV format, which you can load into a spreadsheet like MSExcel.
@@ -124,8 +124,66 @@ Scoring the QSO Party, step by step.
        
        Review this output for errors - you may want to consider rejecting
        logs that have excessive errors and ask the submitters to correct
-       the errors.
+       the errors, or edit the files yourself to correct minor defects.
        
+       If you choose to edit the logs, it is recommended that you preserve the
+       original log as submitted for history, and perform edits on a copy of
+       the log in another folder.
+       Things to look for include:
+          A. CABRILLO HEADER info. Especially the LOCATION: and all CATEGORY-XXXX: tags. 
+             This information is what will determine which MOQP category the
+             station fits into. Many operators edit the fields and change the data to non-
+             standard values. For the QSO Party, all stations should make LOCATION: their 
+             STATE, PROVINCE or DX. The mqpcategory utility will flag fields it recognizes 
+             as incorrect or incomplete in most cases. It's worth a reply e-mail to the 
+             submitter to get this info clarified or corrected. 
+             
+          B. QSO: Exchanges need to be in the format:
+                 QSO: frequency-in-KHz MODE DATE TIME MYCALL MYRST MYQTH URCALL URRST URQTH
+             Example of W0MA PHONE QSO with N0H:
+                 QSO: 3900 PH 2019-04-07 1451 W0MA 59 MO N0H 59 IRN
+          
+          C. QSO DATE/TIME Stamps - The utility will flag QSOs that are not withing the 
+             contest period. If there are lots of them, you should question if the station 
+             time was off. If it's off more than 30 minutes, many QSOs may be considered 
+             invalid by the qskchecker.
+             
+          D. QSO FREQUENCY in KHz - Many stations will entry the frequency in MHz (3.5, 4, 
+             7, 14, 21, etc.) - CABRILLO format expects frequency in KHz (3500, 4000, 7000, etc.).
+             
+          E. For MISSOURI stations, the MYQTH/URQTH in the exchange field should be a 3 character
+             county name, NOT MO or MISSOURI!
+             
+          F. SIGNAL REPORTS - must be the standard RST format, not db numbers from FT8 QSOs!
+          
+          G. EXTRA DATA COLUMNS IN THE QSO: LINES - Some older logging programs include a
+             a SEQUENCE or SERIAL NUMBER as part of the exchange. This is no longer required
+             and they need to be removed before scoring. Some logging programs include 
+             station fields for multi-transmitter stations. These may need to be removed 
+             before scoring unless they are at the end of the line.
+             
+          H. DUPES REMOVED - Most modern logging programs do this. If not, the QSOCHECKER will 
+             flag the older of two QSOs that are DUPES as INVALID.
+    
+    6. Once Step #5 is completed and the logfile edited accordingly, it is recommended that the 
+       edited log be moved to a different folder, and that the original be preserved for history.
+       
+    7. Load the logfiles into the database:
+           python ./loadlogs -i /home/data/moqplogs/ready-to-load/W0MA.LOG  
+       This will load a single logfile into the database. Entering:
+           python ./loadlogs -i /home/data/moqplogs/ready-to-load/
+       will attempt to load ALL logfiles in the folder /home/data/moqplogs/ready-to-load/
+       
+       NOTE: The loadlogs utility needs updating to allow for REPLACING logs in the database.
+             currently, the utility will simply make a new db entry for the log if you load it a
+             2nd time. This would show up as a station appearing multiple times (with many DUPElicate
+             QSOS) in the contest reports later on, and these will need to be removed manually. You
+             may use phpMyAdmin to remove duplicate logs, but it's a bit painfull. A utility to help
+             manage this probably should be on the TODO list.
+       
+    8. Run the QSO checker:
+    
+             
  ----- More to follow -----
 
 V1.0.0 Initial release - 2018-04-13
