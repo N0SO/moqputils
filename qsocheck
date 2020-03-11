@@ -14,8 +14,6 @@ for mypath in DEVMODPATH:
         sys.path.insert(0,mypath)
 #print('Python path = %s'%(sys.path))
 
-from moqpdbutils import *
-
 DESCRIPTION = \
 """qsocheck  - Check validity of each QSO in the database. Set QSO
                record VALID flag if QSO is valid per 2019 rules.
@@ -37,10 +35,10 @@ class get_args():
                                            epilog = EPILOG)
         parser.add_argument('-v', '--version', action='version', version = VERSION)
         parser.add_argument('-c', '--callsign', default=None,
-            help='Verify QSOS for CALLSIGN in MOQP database.')
+            help='Verify QSOS for CALLSIGN in MOQP database. Using allcalls as CALLSIGN checks all QSOs in the database.')
+        """
         parser.add_argument('-a', '--allcalls', default='allcalls',
             help='Verify QSOs for all logs in MOQP database.')
-        """
         parser.add_argument('-i', '--inputpath', default=None,
             help='Specifies the path to the folder that contains the log files to summarize.')
         """
@@ -58,16 +56,21 @@ def checkOneCall(call):
             print()
        
 if __name__ == '__main__':
+    args = get_args()
+    from moqpdbutils import *
     mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
     mydb.setCursorDict()
-    args = get_args()
     if (args.args.callsign):
-        checkOneCall(args.args.callsign)
-    elif (args.args.allcalls):
-        loglist = mydb.read_query( \
-              "SELECT ID, CALLSIGN FROM logheader WHERE 1")
-        for nextlog in loglist:
-            checkOneCall(nextlog['CALLSIGN'])
+        if (args.args.callsign == 'allcalls'):
+            loglist = mydb.fetchLogList()
+            """
+            loglist = mydb.read_query( \
+                "SELECT ID, CALLSIGN FROM logheader WHERE 1")
+            """
+            for nextlog in loglist:
+                checkOneCall(nextlog['CALLSIGN'])
+        else:
+            checkOneCall(args.args.callsign)
     else:
        print('Nothing to do.')   
      
