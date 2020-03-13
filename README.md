@@ -4,7 +4,8 @@ The set has now grown from the single csv2cab utility to an entire
 suite of utilities that was used to score the 2019 Missouri QSO 
 Party. Expanded utilities include:
 
-   csv2cab - The original CSV to CABRILLO utility. The BEARS-STL
+1. csv2cab 
+   - The original CSV to CABRILLO utility. The BEARS-STL
              provide a spreadsheet template useful for logging 
              contacts during the Missouri QSO Party. The form 
              may be downloaded from our website: 
@@ -14,14 +15,14 @@ Party. Expanded utilities include:
              Missouri QSO Party Excel logging form MOQP_log.xls 
              to a Cabrillo file ready for submission.
    
-   loadlogs - Load logfiles into a MySQL database. Log headers 
+   -loadlogs - Load logfiles into a MySQL database. Log headers 
               are read and recorded a table logheaders, then
               QSOs from the log are read into a QSOs table. 
               This will allow the additional utilities to do 
               things like validate QSOs and generate contest 
               wide stats.
               
-   qsocheck - Check all QSOs in the MySQL database QSO table
+   -qsocheck - Check all QSOs in the MySQL database QSO table
               for validity. Also checks for a corrosponding QSO
               with the other station. The QOS will be marked
               VALID if all QSO checks pass, or the reason the
