@@ -80,52 +80,51 @@ USAGE:
    the command line functions for now.
 2. Use the cd command to swithc into the moqputils directory in 
    a command window. You can run all of the utilities from there.
-3. You can see options for each utility by entering:
-   '''
-   ./utility-name --help. Example:
-    python ./mqpcategory --help
-    usage: mqpcategory [-h] [-v] [-c CALLSIGN] [-d DIGITAL] [-U VHF] [-i INPUTPATH]
-    moqpcategory - Determine which Missouri QSO Party Award category a Cabrillo Format log file is in. Based on 2019 MOQP rules
-    optional arguments:
-             -h, --help            show this help message and exit
-             -v, --version         show program's version number and exit
-             -c CALLSIGN, --callsign CALLSIGN
-              CALLSIGN in MOQP database to summarize. Entering allcalls = all calls in database
-             -d DIGITAL, --digital DIGITAL
+3. You can see options for each utility by entering:<br/>
+   ./utility-name --help. Example:<br/>
+    python ./mqpcategory --help<br/>
+    usage: mqpcategory [-h] [-v] [-c CALLSIGN] [-d DIGITAL] [-U VHF] [-i INPUTPATH]<br/>
+    moqpcategory - Determine which Missouri QSO Party Award category a Cabrillo Format log file is in. Based on 2019 MOQP rules<br/>
+    optional arguments:<br/>
+             -h, --help            show this help message and exit<br/>
+             -v, --version         show program's version number and exit<br/>
+             -c CALLSIGN, --callsign CALLSIGN<br/>
+              CALLSIGN in MOQP database to summarize. Entering allcalls = all calls in database<br/>
+             -d DIGITAL, --digital DIGITAL<br/>
              Summarize digital QSOs only for CALLSIGN in MOQP database. Entering allcalls = all calls in
-             database
+             database<br/>
              -U VHF, --vhf VHF     Summarize VHF QSOs only for CALLSIGN in MOQP database. Entering allcalls = all calls in
-                                   database
-             -i INPUTPATH, --inputpath INPUTPATH
-              Specifies the path to the folder that contains the log files to summarize.      
-     '''
+                                   database<br/>
+             -i INPUTPATH, --inputpath INPUTPATH<br/>
+              Specifies the path to the folder that contains the log files to summarize. <br/>     
+  
          
 SCORING THE QSO PARTY, STEP-BY-STEP.
-    1. Install the utilities as described above.
-    2. Setup a new MySQL database to hold your data. We recommend using phpMyAdmin
-       and importing the sample database.
-    3. Open a terminal window in the moqputils folder.
-    4. Note where the raw CABRILLO format log files reside. Logs MUST BE in CABRILLO format.
-    5. You can pre-check each logfile for errors by running:
-           python ./mqpcategory -i path-to-log-file
-       This will check the logfile without loading it into the database and show you
-       a report in CSV format, which you can load into a spreadsheet like MSExcel.
-       example:
-           python ./mqpcategory -i /home/data/moqploags/W0MA.LOG
+1. Install the utilities as described above.
+2. Setup a new MySQL database to hold your data. We recommend using phpMyAdmin
+   and importing the sample database.
+3. Open a terminal window in the moqputils folder.
+4. Note where the raw CABRILLO format log files reside. Logs MUST BE in CABRILLO format.
+5. You can pre-check each logfile for errors by running:<br/>
+   python ./mqpcategory -i path-to-log-file<br/>
+   This will check the logfile without loading it into the database and show you
+   a report in CSV format, which you can load into a spreadsheet like MSExcel.<br/>
+   example:<br/>
+           python ./mqpcategory -i /home/data/moqploags/W0MA.LOG<br/>
        this will evaluate only the single log file W0MA.LOG. Entering the following 
-       will perform the summary in ALL .LOG files in the folder:
-           python ./mqpcategory -i /home/data/moqploags/
+       will perform the summary in ALL .LOG files in the folder:<br/>
+           python ./mqpcategory -i /home/data/moqploags/<br/>
        the ending slash is important!
        
-       Review this output for errors - you may want to consider rejecting
-       logs that have excessive errors and ask the submitters to correct
-       the errors, or edit the files yourself to correct minor defects.
+   Review this output for errors - you may want to consider rejecting
+   logs that have excessive errors and ask the submitters to correct
+   the errors, or edit the files yourself to correct minor defects.
        
-       If you choose to edit the logs, it is recommended that you preserve the
-       original log as submitted for history, and perform edits on a copy of
-       the log in another folder.
-       Things to look for include:
-          A. CABRILLO HEADER info. Especially the LOCATION: and all CATEGORY-XXXX: tags. 
+   If you choose to edit the logs, it is recommended that you preserve the
+   original log as submitted for history, and perform edits on a copy of
+   the log in another folder.
+   Things to look for include:
+   - CABRILLO HEADER info. Especially the LOCATION: and all CATEGORY-XXXX: tags. 
              This information is what will determine which MOQP category the
              station fits into. Many operators edit the fields and change the data to non-
              standard values. For the QSO Party, all stations should make LOCATION: their 
@@ -133,41 +132,41 @@ SCORING THE QSO PARTY, STEP-BY-STEP.
              as incorrect or incomplete in most cases. It's worth a reply e-mail to the 
              submitter to get this info clarified or corrected. 
              
-          B. QSO: Exchanges need to be in the format:
-                 QSO: frequency-in-KHz MODE DATE TIME MYCALL MYRST MYQTH URCALL URRST URQTH
-             Example of W0MA PHONE QSO with N0H:
-                 QSO: 3900 PH 2019-04-07 1451 W0MA 59 MO N0H 59 IRN
+   - QSO: Exchanges need to be in the format:<br/>
+                 QSO: frequency-in-KHz MODE DATE TIME MYCALL MYRST MYQTH URCALL URRST URQTH<br/>
+             Example of W0MA PHONE QSO with N0H:<br/>
+                 QSO: 3900 PH 2019-04-07 1451 W0MA 59 MO N0H 59 IRN<br/>
           
-          C. QSO DATE/TIMES - The utility will flag QSOs that are not withing the 
+   - QSO DATE/TIMES - The utility will flag QSOs that are not withing the 
              contest period. If there are lots of them, you should question if the station 
              time was off. If it's off more than 30 minutes, many QSOs may be considered 
              invalid by the qsochecker.
              
-          D. QSO FREQUENCY in KHz - Many stations will entry the frequency in MHz (3.5, 4, 
+   - QSO FREQUENCY in KHz - Many stations will entry the frequency in MHz (3.5, 4, 
              7, 14, 21, etc.) - CABRILLO format expects frequency in KHz (3500, 4000, 7000, etc.).
              
-          E. For MISSOURI stations, the MYQTH/URQTH in the exchange field should be a 3 character
+   - For MISSOURI stations, the MYQTH/URQTH in the exchange field should be a 3 character
              county name, NOT MO or MISSOURI!
              
-          F. SIGNAL REPORTS - must be the standard RST format, not db numbers from FT8 QSOs!
+   - SIGNAL REPORTS - must be the standard RST format, not db numbers from FT8 QSOs!
           
-          G. EXTRA DATA COLUMNS IN THE QSO: LINES - Some older logging programs include a
+   - EXTRA DATA COLUMNS IN THE QSO: LINES - Some older logging programs include a
              a SEQUENCE or SERIAL NUMBER as part of the exchange. This is no longer required
              and they need to be removed before scoring. Some logging programs include 
              station fields for multi-transmitter stations. These may need to be removed 
              before scoring unless they are at the end of the line.
              
-          H. DUPES REMOVED - Most modern logging programs do this. If not, the QSOCHECKER will 
+   - DUPES REMOVED - Most modern logging programs do this. If not, the QSOCHECKER will 
              flag the older of two QSOs that are DUPES as INVALID.
     
-    6. Once Step #5 is completed and the logfile edited accordingly, it is recommended that the 
+6. Once Step #5 is completed and the logfile edited accordingly, it is recommended that the 
        edited log be moved to a different folder, and that the original be preserved for history.
        
-    7. Load the logfiles into the database:
-           python ./loadlogs -i /home/data/moqplogs/ready-to-load/W0MA.LOG  
-       This will load a single logfile into the database. Entering:
-           python ./loadlogs -i /home/data/moqplogs/ready-to-load/
-       will attempt to load ALL logfiles in the folder /home/data/moqplogs/ready-to-load/
+7. Load the logfiles into the database:<br/>
+           python ./loadlogs -i /home/data/moqplogs/ready-to-load/W0MA.LOG  <br/>
+       This will load a single logfile into the database. Entering:<br/>
+           python ./loadlogs -i /home/data/moqplogs/ready-to-load/<br/>
+       will attempt to load ALL logfiles in the folder /home/data/moqplogs/ready-to-load/<br/>
        
        NOTE: The loadlogs utility needs updating to allow for REPLACING logs in the database.
              currently, the utility will simply make a new db entry for the log if you load it a
@@ -176,7 +175,7 @@ SCORING THE QSO PARTY, STEP-BY-STEP.
              may use phpMyAdmin to remove duplicate logs, but it's a bit painfull. A utility to help
              manage this probably should be on the TODO list.
        
-    8. Getting the raw log files in prepped to initiallly load is probably the most time consuming task. 
+8. Getting the raw log files in prepped to initiallly load is probably the most time consuming task. 
        It can (and probably should) be done as the logs trickle in at the end of the contest. That way 
        when the contest log submission closes, you are ready to score! Don't forget to save/archive the
        raw logs, just in case!
@@ -185,8 +184,8 @@ SCORING THE QSO PARTY, STEP-BY-STEP.
        backup of the database. Again, the phoMyAdmin tool can help with this. Save the exported file 
        somewhere, just in case.
        
-    9. Once all logs are loaded into the database, start running the QSO checker:
-             python ./qsocheck -c W0MA
+9. Once all logs are loaded into the database, start running the QSO checker:<br/>
+             python ./qsocheck -c W0MA<br/>
        runs the QSO check for all QSOs submitted by W0MA. A report will be printed showing progress,
        and a list of VALID qsos will be displayed, followd by a list of INVALID qsos.
        
@@ -200,44 +199,50 @@ SCORING THE QSO PARTY, STEP-BY-STEP.
        
        Once this step is complete, you are now ready to start "scoring".
        
-   10. The database contains three summary tables:
-           SUMMARY - Holds a summary list of QSOs by mode, multiplier count (mults), W0MA Bonus, K0GQ Bonus,
+10. The database contains three summary tables:
+    - SUMMARY - Holds a summary list of QSOs by mode, multiplier count (mults) W0MA Bonus, K0GQ Bonus,
                      CABFILE Bonus, total score, MOQPCATEGORY, DIGITAL, VHF and ROOKIE flags. 
                      
-                     Running python ./mqpcategory -c CALLSIGN adds or updates info for the station CALLSIGN.
+      - Running python ./mqpcategory -c CALLSIGN<br/>
+        adds or updates info for the station CALLSIGN.
                      
-                     Running python ./mqpcategory -c allcalls adds or updates this table for all stations
+      - Running python ./mqpcategory -c allcalls<br/>
+        adds or updates this table for all stations
                      found in the database.
-                     
-                     Note that running ./mqpcategory -d CALLSIGN or allcalls produces a summary report of
+                  
+      - Note that running ./mqpcategory -d CALLSIGN or allcalls <br/>
+        produces a summary report of
                      DIGITAL qsos only, usefull for scoring the DIGITAL award. No updates to the SUMMARY
                      table.
 
-                     Note that running ./mqpcategory -U CALLSIGN or allcalls produces a summary report of
+      - Note that running ./mqpcategory -U CALLSIGN or allcalls <br/>
+        produces a summary report of
                      VFH (and up) qsos only, usefull for scoring the VHF awards. No updates to the SUMMARY
                      table.
                      
-                     Note that running ./mqpcategory -C or --county CALLSIGN or allcalls produces a summary 
+      - Note that running ./mqpcategory -C or --county CALLSIGN or allcalls <br/>
+        produces a summary 
                      report of MISSOURI COUNTIES worked, usefull for scoring the MOST COUNTIES WORKED awards. 
                      
-          SHOWME - Holds a summary list of all 1x1 stations worked by CALLSIGN for the SHOWME Award.
-          MISSOURI - Holds a summary list of all 1x1 stations worked by CALLSIGN for the MISSOURI Award.
+    - SHOWME - Holds a summary list of all 1x1 stations worked by CALLSIGN for the SHOWME Award.
+    - MISSOURI - Holds a summary list of all 1x1 stations worked by CALLSIGN for the MISSOURI Award.
                      
-                     Running python ./mqpcertificates -c CALLSIGN or allcalls adds a station to, or updates
-                     stations status in these two tables. Note that entering:
-                         python ./mqpcertificates -i path-to-logfile
+      - Running python ./mqpcertificates -c CALLSIGN or allcalls <br/>
+        adds a station to, or updates
+                     stations status in these two tables.
+      - Note that entering: python ./mqpcertificates -i path-to-logfile<br/>
                      will run the utility on a log file or directory of logfiles.
                      
-   11. Step 10 was mostly descriptive, so here is an expample for after the database is loaded with all log files
+11. Step 10 was mostly descriptive, so here is an expample for after the database is loaded with all log files
        and the qsocheck has been run:
        
-             SCORE, SUMMARIZE AND STORE in SUMMARY Table and MOQP SCORES BY CATEGORY Report:
+    - SCORE, SUMMARIZE AND STORE in SUMMARY Table and MOQP SCORES BY CATEGORY Report:<br/>
              python mqpcategory -c allcalls (optionally add >filename.csv to this line to capture report).
              This updates the SUMMARY table, and also produces a nice report in .CSV format that may be pulled
              into MSExcel for sorting, printing, reporting. You need to run this first to create / update the
              SUMMARY table. Some of the later reports rely on it.
              
-             MOQP SCORES BY CATEGORY Report:
+    - MOQP SCORES BY CATEGORY Report:<br/>
              python mqpreports -c allcalls (optionally add >filename.csv to this line to capture report).
              Same report as mqpcategory -c but without updating the SUMMARY table. This one just reads and
              formats data from the table. As a TODO, it should also sort my MOQPCATEGORY and SCORE.
@@ -247,38 +252,38 @@ SCORING THE QSO PARTY, STEP-BY-STEP.
              splitting out by MOQP CATEGORY. Probably the most time consuming task (aside from getting the
              raw log files in shape to initiallly load).
              
-             MOQP SHOWME and MISSOURI Awards:
+    - MOQP SHOWME and MISSOURI Awards:<br/>
              python mqocertificates -c allcalls (optionally add >filename.csv to this line to capture report).
              This updates the SHOWME and MISSOURI tables, and produces a nice report in .CSV format that may 
              be pulled into MSExcel for sorting, printing, reporting. As a TODO, these should also get added 
              to mqpreports to only report the data without updating the tables.
              
-             MOQP DIGITAL ONLY Awards:
+    - MOQP DIGITAL ONLY Awards:<br/>
              python mqpcategory -d allcalls (optionally add >filename.csv to this line to capture report).
              This produces a report of the DIGITAL QSOs from the summary tabel, and also produces a nice report 
              in .CSV format that may be pulled into MSExcel for sorting, printing, reporting. No updates to the
              table, so you need to run with the -c option first. As a TODO, these should also get added 
              to mqpreports utility.
              
-             MOQP VHF ONLY Awards
+    - MOQP VHF ONLY Awards:<br/>
              python mqpcategory -U allcalls (optionally add >filename.csv to this line to capture report).
              This produces a report of the VHF and up only QSOs from the summary tabel, and also produces a nice 
              report in .CSV format that may be pulled into MSExcel for sorting, printing, reporting. No updates 
              to the table, so you need to run with the -c option first. As a TODO, these should also get added 
              to mqpreports utility.
              
-             MOQP CLUB Awards
+   - MOQP CLUB Awards:<br/>
              python mqpreports -c club (optionally add >filename.csv to this line to capture report).
              This produces a summary report of the stations with something in the CLUB: tag of the logfile header.
              The list will be sorted by LOCATION, CLUB and SCORE. Also produces a nice report in .CSV format that 
              may be pulled into MSExcel for sorting, printing, reporting. At the moment, the user needs to 
              consolidate and summarize the clubs using the spreadsheet to determine winners.
 
-             MOQP MOST COUNTIES Award
+   - MOQP MOST COUNTIES Award:<br/>
              python mqpcategory -C or --county allcalls (optionally add >filename.csv to this line to capture report).
              Generates a list of all stations showing the Missouri Counties worked.
              
-             MOQP ROOKIE Award
+  -  MOQP ROOKIE Award:<br/>
              Use the report generated by mqpreports -c allcalls >filename.txt.
              Load filename.txt into MSExcel (or equivalent) and sort on the ROOKIE field to generate the list of
              rookie entries with score. Eligibility for teh ROOKIE award must be done manually, and may take 
