@@ -1,30 +1,48 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 gui_moqputils.py - GUI "front end" for moqp utilities
 
-          V0.0.1 - 2019-05-10
-          First interation
-          
-          V0.0.2 - 2019-05-10
-          Renamed to guiMOQPUtils since it now has options
-          for several other MOQP utilities.
-          
-          
+Update History:
+* Fri May 10 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.2 - 2019-05-10 -First interation
+- Renamed to guiMOQPUtils since it now has options
+- for several other MOQP utilities.
           
 """
-from Tkinter import *
-from tkMessageBox import *
-from tkFileDialog   import askopenfilename
-from tkFileDialog   import askdirectory
-
+import sys
+python_version = sys.version_info[0]
+if (python_version == 2):
+    from Tkinter import *
+    from tkMessageBox import *
+    from tkFileDialog   import askopenfilename
+    from tkFileDialog   import askdirectory
+    from tkFileDialog   import asksaveasfilename
+else:
+    from tkinter import *
+    from tkinter.messagebox import showinfo
+    from tkinter.filedialog import askopenfilename
+    from tkinter.filedialog import askdirectory
+    from tkinter.filedialog import asksaveasfilename
 import os.path
+import subprocess
 import argparse
+
+VERSION = '0.0.3'
+FILELIST = './'
+DEVMODPATH = ['cabrilloutils', 'moqputils']
+# If the development module source paths exist, 
+# add them to the python path
+for mypath in DEVMODPATH:
+    if ( os.path.exists(mypath) and \
+                       (os.path.isfile(mypath) == False) ):
+        sys.path.insert(0,mypath)
+#print('Python path = %s'%(sys.path))
+
 from csv2cab import csv2CAB
 from moqpcategory import MOQPCategory
 #from onexonesummary import 
 
-VERSION = '0.0.3'
-FILELIST = './'
+
 
 class guiMOQPUtils(Frame):
 
@@ -42,7 +60,7 @@ class guiMOQPUtils(Frame):
 
     #Creation of init_window
     def client_exit(self):
-        print "Exiting..."
+        print("Exiting...")
         exit()
 
     def init_window(self):
@@ -74,7 +92,7 @@ class guiMOQPUtils(Frame):
         #mainloop()
 
     def NewFile(self):
-        print "New File!"
+        print("New File!")
 
 
     def About(self):
@@ -143,6 +161,7 @@ class guiMOQPUtils(Frame):
         return retText
 
     def OpenFile(self):
+        """
         csvfilename = askopenfilename(title = "Select input log file:",
                                       filetypes=[("CSV files","*.csv"),
                                                  ("Text files","*.txt"),
@@ -160,7 +179,11 @@ class guiMOQPUtils(Frame):
             with open(cabfile,'w') as f:
                 f.write(cabtext)
             showinfo('CAB File created and saved', 'Saved as CAB file:\n'+cabfile)
-        
+        from ui import gui_csv2cab
+        app = gui_csv2cab()
+        """
+        pid = subprocess.Popen([sys.executable, "csv2cab"]) # call subprocess
+       
     def appMain(self, pathname):
        #import moqpcategory
        mqpcat = MOQPCategory()

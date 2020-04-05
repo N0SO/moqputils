@@ -38,7 +38,6 @@ class LogSummary(CabrilloUtils):
       
    def processLog(self, logfile):
       retdata = None
-      #cab = CabrilloUtils()
       data = self.readFile(logfile)
       if (data):
          retdata = self.processData( data)
@@ -90,6 +89,45 @@ class LogSummary(CabrilloUtils):
                   ops = self.getCabstg('OPERATORS:',line)
       return call, ops, qso, cw, ph, dg, vhf
 
+   def processQSOList(self,  data):
+      """
+      Process and return summary data from a list of
+      QSO dictionary objects.
+      """
+      summary = dict()
+      summary['QSOS'] = 0
+      summary['CW'] = 0
+      summary['PH'] = 0
+      summary['VHF'] = 0
+      summary['DG'] = 0
+      
+      for thisqso in data:
+      
+         summary['QSOS'] += 1
+                        
+         try:
+             tfreq = thisqso['FREQ']
+             freq = float(tfreq)
+         except:
+             freq = 0.0
+         if ((freq >= 144000.0) or (tfreq in self.VHFFREQ) ):
+             summary['VHF'] += 1
+                                   
+         mode = thisqso['MODE'].upper()
+         if ('CW' in mode):
+             summary['CW'] += 1
+         elif (mode in self.PHONEMODES):
+             summary['PH'] += 1
+         elif (mode in self.DIGIMODES):
+             summary['DG'] += 1
+         else:
+             badmodeline = ('QSO:')
+             for tag in self.QSOTAGS:
+                 badmodeline += (' %s'%(data[tag]))
+             print('UNDEFINED MODE: %s -- QSO data = %s'%(mode, badmodeline))
+
+      return  summary
+
    def processData(self,  data):
       retdata = []
       qso = 0
@@ -134,10 +172,11 @@ class LogSummary(CabrilloUtils):
       
    def main(self):
       args = get_args()
-      sumdata = self.processLog(args.args.inputfile)
-      if (sumdata):
-         for line in sumdata:
-            print line
+      if(args.args.inputfile):
+          sumdata = self.processLog(args.args.inputfile)
+          if (sumdata):
+             for line in sumdata:
+                print(line)
 
 if __name__ == '__main__':
    app=LogSummary()

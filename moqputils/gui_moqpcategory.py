@@ -57,8 +57,11 @@ class gui_MOQPCategory(MOQPCategory):
         #filemenu.add_command(label="New", command=self.NewFile)
         #filemenu.add_command(label="Convert CSV to CAB...", command=self.OpenFile)
         #filemenu.add_separator()
-        filemenu.add_command(label="Log File to Categorize...", command=self.SumFile)
-        filemenu.add_command(label="Sum directory of logs...", command=self.SumDir)
+        filemenu.add_command(label="Categorize single log file...", command=self.SumFile)
+        filemenu.add_command(label="Categorize directory of logs...", command=self.SumDir)
+        #filemenu.add_separator()
+        filemenu.add_command(label="Callsign from DB to Categorize...", command=self.sumCall)
+        filemenu.add_command(label="Categorize all logs from DB...", command=self.sumAll)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.client_exit)
 
@@ -69,6 +72,11 @@ class gui_MOQPCategory(MOQPCategory):
     def NewFile(self):
         print("New File!")
 
+    def sumCall(self):
+        print('Sum single callsign from MOQP database.')
+
+    def sumAll(self):
+        print('Sum all callsigns from MOQP database.')
 
     def About(self):
         showinfo('GUI_MOQPCATEGORY', 'GUI_MOQPCATEGORY - Version ' + VERSION + '\n' + \
@@ -141,6 +149,8 @@ class gui_MOQPCategory(MOQPCategory):
         window.insert(END, ('%s\t'%(log['QSOSUM']['DG'])))
         window.insert(END, ('%s\t'%(log['QSOSUM']['QSOS'])))
         window.insert(END, ('%s\t'%(log['QSOSUM']['VHF'])))
+        window.insert(END, ('%s\t'%(log['MULTS'])))         
+        window.insert(END, ('%s\t'%(log['SCORE'])))        
         window.insert(END, ('%s\t'%(log['MOQPCAT']['MOQPCAT'])))
         window.insert(END, ('%s\t'%(log['MOQPCAT']['DIGITAL'])))
         window.insert(END, ('%s\t'%(log['MOQPCAT']['VHF'])))

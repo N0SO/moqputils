@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""
+ShowMe  - Determine which Missouri QSO Party stations 
+          qualify for the ShowMe and/or MISSOURI awards
+
+Update History:
+* Mon Dec 09 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.1 - Start of work
+* Tue Dec 10 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Working command  line version of SHOWME and
+- MISSOURI awards.
+- Needs more testing and tweaking - Files with lots of
+- bad QSO errors make the output confusing to read.
+- Needs to factor in use of COMMONCALLS and WILDCARD.
+- No GUI
+* Wed Dec 11 2019 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Added child class BonusAward to determine
+- if stations worked the BONUS stations (W0MA and K0GQ
+- for 2019.
+- Updated GenAward to keep up to four (4) unique calls
+- per element to help match multiple awards (SHOWME and
+- MISSOURI for 2019) Need to write method to prevent 
+- same call being used for both awards and account for
+- bonus stations.
+* Thu Jan 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.2.0 - Split each award class into a separate file.
+- Renamed showme script (this file) to mqpcertificates
+- Created moqputils/moqpcertificates.py for command
+- line processing.
+"""
+
+import os.path
+import sys
+import argparse
+VERSION = '0.1.1'
+ARGS = None
+
+DEVMODPATH = ['moqputils', 'cabrilloutils']
+# If the development module source paths exist, 
+# add them to the python path
+for mypath in DEVMODPATH:
+    if ( os.path.exists(mypath) and \
+                       (os.path.isfile(mypath) == False) ):
+        sys.path.insert(0,mypath)
+#print('Python path = %s'%(sys.path))
+        
+DESCRIPTION = \
+"""mqpcertificates  
+      - Determine which Missouri QSO Party stations 
+        qualify for the ShowMe and/or MISSOURI awards.
+        Also captures BONUS stations.
+                
+        Based on 2019 MOQP Rules
+"""
+
+EPILOG = \
+"""
+Running with no parameters will launch the GUI.
+"""
+
+class get_args():
+    def __init__(self):
+        if __name__ == '__main__':
+            self.args = self.getargs()
+            
+    def getargs(self):
+        parser = argparse.ArgumentParser(\
+                               description = DESCRIPTION,
+                                           epilog = EPILOG)
+        parser.add_argument('-v', '--version', action='version', version = VERSION)
+        parser.add_argument("-c", "--callsign", default=None,
+            help="Summarize log data from database for CALLSIGN .")
+        parser.add_argument("-i", "--inputpath", default=None,
+            help="Specifies the path to the folder that contains the log files to summarize.")
+        return parser.parse_args()
+
+
+if __name__ == '__main__':
+   args = get_args()
+   
+   if (args.args.inputpath):
+       print(args.args.inputpath)
+       from moqpcertificates import MOQPCertificates
+       app = MOQPCertificates(args.args.inputpath)
+   elif (args.args.callsign):
+       #print(args.args.callsign)
+       from moqpdbcertificates import MOQPDBCertificates
+       app = MOQPDBCertificates(args.args.callsign)
+   else:
+       from showme_ui import ui
+       app=ui()
+        
