@@ -24,6 +24,9 @@ Update History:
 - V1.0.12
 - Added is_number method to handle frequencies entered 
 - with decimal.
+* Wed Apr 15 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.13
+- Added method getLogDisct(filename)
 """
 
 class CabrilloUtils():
@@ -195,7 +198,7 @@ class CabrilloUtils():
        header = self.makeHEADERdict()
        for line in cabdata:
           headerline = self.packLine(line.upper())
-          linesplit = line.split(':')
+          linesplit = headerline.split(':')
           if (linesplit[0] in 'QSO END-OF-LOG'):
              continue
           else:
@@ -204,7 +207,39 @@ class CabrilloUtils():
        #print(header)
        return header
        
+    """
+    Method getLogDist(filename)
+    Reads target cabrillo file filename
+    verifies data is a cab file
+    returns a DICT object:
+    result['HEADE'] = a DICT object of the HEADER data using
+                   self.CABRILLOTAGS and the dict index list.
+    result['QSOLIST'] = a list of the QSO: taged lines. No 
+                     verification of the QSO data is attempted.
 
+    If filename cannot be read or is not CAB data, then
+    result is returned as None type.
+    """
+    def getLogdict(self, fileName):
+       logtext = self.readFile(fileName)
+       if (logtext):
+          logdict = dict()
+          header = self.makeHEADERdict()
+          qsolist = []
+          for line in logtext:
+              newline = self.packLine(line.upper())
+              tagsplit = newline.split(':')
+              if (tagsplit[0] in 'QSO END-OF-LOG'):
+                 if (tagsplit[0] == 'QSO'):
+                    qsolist.append(newline)
+              else:
+                 if (len(tagsplit) > 1):
+                    header[tagsplit[0]] += tagsplit[1]
+          logdict['HEADER'] = header
+          logdict['QSOLIST'] = qsolist
+       else:
+          logdict = None
+       return logdict
 
     def getOperatorData(self, data):
        opData = []
