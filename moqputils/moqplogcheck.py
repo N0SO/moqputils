@@ -33,11 +33,17 @@ the MOQP SQL database. Look for the following:
 Update History:
 * Tue Apr 14 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - First interation
+- Same basic funtion as moqpcategory.py
+* Thu Apr 16 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.2 - Added enhanced log header verification.
+- Steps 1 & 2 above.
+
 """
 
 from CabrilloUtils import *
 from moqpmults import *
 from generalaward import GenAward
+from qsoutils import QSOUtils
 import os
 
 INSTATE = ['MO', 'MISSOURI']
@@ -94,6 +100,23 @@ class MOQPLogcheck(CabrilloUtils):
                  Headers = False
         return result
 
+    def validateQSOtime(self, qso):
+        qsoutils = QSOUtils()
+        timeValid = False
+        day1Start = qsoutils.qsotimeOBJ('2020-04-04', '1400')
+        day1Stop = qsoutils.qsotimeOBJ('2020-04-05', '0400')
+        day2Start = qsoutils.qsotimeOBJ('2020-04-05', '1400')
+        day2Stop = qsoutils.qsotimeOBJ('2020-04-05', '2000')
+        logtime = qsoutils.qsotimeOBJ(qso['DATE'], qso['TIME'])
+        if ( ((logtime >= day1Start) and (logtime <= day1Stop)) \
+           or \
+           ((logtime >= day2Start) and (logtime <= day2Stop)) ):
+            timeValid = True
+        return timeValid
+        
+    
+    
+    
     def makeQSOdict(self):
        """
        Return an empty dictionary for Cabrillo QSO Data
@@ -186,17 +209,20 @@ class MOQPLogcheck(CabrilloUtils):
        temp = qsodata.replace(':','')
        qsoparts = temp.split(' ')
        #print(len(qsoparts))
-       if (len(qsoparts) == 10):
+       if (len(qsoparts) >= 10):
           i=0
           qso = self.makeQSOdict()
           for tag in self.QSOTAGS:
              #print('qso[%s] = %s %d'%(tag, qsoparts[i], i))
-             qso[tag] = qsoparts[i].strip()
+             qso[tag] = self.packLine(qsoparts[i])
              i += 1
           #print qso
           qso_errors = self.qso_valid(qso)
+          timerr = self.validateQSOtime(qso)
+          if (timerr == False): qso_errors.append(\
+                'QSO outside of contest times:\n   %s'%(qsodata))
        else:
-          qso_errors = ['QSO has %d elements, should have 10.'%(len(qsoparts))]
+          qso_errors = ['QSO has %d elements, should have at least 10.'%(len(qsoparts))]
        qso_data['ERRORS'] = qso_errors
        qso_data['DATA'] = qso
        return qso_data       
@@ -217,13 +243,13 @@ class MOQPLogcheck(CabrilloUtils):
           lineparts = len(linesplit)
           #print('%d Split data items: %s'%(lineparts, linesplit))
           if (lineparts >= 2):
-             cabkey = linesplit[0].strip()
-             recdata = linesplit[1].strip()
+             cabkey = self.packLine(linesplit[0])
+             recdata = self.packLine(linesplit[1])
              #print('cabkey =%s\nrecdata =%s\n'%(cabkey, recdata))
              if (lineparts > 2):
                 tagpos = cabline.find(':')
                 templine = cabline[tagpos:].replace(':','')
-                recdata = templine.strip()
+                recdata = self.packLine(templine)
              if (cabkey == 'QSO'):
                 qso = self.getQSOdict(recdata)
                 #print('qso errors = %s'%(qso['ERRORS']))
@@ -493,24 +519,81 @@ class MOQPLogcheck(CabrilloUtils):
           csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
        print(csvdata)  
 
+    def headerReview(self, header):
+        errors =[]
+        goodHeader = True
+        if ('START-OF-LOG' in header):
+            tag = self.packLine(header['LOCATION'])
+            if (\
+                (tag in INSTATE) or
+                (tag in US) or
+                (tag in CANADA) or
+                (tag in DX) ):
+                pass
+            else:
+                errors.append('LOCATION: %s tag INVALID'% \
+                            (header['LOCATION']))
+                goodKey = False
+            if (\
+                (header['CATEGORY-STATION']) and
+                (header['CATEGORY-OPERATOR']) and
+                (header['CATEGORY-POWER']) and
+                (header['CATEGORY-MODE']) ):
+                pass
+            else:
+                #Missing some CATEHORY data
+                errors.append(\
+                    'CATEGORY-xxx: tags may be incomplete')
+                goodKey = False
+            if (header['CALLSIGN'] == ''):
+                 errors.append('CALLSIGN: %s tag INVALID'% \
+                            (header['CALLSIGN']))
+                 goodHeader = False
+            if (header['EMAIL'] == ''):
+                 errors.append('EMAIL: %s tag INVALID'% \
+                            (header['EMAIL']))
+                 goodHeader = False
+        else:
+            #Not a CAB Header object
+            errors.append('No valid CAB Header')
+            goodHeader = False
+
+        result = { 'STAT' : goodHeader,
+                   'ERRORS' : errors }
+        return result
+
+    def errorCopy(self, target, destination):
+        if(len(target)>0):
+            for item in target:
+               destination.append(item)
+        return destination
+
     def checkLog(self, fileName):
         result = dict()
+        errors = []
         log = self.getLogdict(fileName)
         #print(dir(log))
         if ( log ):
+          headerResult = self.headerReview(log['HEADER'])
+          errors = self.errorCopy(headerResult['ERRORS'], errors)
+          result['HEADERSTAT'] = headerResult['STAT']
+          print(result, errors)
           logsummary = self.getQSOdata(log['QSOLIST'])
           #print(dir(logsummary))
           #print('QSOS: %s\nMULTS: %s\nERRORS: %s'%(logsummary['QSOLIST'], logsummary['MULTS'], logsummary['ERRORS']))
           log['QSOLIST'] = logsummary['QSOLIST']
+          errors = self.errorCopy(logsummary['ERRORS'], errors)
+          
           qsosummary = self.processQSOList(log['QSOLIST'])
           #logSummary = dict()
           #logSummary['HEADER'] = log['HEADER']
           #logSummary['QSOLIST'] = log['QSOLIST']
-          log['ERRORS'] = logsummary['ERRORS']
           log['QSOSUM'] = qsosummary
           log['MULTS'] = logsummary['MULTS']
           log['MOQPCAT'] = self.determineMOQPCatdict(log)
           log['SCORE'] = self.calculate_score(log['QSOSUM'], log['MULTS'])
+          #log['ERRORS'] = logsummary['ERRORS']
+          log['ERRORS'] = errors
         return log
 
     def appMain(self, pathname):
@@ -520,6 +603,7 @@ class MOQPLogcheck(CabrilloUtils):
           csvdata = self.exportcsvfile(log)
        else:
           csvdata = self.checkLogList(pathname)
-       print(csvdata)
+       if (csvdata):
+          print('\n%s'%(csvdata))
 
 
