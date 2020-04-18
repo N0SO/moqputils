@@ -37,13 +37,15 @@ Update History:
 * Thu Apr 16 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.2 - Added enhanced log header verification.
 - Steps 1 & 2 above.
-
+* Thu Apr 17 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.3 - Added DUPE and BONUS checks.
 """
 
 from CabrilloUtils import *
 from moqpmults import *
 from generalaward import GenAward
-from qsoutils import QSOUtils
+from dupecheck import DUPECheck
+from bonusaward import BonusAward
 import os
 
 INSTATE = ['MO', 'MISSOURI']
@@ -68,7 +70,8 @@ DX = 'DX DK2 DL8 HA8 ON4'
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tTOTAL\tVHF QSO\t' + \
-                'MULTS\tSCORE\tMOQP CATEGORY\tDIGITAL\tVHF\tROOKIE\n'
+                'MULTS\tDUPES\tW0MA\tK0GQ\tSCORE\t' + \
+                'MOQP CATEGORY\tDIGITAL\tVHF\tROOKIE\n'
 
 
 
@@ -101,7 +104,7 @@ class MOQPLogcheck(CabrilloUtils):
         return result
 
     def validateQSOtime(self, qso):
-        qsoutils = QSOUtils()
+        qsoutils = DUPECheck()
         timeValid = False
         day1Start = qsoutils.qsotimeOBJ('2020-04-04', '1400')
         day1Stop = qsoutils.qsotimeOBJ('2020-04-05', '0400')
@@ -113,9 +116,6 @@ class MOQPLogcheck(CabrilloUtils):
            ((logtime >= day2Start) and (logtime <= day2Stop)) ):
             timeValid = True
         return timeValid
-        
-    
-    
     
     def makeQSOdict(self):
        """
@@ -147,19 +147,26 @@ class MOQPLogcheck(CabrilloUtils):
        else:
           errorData.append(  ('QSO MODE Parameter invalid: %s'%(qso['MODE'])) )
           qsovalid = False
-
        if all(char in valid_date_chars for char in qso['DATE']):
           pass
        else:
           errorData.append(  ('QSO DATE Parameter invalid: %s'%(qso['DATE'])) )
           qsovalid = False
-
+          qso['DATE'] = None
        if ( qso['TIME'].isnumeric() ):
           pass
        else:
           errorData.append(  ('QSO TIME Parameter invalid: %s'%(qso['TIME'])) )
           qsovalid = False
-
+          qso['TIME'] = None
+       if ( qso['DATE'] and qso['TIME'] ):
+          if (self.validateQSOtime(qso)):
+             pass
+          else:
+             errorData.append(  (\
+              'QSO DATE/TIME outside contest time period: %s %s'\
+               %(qso['DATE'],
+                 qso['TIME'])) )
        #if ( qso['MYCALL'].isalnum() ):
        if all(char in valid_call_chars for char in qso['MYCALL']):
           pass
@@ -218,9 +225,6 @@ class MOQPLogcheck(CabrilloUtils):
              i += 1
           #print qso
           qso_errors = self.qso_valid(qso)
-          timerr = self.validateQSOtime(qso)
-          if (timerr == False): qso_errors.append(\
-                'QSO outside of contest times:\n   %s'%(qsodata))
        else:
           qso_errors = ['QSO has %d elements, should have at least 10.'%(len(qsoparts))]
        qso_data['ERRORS'] = qso_errors
@@ -232,7 +236,7 @@ class MOQPLogcheck(CabrilloUtils):
        mults = MOQPMults()
        qsos = []
        errorData = []
-       #header = self.makeHEADERdict()
+       header = self.makeHEADERdict()
        linecount = 0
        for line in qsolist:
           linecount += 1
@@ -272,14 +276,14 @@ class MOQPLogcheck(CabrilloUtils):
             errorData.append( \
            ('CAB data bad, line %d: \"%s\" skipping'% \
                                                (linecount, cabline)) )
-       #thislog['HEADER'] = header
+       thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
        thislog['MULTS'] = mults.sumMults()
        thislog['ERRORS'] = errorData
        #print(thislog['MULTS'], mults.sumMults())
        return thislog
 
-    def processQSOList(self,  data):
+    def sumQSOList(self,  data):
       """
       Process and return summary data from a list of
       QSO dictionary objects.
@@ -290,40 +294,51 @@ class MOQPLogcheck(CabrilloUtils):
       summary['PH'] = 0
       summary['VHF'] = 0
       summary['DG'] = 0
+      summary['DUPES'] = 0
       
       for thisqso in data:
+         if (thisqso['DUPE'] == 0):
       
-         summary['QSOS'] += 1
+           summary['QSOS'] += 1
                         
-         try:
+           try:
              tfreq = thisqso['FREQ']
              freq = float(tfreq)
-         except:
+           except:
              freq = 0.0
-         if ((freq >= 50000.0) or (tfreq in self.VHFFREQ) ):
+           if ((freq >= 50000.0) or (tfreq in self.VHFFREQ) ):
              summary['VHF'] += 1
                                    
-         mode = thisqso['MODE'].upper()
-         if ('CW' in mode):
+           mode = thisqso['MODE'].upper()
+           if ('CW' in mode):
              summary['CW'] += 1
-         elif (mode in self.PHONEMODES):
+           elif (mode in self.PHONEMODES):
              summary['PH'] += 1
-         elif (mode in self.DIGIMODES):
+           elif (mode in self.DIGIMODES):
              summary['DG'] += 1
-         else:
+           else:
              badmodeline = ('QSO:')
              for tag in self.QSOTAGS:
                  badmodeline += (' %s'%(data[tag]))
              print('UNDEFINED MODE: %s -- QSO data = %s'%(mode, badmodeline))
-
+         else:
+           summary['DUPES'] += 1
       return  summary
 
-    def calculate_score(self, qsosum, mults):
+    def calculate_score(self, qsosum, mults, bonus):
+        if (bonus['W0MA']):
+            w0mabonus = 100
+        else:
+            w0mabonus = 0
+        if (bonus['K0GQ']):
+            k0gqbonus = 100
+        else:
+            k0gqbonus = 0
         Score = 0
         cwpoints = qsosum['CW'] * 2
         digipoints = qsosum['DG'] * 2
         qsopoints = cwpoints + digipoints + qsosum['PH']
-        Score = qsopoints * mults
+        Score = (qsopoints * mults)  + w0mabonus + k0gqbonus
         return Score
 
     def _moqpcatloc_(self, log):
@@ -504,20 +519,34 @@ class MOQPLogcheck(CabrilloUtils):
            csvdata += ('%s\t'%(log['QSOSUM']['DG']))
            csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
            csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
-           csvdata += ('%s\t'%(log['MULTS']))         
+           csvdata += ('%s\t'%(log['MULTS'])) 
+           csvdata += ('%s\t'%(log['QSOSUM']['DUPES'])) 
+           if (log['BONUS']['W0MA']):
+               w0mabonus = '100'
+           else:
+               w0mabonus = '0'        
+           csvdata += ('%s\t'%(w0mabonus))         
+           if (log['BONUS']['K0GQ']):
+               k0gqbonus = '100'
+           else:
+               k0gqbonus = '0'        
+           csvdata += ('%s\t'%(k0gqbonus))         
            csvdata += ('%s\t'%(log['SCORE']))         
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
-           csvdata += ('%s'%(log['MOQPCAT']['ROOKIE']))
+           csvdata += ('%s\n'%(log['MOQPCAT']['ROOKIE']))
 
-           for err in log['ERRORS']:
-               if ( err != [] ):
-                   csvdata += err
+           if (log['ERRORS'] != []):
+               for err in log['ERRORS']:
+                   csvdata += ('%s\n'%(err))
        
        else:
           csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
-       print(csvdata)  
+       print(csvdata)
+       
+       #for line in csvdata:
+       #   print(line)  
 
     def headerReview(self, header):
         errors =[]
@@ -568,32 +597,58 @@ class MOQPLogcheck(CabrilloUtils):
                destination.append(item)
         return destination
 
+    def getMOQPLog(self, fileName):
+        logtest = None
+        log = None
+        logtext = self.readFile(fileName)
+        if (logtext):
+            log = self.getQSOdata(logtext)
+        return log
+
+
     def checkLog(self, fileName):
+        #dupes = DUPECheck()
         result = dict()
-        errors = []
-        log = self.getLogdict(fileName)
-        #print(dir(log))
+        log = self.getMOQPLog(fileName)
         if ( log ):
-          headerResult = self.headerReview(log['HEADER'])
-          errors = self.errorCopy(headerResult['ERRORS'], errors)
-          result['HEADERSTAT'] = headerResult['STAT']
-          print(result, errors)
-          logsummary = self.getQSOdata(log['QSOLIST'])
-          #print(dir(logsummary))
-          #print('QSOS: %s\nMULTS: %s\nERRORS: %s'%(logsummary['QSOLIST'], logsummary['MULTS'], logsummary['ERRORS']))
-          log['QSOLIST'] = logsummary['QSOLIST']
-          errors = self.errorCopy(logsummary['ERRORS'], errors)
+            Bonus = BonusAward(log['QSOLIST'])
+            errors = log['ERRORS']
+            headerResult = self.headerReview(log['HEADER'])
+            errors = self.errorCopy(headerResult['ERRORS'], 
+                                                     errors)
+            result['HEADERSTAT'] = headerResult['STAT']
+            
+            dupes = DUPECheck(log['QSOLIST'])
+            #print(dupes.newlist)
+            qcount = 1
+            for qso in dupes.newlist:
+                if (qso['DUPE'] == 0):
+                    pass
+                else:
+                    errors.append('QSO %d DUPE of QSO %s'% \
+                                  (qcount, dupes.showQSO(qso)))
+                qcount += 1
+                
+            log['QSOLIST'] = dupes.newlist
           
-          qsosummary = self.processQSOList(log['QSOLIST'])
-          #logSummary = dict()
-          #logSummary['HEADER'] = log['HEADER']
-          #logSummary['QSOLIST'] = log['QSOLIST']
-          log['QSOSUM'] = qsosummary
-          log['MULTS'] = logsummary['MULTS']
-          log['MOQPCAT'] = self.determineMOQPCatdict(log)
-          log['SCORE'] = self.calculate_score(log['QSOSUM'], log['MULTS'])
-          #log['ERRORS'] = logsummary['ERRORS']
-          log['ERRORS'] = errors
+            qsosummary = self.sumQSOList(log['QSOLIST'])
+            
+            print(qsosummary)
+
+            log['QSOSUM'] = qsosummary
+
+            log['BONUS'] = { 'W0MA': Bonus.Award['W0MA']['INLOG'],
+                             'K0GQ':Bonus.Award['K0GQ']['INLOG']}
+
+            log['MOQPCAT'] = self.determineMOQPCatdict(log)
+
+            log['SCORE'] = self.calculate_score(log['QSOSUM'], 
+                                                log['MULTS'],
+                                                log['BONUS'])
+
+
+
+            log['ERRORS'] = errors
         return log
 
     def appMain(self, pathname):
