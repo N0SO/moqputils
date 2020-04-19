@@ -46,7 +46,7 @@ from moqpmults import *
 from generalaward import GenAward
 from dupecheck import DUPECheck
 from bonusaward import BonusAward
-import os
+import os, shutil
 
 INSTATE = ['MO', 'MISSOURI']
 
@@ -89,20 +89,6 @@ class MOQPLogcheck(CabrilloUtils):
     def getVersion(self):
        return VERSION
 
-    def checkLogList(self, pathName):
-        result = dict()
-        csvdata = COLUMNHEADERS
-        for (dirName, subdirList, fileList) in os.walk(pathname, topdown=True):
-           if (fileList != ''): 
-              Headers = True
-              for fileName in fileList:
-                 fullPath = ('%s/%s'%(dirName, fileName))
-                 result = self.exportcsvfile(fullPath, Headers)
-                 if (result):
-                     csvdata += result
-                 Headers = False
-        return result
-
     def validateQSOtime(self, qso):
         qsoutils = DUPECheck()
         timeValid = False
@@ -111,10 +97,13 @@ class MOQPLogcheck(CabrilloUtils):
         day2Start = qsoutils.qsotimeOBJ('2020-04-05', '1400')
         day2Stop = qsoutils.qsotimeOBJ('2020-04-05', '2000')
         logtime = qsoutils.qsotimeOBJ(qso['DATE'], qso['TIME'])
-        if ( ((logtime >= day1Start) and (logtime <= day1Stop)) \
-           or \
-           ((logtime >= day2Start) and (logtime <= day2Stop)) ):
-            timeValid = True
+        if (logtime):
+           if ( ((logtime >= day1Start) and \
+                 (logtime <= day1Stop)) \
+              or \
+              ((logtime >= day2Start) and \
+               (logtime <= day2Stop)) ):
+                timeValid = True
         return timeValid
     
     def makeQSOdict(self):
@@ -231,14 +220,14 @@ class MOQPLogcheck(CabrilloUtils):
        qso_data['DATA'] = qso
        return qso_data       
 
-    def getQSOdata(self, qsolist):
+    def getQSOdata(self, logtext):
        thislog = dict()
        mults = MOQPMults()
        qsos = []
        errorData = []
        header = self.makeHEADERdict()
        linecount = 0
-       for line in qsolist:
+       for line in logtext:
           linecount += 1
           line = line.upper()
           cabline = self.packLine(line)
@@ -258,14 +247,16 @@ class MOQPLogcheck(CabrilloUtils):
                 qso = self.getQSOdict(recdata)
                 #print('qso errors = %s'%(qso['ERRORS']))
                 if (qso['ERRORS'] == []):
-                   qsos.append(qso['DATA'])
                    #print(qso['DATA'])
+                   qsos.append(qso['DATA'])
                    mults.setMult(qso['DATA']['URQTH'])
                 else:
                    errorData.append( \
-                      ('QSO BUSTED, line %d: \"%s\" \n' \
-                        '    %s\n'% \
-                        (linecount, cabline, qso['ERRORS'])) )
+                      ('QSO BUSTED, line %d: \"%s\" \n'% \
+                        (linecount, cabline)) )
+                   for err in qso['ERRORS']:
+                      errorData.append(" %s"%(err))
+
              elif (cabkey in header):
                 header[cabkey] += recdata
              else:
@@ -275,7 +266,8 @@ class MOQPLogcheck(CabrilloUtils):
           else:
             errorData.append( \
            ('CAB data bad, line %d: \"%s\" skipping'% \
-                                               (linecount, cabline)) )
+                                               (linecount, 
+                                                  cabline)) )
        thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
        thislog['MULTS'] = mults.sumMults()
@@ -495,9 +487,8 @@ class MOQPLogcheck(CabrilloUtils):
        #print(moqpcatdict)         
        return moqpcatdict
 
-    def exportcsvfile(self, log, Headers=True):
-       csvdata = None
-       #log = self.parseLog(filename)
+    def exportcsv(self, log, Headers=True):
+       #print(Headers)
        if (log):
        
            if (Headers): 
@@ -542,11 +533,9 @@ class MOQPLogcheck(CabrilloUtils):
                    csvdata += ('%s\n'%(err))
        
        else:
-          csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
-       print(csvdata)
+          csvdata = None
+       return csvdata
        
-       #for line in csvdata:
-       #   print(line)  
 
     def headerReview(self, header):
         errors =[]
@@ -607,58 +596,109 @@ class MOQPLogcheck(CabrilloUtils):
 
 
     def checkLog(self, fileName):
-        #dupes = DUPECheck()
         result = dict()
         log = self.getMOQPLog(fileName)
         if ( log ):
-            Bonus = BonusAward(log['QSOLIST'])
             errors = log['ERRORS']
             headerResult = self.headerReview(log['HEADER'])
             errors = self.errorCopy(headerResult['ERRORS'], 
                                                      errors)
             result['HEADERSTAT'] = headerResult['STAT']
-            
             dupes = DUPECheck(log['QSOLIST'])
             #print(dupes.newlist)
-            qcount = 1
-            for qso in dupes.newlist:
-                if (qso['DUPE'] == 0):
-                    pass
-                else:
-                    errors.append('QSO %d DUPE of QSO %s'% \
+            if (dupes.newlist):
+                qcount = 1
+                for qso in dupes.newlist:
+                    if (qso['DUPE'] == 0):
+                      pass
+                    else:
+                      errors.append('QSO %d DUPE of QSO %s'% \
                                   (qcount, dupes.showQSO(qso)))
-                qcount += 1
+                    qcount += 1
                 
-            log['QSOLIST'] = dupes.newlist
-          
+                log['QSOLIST'] = dupes.newlist
+            
+            Bonus = BonusAward(log['QSOLIST'])
+                      
             qsosummary = self.sumQSOList(log['QSOLIST'])
             
-            print(qsosummary)
+            #print(qsosummary)
 
             log['QSOSUM'] = qsosummary
 
             log['BONUS'] = { 'W0MA': Bonus.Award['W0MA']['INLOG'],
-                             'K0GQ':Bonus.Award['K0GQ']['INLOG']}
-
+                               'K0GQ':Bonus.Award['K0GQ']['INLOG']}
             log['MOQPCAT'] = self.determineMOQPCatdict(log)
-
             log['SCORE'] = self.calculate_score(log['QSOSUM'], 
                                                 log['MULTS'],
                                                 log['BONUS'])
-
-
-
             log['ERRORS'] = errors
+        else:
+            log = dict()
+            log['HEADER'] = None
+            log['QSOLIST'] = None
+            log['BONUS'] = None
+            log['SCORE'] = 0
+            log['MOQPCAT'] = 'UNKNOWN'
+            log['ERRORS'] = [( \
+               'File %s is not an MOQP log or cannot be parsed.'%\
+                (fileName))]
+            
         return log
+
+    def writeReport(self, reportfile, rdata, new=True):
+        if (new):
+            mode = 'w+'
+        else:
+            mode = 'a'
+        with open(reportfile, mode) as writer:
+            writer.write(rdata)
+
+    def checkLogList(self, pathName):
+        #result = dict()
+        csvdata = ''
+        csvdata1 = ''
+        allcsv = ''
+        for (dirName, subdirList, fileList) in os.walk(pathName, topdown=True):
+           if (fileList != ''): 
+              Headers = True
+              Headers1 = True
+              for fileName in fileList:
+                 fullPath = ('%s/%s'%(dirName, fileName))
+                 #print("Checking file %s"%(fullPath))
+                 log = self.checkLog(fullPath)
+                 if (log):
+                     if (len(log['ERRORS']) == 0):
+                        #print('%s error count: %d'%(fileName,len(log['ERRORS']))) 
+                        csvdata = self.exportcsv(log, Headers)
+                        self.writeReport('accepted.txt',
+                                         csvdata, Headers)
+                        Headers = False
+                        allcsv += csvdata
+                     else:
+                        csvdata1 = self.exportcsv(log, Headers1)
+                        self.writeReport('rejected.txt',
+                                         csvdata1, Headers1)
+                        Headers1 = False
+                        allcsv += csvdata1
+                     #if (log['ERRORS'] != []):
+                        #move this file to errors folder
+                        #shutil.move(fullpath, dest1)
+                         
+                 #print(csvdata)
+        return allcsv
 
     def appMain(self, pathname):
        csvdata = 'Nothing.'
        if (os.path.isfile(pathname)):
           log = self.checkLog(pathname)
-          csvdata = self.exportcsvfile(log)
+          csvdata = self.exportcsv(log)
+          if (csvdata == None):
+             csvdata = ('File %s is not in MOQP Cabrillo format.'\
+                         %(pathname))
        else:
           csvdata = self.checkLogList(pathname)
        if (csvdata):
-          print('\n%s'%(csvdata))
+          print('%s'%(csvdata))
 
 

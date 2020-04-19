@@ -80,8 +80,10 @@ class QSOUtils(CabrilloUtils):
            except:
               #print('Format %s did not work for time %s.'%(timefstg, logtime))
               t += 1
-
-       logtimeobj = datetime.strptime(logdate+' '+logtime, datefstg+' '+timefstg)
+       try:
+           logtimeobj = datetime.strptime(logdate+' '+logtime, datefstg+' '+timefstg)
+       except:
+           logtimeobj = None
        return logtimeobj
        
 
