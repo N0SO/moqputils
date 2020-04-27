@@ -39,6 +39,8 @@ Update History:
 - Steps 1 & 2 above.
 * Thu Apr 17 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.3 - Added DUPE and BONUS checks.
+* Mon Apr 27 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.4 - Added ERROR flags for sorting of files with errors.
 """
 
 from CabrilloUtils import *
@@ -67,7 +69,7 @@ US+= 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD CA '
 
 DX = 'DX DK2 DL8 HA8 ON4'
 
-COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
+COLUMNHEADERS = 'LOG ERRORS\tCALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tTOTAL\tVHF QSO\t' + \
                 'MULTS\tDUPES\tW0MA\tK0GQ\tSCORE\t' + \
@@ -252,7 +254,7 @@ class MOQPLogcheck(CabrilloUtils):
                    mults.setMult(qso['DATA']['URQTH'])
                 else:
                    errorData.append( \
-                      ('QSO BUSTED, line %d: \"%s\" \n'% \
+                      ('QSO BUSTED, line %d: \"%s\" '% \
                         (linecount, cabline)) )
                    for err in qso['ERRORS']:
                       errorData.append(" %s"%(err))
@@ -261,7 +263,7 @@ class MOQPLogcheck(CabrilloUtils):
                 header[cabkey] += recdata
              else:
                 errorData.append( \
-                  ('CAB TAG unknown, line %d: \"%s\"\n'% \
+                  ('CAB TAG unknown, line %d: \"%s\"'% \
                             (linecount, cabline)) )
           else:
             errorData.append( \
@@ -497,6 +499,9 @@ class MOQPLogcheck(CabrilloUtils):
            else:
                csvdata = ''
 
+           if (log['ERRORS'] != []):
+               csvdata += 'True'
+           csvdata += '\t'
            csvdata += ('%s\t'%(log['HEADER']['CALLSIGN']))
            csvdata += ('%s\t'%(log['HEADER']['OPERATORS']))
            csvdata += ('%s\t'%(log['HEADER']['CATEGORY-STATION']))
@@ -530,8 +535,7 @@ class MOQPLogcheck(CabrilloUtils):
 
            if (log['ERRORS'] != []):
                for err in log['ERRORS']:
-                   csvdata += ('%s\n'%(err))
-       
+                   csvdata += ('ERROR LINE\t%s\n'%(err))
        else:
           csvdata = None
        return csvdata
@@ -633,72 +637,49 @@ class MOQPLogcheck(CabrilloUtils):
                                                 log['MULTS'],
                                                 log['BONUS'])
             log['ERRORS'] = errors
-        else:
-            log = dict()
-            log['HEADER'] = None
-            log['QSOLIST'] = None
-            log['BONUS'] = None
-            log['SCORE'] = 0
-            log['MOQPCAT'] = 'UNKNOWN'
-            log['ERRORS'] = [( \
-               'File %s is not an MOQP log or cannot be parsed.'%\
-                (fileName))]
-            
         return log
 
-    def writeReport(self, reportfile, rdata, new=True):
-        if (new):
-            mode = 'w+'
-        else:
-            mode = 'a'
-        with open(reportfile, mode) as writer:
-            writer.write(rdata)
 
-    def checkLogList(self, pathName):
-        #result = dict()
+    def processOneFile(self, filename, headers=True):               
+       if (os.path.isfile(filename)):
+          log = self.checkLog(filename)
+          if (log):
+             csvdata = self.exportcsv(log, headers)
+             if (csvdata == None):
+                csvdata = ('True\tFile %s is not in MOQP Cabrillo format Dude.\n'\
+                         %(filename))
+          else:
+             csvdata = ('True\tFile %s is not in MOQP Cabrillo format.\n'\
+                         %(filename))
+       else:
+          csvdata = ('True\tLog File %s does not exist\n'% \
+                          (filename))
+       return csvdata 
+
+    def processFileList(self, pathname):
         csvdata = ''
-        csvdata1 = ''
-        allcsv = ''
-        for (dirName, subdirList, fileList) in os.walk(pathName, topdown=True):
+        for (dirName, subdirList, fileList) in  \
+                      os.walk(pathname, topdown=True):
            if (fileList != ''): 
               Headers = True
-              Headers1 = True
               for fileName in fileList:
-                 fullPath = ('%s/%s'%(dirName, fileName))
-                 #print("Checking file %s"%(fullPath))
-                 log = self.checkLog(fullPath)
-                 if (log):
-                     if (len(log['ERRORS']) == 0):
-                        #print('%s error count: %d'%(fileName,len(log['ERRORS']))) 
-                        csvdata = self.exportcsv(log, Headers)
-                        self.writeReport('accepted.txt',
-                                         csvdata, Headers)
-                        Headers = False
-                        allcsv += csvdata
-                     else:
-                        csvdata1 = self.exportcsv(log, Headers1)
-                        self.writeReport('rejected.txt',
-                                         csvdata1, Headers1)
-                        Headers1 = False
-                        allcsv += csvdata1
-                     #if (log['ERRORS'] != []):
-                        #move this file to errors folder
-                        #shutil.move(fullpath, dest1)
-                         
-                 #print(csvdata)
-        return allcsv
+                 if (fileName.startswith('.')):
+                     pass
+                 else:
+                     fullPath = ('%s/%s'%(dirName, fileName))
+                     csvdata += self.processOneFile(fullPath, 
+                                                  Headers)
+                     Headers = False
+           else: 
+              csvdata += ('True\tLog File %s does not exist\n'% \
+                          (fileName))
+        return csvdata
 
     def appMain(self, pathname):
        csvdata = 'Nothing.'
        if (os.path.isfile(pathname)):
-          log = self.checkLog(pathname)
-          csvdata = self.exportcsv(log)
-          if (csvdata == None):
-             csvdata = ('File %s is not in MOQP Cabrillo format.'\
-                         %(pathname))
+          csvdata = self.processOneFile(pathname)
        else:
-          csvdata = self.checkLogList(pathname)
+          csvdata = self.processFileList(pathname)
        if (csvdata):
           print('%s'%(csvdata))
-
-

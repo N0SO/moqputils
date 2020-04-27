@@ -90,16 +90,10 @@ class get_args():
                                description = DESCRIPTION,
                                            epilog = EPILOG)
         parser.add_argument('-v', '--version', action='version', version = VERSION)
-        #parser.add_argument('-c', '--callsign', default=None,
-        #    help='CALLSIGN in MOQP database to summarize. Entering allcalls = all calls in database')
-        #parser.add_argument('-d', '--digital', default=None,
-        #    help='Summarize digital QSOs only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
-        #parser.add_argument('-U', '--vhf', default=None,
-        #    help='Summarize VHF QSOs only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
-        #parser.add_argument('-C', '--county', default=None,
-        #    help='Summarize MISSOURI COUNTIES only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
         parser.add_argument('-i', '--inputpath', default=None,
             help='Specifies the path to the folder that contains the log files to summarize.')
+        parser.add_argument('-e', '--errcpypath', default=None,
+            help='Specifies the path to the folder where log files with errors get moved to.')
         return parser.parse_args()
 
 
