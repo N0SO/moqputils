@@ -41,6 +41,9 @@ Update History:
 - V0.0.3 - Added DUPE and BONUS checks.
 * Mon Apr 27 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.4 - Added ERROR flags for sorting of files with errors.
+* Mon Apr 29 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.5 - Added Added option tp move logs with errors to
+- another folder.
 """
 
 from CabrilloUtils import *
@@ -76,17 +79,17 @@ COLUMNHEADERS = 'LOG ERRORS\tCALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'MOQP CATEGORY\tDIGITAL\tVHF\tROOKIE\n'
 
 
-
+VERSION = '0.0.5'
 
 class MOQPLogcheck(CabrilloUtils):
 
     QSOTAGS = ['FREQ', 'MODE', 'DATE', 'TIME', 'MYCALL',
                'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH']
 
-    def __init__(self, filename = None):
+    def __init__(self, filename = None, errcopypath = None):
         if (filename):
            if (filename):
-              self.appMain(filename)
+              self.appMain(filename, errcopypath)
 
     def getVersion(self):
        return VERSION
@@ -655,8 +658,33 @@ class MOQPLogcheck(CabrilloUtils):
           csvdata = ('True\tLog File %s does not exist\n'% \
                           (filename))
        return csvdata 
+       
+    def moveLogwithErrs(self, thislog, filename, errormovepath):
+       moved = False
+       if (errormovepath):
+           lines = thislog.splitlines()
+           #print(len(lines), lines)
+           if(len(lines) > 1):
+               if (lines[0].startswith('LOG ERROR')):
+                   index = 1
+               else:
+                   index = 0
+           else:
+               index = 0
+           #print(lines[index])
+           if (lines[index].startswith('True')):
+               print('Moving file %s to %s'% \
+               (filename, errormovepath))
+               try:
+                   dest = shutil.move(filename, errormovepath)
+                   moved = True
+               except:
+                   print('Move of %s to %s failed!'% \
+                                              (filename,
+                                               errormovepath))
+       return moved 
 
-    def processFileList(self, pathname):
+    def processFileList(self, pathname, errcopypath):
         csvdata = ''
         for (dirName, subdirList, fileList) in  \
                       os.walk(pathname, topdown=True):
@@ -667,19 +695,24 @@ class MOQPLogcheck(CabrilloUtils):
                      pass
                  else:
                      fullPath = ('%s/%s'%(dirName, fileName))
-                     csvdata += self.processOneFile(fullPath, 
+                     thislog = self.processOneFile(fullPath, 
                                                   Headers)
+                     csvdata += thislog
+                     moved = self.moveLogwithErrs(thislog,
+                                                  fullPath,
+                                                  errcopypath)
                      Headers = False
+                     #if moved: break
            else: 
               csvdata += ('True\tLog File %s does not exist\n'% \
                           (fileName))
         return csvdata
 
-    def appMain(self, pathname):
+    def appMain(self, pathname, errcopypath):
        csvdata = 'Nothing.'
        if (os.path.isfile(pathname)):
           csvdata = self.processOneFile(pathname)
        else:
-          csvdata = self.processFileList(pathname)
+          csvdata = self.processFileList(pathname, errcopypath)
        if (csvdata):
           print('%s'%(csvdata))

@@ -103,21 +103,11 @@ if __name__ == '__main__':
    if (args.args.inputpath):
        #print(args.args.inputpath)
        from moqplogcheck import MOQPLogcheck
-       app = MOQPLogcheck(args.args.inputpath)
-   #elif (args.args.callsign):
-   #    from moqpdbcategory import MOQPDBCategory
-   #    app = MOQPDBCategory(args.args.callsign)
-   #elif (args.args.digital):
-   #    from moqpdbdigital import MOQPDBDigital
-   #    app = MOQPDBDigital(args.args.digital)
-   #elif (args.args.vhf):
-   #    from moqpdbvhf import MOQPDBVhf
-   #    app = MOQPDBVhf(args.args.vhf)
-   #elif (args.args.county):
-   #    from moqpdbcountyrpt import MOQPDBCountyRpt
-   #    app = MOQPDBCountyRpt(args.args.county)
+       if (args.args.errcpypath):
+           app = MOQPLogcheck(args.args.inputpath,
+                               args.args.errcpypath)
+       else:
+           app = MOQPLogcheck(args.args.inputpath)
    else:
        from gui_moqpcategory import gui_MOQPChecklog
        app=gui_MOQPChecklog()
-
-
