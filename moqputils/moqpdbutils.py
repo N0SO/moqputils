@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+Update History:
+* Thu Apr 29 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Retired code from 2019 QSO Party
+- and added enhanced log header/QSO checking
+- by inheriting from MOQPLogCheck
+"""
+
 import MySQLdb
 import os.path
 import sys
@@ -7,8 +15,8 @@ from datetime import date
 from datetime import time
 from datetime import timedelta
 
-VERSION = '0.0.4' 
-
+VERSION = '0.1.0' 
+"""
 DEVMODPATH = ['moqputils', 'cabrilloutils']
 # If the development module source paths exist, 
 # add them to the python path
@@ -17,10 +25,10 @@ for mypath in DEVMODPATH:
                        (os.path.isfile(mypath) == False) ):
         sys.path.insert(0,mypath)
 #print('Python path = %s'%(sys.path))
-
 from moqpdbconfig import *
 from generalaward import GenAward
 from CabrilloUtils import CabrilloUtils
+"""
 
 
 class MOQPDBUtils():
@@ -29,22 +37,17 @@ class MOQPDBUtils():
                        user = None, 
                        passwd = None, 
                        database = None):
-       if (host==None):
-           host = HOSTNAME
-           user = USER
-           passwd = PW
-           database = DBNAME
-
-       #print('Attempting connection to: %s as:%s pw:%s db:%s'%(host, user, passwd, database))
-       self.mydb = self.connectDB(host, 
+       if (host):
+           #print('Attempting connection to: %s as:%s pw:%s db:%s'%(host, user, passwd, database))
+           self.mydb = self.connectDB(host, 
                                   user, 
                                   passwd, 
                                   database)
-       if (self.mydb):
-           self.setCursor()
-           #self.cursor = None
-       else:
-          print("Error connecting to %s database %s:\n%s"%(host, database, e))
+           if (self.mydb):
+               self.setCursor()
+               #self.cursor = None
+           else:
+               print("Error connecting to %s database %s:\n%s"%(host, database, e))
           
     def connectDB(self, host, 
                         user, 
@@ -102,7 +105,7 @@ class MOQPDBUtils():
         """
         loglist = None
         loglist = self.read_query( \
-               "SELECT ID, CALLSIGN FROM logheader WHERE 1")
+               "SELECT ID, CALLSIGN FROM LOGHEADER WHERE 1")
         return loglist
 
     def fetchlogQSOS(self, callID):
@@ -126,7 +129,7 @@ class MOQPDBUtils():
         if (loglist):
             all_logs = loglist
         else:
-            query =  "SELECT `ID`, `CALLSIGN` FROM `logheader` WHERE 1"
+            query =  "SELECT `ID`, `CALLSIGN` FROM `LOGHEADER` WHERE 1"
             all_logs = self.read_query(query)
         
         myID = self.CallinLogDB(mycall, loglist)
@@ -147,7 +150,7 @@ class MOQPDBUtils():
         logID = self.CallinLogDB(call)
         if (logID):
             header = self.read_query( \
-                "SELECT * FROM `logheader` WHERE ID=%d"%(logID))
+                "SELECT * FROM `LOGHEADER` WHERE ID=%d"%(logID))
         return header
 
     def fetchCABHeader(self, call):
@@ -299,7 +302,7 @@ class MOQPDBUtils():
         if (loglist):
             all_logs = loglist
         else:
-            query =  "SELECT `ID`, `CALLSIGN` FROM `logheader` WHERE 1"
+            query =  "SELECT `ID`, `CALLSIGN` FROM `LOGHEADER` WHERE 1"
             all_logs = self.read_query(query)
         
         callID = self.CallinLogDB(call, all_logs)
@@ -453,12 +456,13 @@ class MOQPDBUtils():
         if (loglist):
             all_logs = loglist
         else:
-            query =  "SELECT `ID`, `CALLSIGN` FROM `logheader` WHERE 1"
+            query =  "SELECT `ID`, `CALLSIGN` FROM `LOGHEADER` WHERE 1"
             all_logs = self.read_query(query)
-        for nextlog in all_logs:
-          if (nextlog['CALLSIGN'] == call):
-            logID = nextlog['ID']
-            break
+        if(all_logs):
+            for nextlog in all_logs:
+               if (nextlog['CALLSIGN'] == call):
+                  logID = nextlog['ID']
+               break
         return logID
 
     def showQSO(self, qso):
@@ -607,6 +611,123 @@ class MOQPDBUtils():
         ures = self.write_query(query)
         return sumID
        
+    def write_header(self, header, cabBonus):
+        logID = None
+
+
+        if (len(header['CREATED-BY']) > 50):
+            #limit CREATED-BY to 50 chars
+            header['CREATED-BY'] = header['CREATED-BY'][:49]
+
+        if (len(header['CLUB']) > 50):
+            #limit CLUB NAME to 120 chars
+            header['CLUB'] = header['CLUB'][:119]
+
+        if (len(header['SOAPBOX']) >120):
+            #Limit soapbox to 120
+            header['SOAPBOX'] = header['SOAPBOX'][:119] 
+
+        query = """INSERT INTO LOGHEADER(START,
+                      CALLSIGN,
+                      CREATEDBY,
+                      LOCATION, 
+                      CONTEST,
+                      NAME,
+                      ADDRESS,
+                      CITY,
+                      STATEPROV,
+                      ZIPCODE,
+                      COUNTRY,
+                      EMAIL,
+                      CATASSISTED,
+                      CATBAND,
+                      CATMODE,
+                      CATOPERATOR,
+                      CATOVERLAY,
+                      CATPOWER,
+                      CATSTATION,
+                      CATXMITTER,
+                      CERTIFICATE,
+                      OPERATORS,
+                      CLAIMEDSCORE,
+                      CLUB,
+                      IOTAISLANDNAME,
+                      OFFTIME,
+                      SOAPBOX,
+                      ENDOFLOG,
+                      CABBONUS)
+                   VALUES(""" + \
+                        ('"%s",'%(header['START-OF-LOG'])) +\
+                        ('"%s",'%(header['CALLSIGN'])) +\
+                        ('"%s",'%(header['CREATED-BY'])) +\
+                        ('"%s",'%(header['LOCATION'])) +\
+                        ('"%s",'%(header['CONTEST'])) +\
+                        ('"%s",'%(header['NAME'])) +\
+                        ('"%s",'%(header['ADDRESS'])) +\
+                        ('"%s",'%(header['ADDRESS-CITY'])) +\
+                        ('"%s",'%(header['ADDRESS-STATE-PROVINCE'])) +\
+                        ('"%s",'%(header['ADDRESS-POSTALCODE'])) +\
+                        ('"%s",'%(header['ADDRESS-COUNTRY'])) +\
+                        ('"%s",'%(header['EMAIL'])) +\
+                        ('"%s",'%(header['CATEGORY-ASSISTED'])) +\
+                        ('"%s",'%(header['CATEGORY-BAND'])) +\
+                        ('"%s",'%(header['CATEGORY-MODE'])) +\
+                        ('"%s",'%(header['CATEGORY-OPERATOR'])) +\
+                        ('"%s",'%(header['CATEGORY-OVERLAY'])) +\
+                        ('"%s",'%(header['CATEGORY-POWER'])) +\
+                        ('"%s",'%(header['CATEGORY-STATION'])) +\
+                        ('"%s",'%(header['CATEGORY-TRANSMITTER'])) +\
+                        ('"%s",'%(header['CERTIFICATE'])) +\
+                        ('"%s",'%(header['OPERATORS'])) +\
+                        ('"%s",'%(header['CLAIMED-SCORE'])) +\
+                        ('"%s",'%(header['CLUB'])) +\
+                        ('"%s",'%(header['IOTA-ISLAND-NAME'])) +\
+                        ('"%s",'%(header['OFFTIME'])) +\
+                        ('"%s",'%(header['SOAPBOX'])) +\
+                        ('"%s",'%(header['END-OF-LOG'])) +\
+                        ('"%d")'%(cabBonus))      
+        logID = self.write_query(query)
+        return logID
+    
+    def write_qsodata(self, logID, qsodata):
+        qsoID = None
+        query = """INSERT INTO QSOS(LOGID,
+                                    FREQ,
+                                    MODE,
+                                    DATE,
+                                    TIME,
+                                    MYCALL,
+                                    MYREPORT,
+                                    MYQTH,
+                                    URCALL,
+                                    URREPORT,
+                                    URQTH)
+                      VALUES(""" + \
+                         ('"%d",'%(logID)) +\
+                         ('"%s",'%(qsodata['FREQ'])) +\
+                         ('"%s",'%(qsodata['MODE'])) +\
+                         ('"%s",'%(qsodata['DATE'])) +\
+                         ('"%s",'%(qsodata['TIME'])) +\
+                         ('"%s",'%(qsodata['MYCALL'])) +\
+                         ('"%s",'%(qsodata['MYREPORT'])) +\
+                         ('"%s",'%(qsodata['MYQTH'])) +\
+                         ('"%s",'%(qsodata['URCALL'])) +\
+                         ('"%s",'%(qsodata['URREPORT'])) +\
+                         ('"%s")'%(qsodata['URQTH']))
+
+        qsoID = self.write_query(query)
+        return qsoID
+
+    def write_qsolist(self, logID, qsolist):
+        success = None
+
+        for qso in qsolist:
+            qID = self.write_qsodata(logID, qso)
+            if (qID):
+                continue
+            else:
+                print('Error writing QSO data!')
+                break
        
 
 if __name__ == '__main__':

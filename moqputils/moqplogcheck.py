@@ -594,11 +594,12 @@ class MOQPLogcheck(CabrilloUtils):
         return destination
 
     def getMOQPLog(self, fileName):
-        logtest = None
+        logtext = None
         log = None
         logtext = self.readFile(fileName)
-        if (logtext):
-            log = self.getQSOdata(logtext)
+        if (self.IsThisACabFile(logtext)):
+            if (logtext):
+                log = self.getQSOdata(logtext)
         return log
 
 

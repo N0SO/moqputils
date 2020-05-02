@@ -1,364 +1,84 @@
 #!/usr/bin/env python3
-from moqpcategory import MOQPCategory
+"""
+MOQPLoadLogs - Inherits code from MOQPLogCheck.
+Enhances QSO and header verification and will write
+log header, QSO list and status of the CABRILLO Bonus 
+to the database. The same reports and file sorting 
+available in moqplogcheck may be printed, but the 
+results are NOT save to the database.
+
+Update History:
+* Thu Apr 29 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Retired code from 2019 QSO Party
+- and added enhanced log header/QSO checking
+- by inheriting from MOQPLogCheck
+"""
+from moqplogcheck import MOQPLogcheck
 import os
 from moqpdbconfig import *
-from bothawards import BothAwards
-import MySQLdb
+from moqpdbutils import *
+#from bothawards import BothAwards
+#import MySQLdb
 
 
-VERSION = '0.0.2' 
+VERSION = '0.1.0' 
 
 
-class MOQPLoadLogs(MOQPCategory):
+class MOQPLoadLogs(MOQPLogcheck):
 
-    def __init__(self, filename = None):
+    def __init__(self, filename = None, 
+                       errcopypath = None,
+                       cabbonus = False):
         if (filename):
-            self.appMain(filename)
-            
-    def show_header_details(self, header):
-        for tag in self.CABRILLOTAGS:
-            if (tag in header):
-                if (tag in 'QSO END-OF-LOG'):
-                    continue
+           if (filename):
+              self.appMain(filename, errcopypath, cabbonus)
+
+
+    def loadToDB(self, log, cabBonus):
+        sucsess = False
+        call = log['HEADER']['CALLSIGN']
+        if (log['ERRORS'] == []):
+            mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+            if (mydb):
+                mydb.setCursorDict()
+                testID = mydb.CallinLogDB(call)
+                if (testID):
+                    print('Log for %s already exists as ID %s - use UPDATE to load new log data'%(call, testID))
                 else:
-                    print('%s: %s'%(tag, header[tag]))
-                
-    def show_qso_details(self,qsolist):
-        for qso in qsolist:
-            print('%s  %s  %s  %s  %s  %s  %s  %s  %s %s' \
-                    %(qso['FREQ'],
-                      qso['MODE'],
-                      qso['DATE'],
-                      qso['TIME'],
-                      qso['MYCALL'],
-                      qso['MYREPORT'],
-                      qso['MYQTH'],
-                      qso['URCALL'],
-                      qso['URREPORT'],
-                      qso['URQTH']))
-            
-    def show_details(self, log):
-        #print(log.keys())
-        self.show_header_details(log['HEADER'])
-        self.show_qso_details(log['QSOLIST'])
-        print('CATEGORY: %s'%(log['MOQPCAT']['MOQPCAT']))
-        
-    def dbconnect(self, host, user, pw, dbname):
-        print('%s, %s, %s, %s'%(host, user, pw, dbname))
-        connection = MySQLdb.connect (host = host,
-                                  user = user,
-                                  passwd = pw,
-                                  db = dbname)
-                                  
-        return connection
+                    newLogID = mydb.write_header(log['HEADER'], cabBonus)
+                    print('New log ID = %d -- writing QSOS...'%(newLogID))
+                    mydb.write_qsolist(newLogID, log['QSOLIST'])
+            else: 
+                print('Error opening database - log %s data not written to database.'%(callsig))
+        else: # Log has errors 
+            print('Log %s has errors - data not written to database.'%(callsig))
+        return sucsess
+    
 
-    def _write_query(self, db, query):
-        qstat = None
-        print('Writeing query Data: %s'%(query))
-        cursor = db.cursor()
-        cursor.execute(query)
-        db.commit()
-        qstat = cursor.lastrowid
-        return qstat
-       
-    def write_header(self, db, header, catg, qsostatus):
-        logID = None
+    def processOneFile(self, filename, headers=True, cabBonus=False):   
+       csvdata = None        
+       if (os.path.isfile(filename)):
+          log = self.checkLog(filename)
+          if (log):
+              self.loadToDB(log, cabBonus)
+          else:
+              csvdata = ( \
+               'True\tFile %s is not in MOQP Cabrillo format.\n'\
+                                                     %(filename))
+       return csvdata 
 
-        if (len(header['CREATED-BY']) > 50):
-            #limit CREATED-BY to 50 chars
-            header['CREATED-BY'] = header['CREATED-BY'][:49]
-
-        if (len(header['CLUB']) > 50):
-            #limit CLUB NAME to 120 chars
-            header['CLUB'] = header['CLUB'][:119]
-
-        if (len(header['SOAPBOX']) >120):
-            #Limit soapbox to 120
-            header['SOAPBOX'] = header['SOAPBOX'][:119] 
-
-        query = """INSERT INTO logheader(START,
-                      CALLSIGN,
-                      CREATEDBY,
-                      LOCATION, 
-                      CONTEST,
-                      NAME,
-                      ADDRESS,
-                      CITY,
-                      STATEPROV,
-                      ZIPCODE,
-                      COUNTRY,
-                      EMAIL,
-                      CATASSISTED,
-                      CATBAND,
-                      CATMODE,
-                      CATOPERATOR,
-                      CATOVERLAY,
-                      CATPOWER,
-                      CATSTATION,
-                      CATXMITTER,
-                      CERTIFICATE,
-                      OPERATORS,
-                      CLAIMEDSCORE,
-                      CLUB,
-                      IOTAISLANDNAME,
-                      OFFTIME,
-                      SOAPBOX,
-                      ENDOFLOG,
-                      MOQPCAT,
-                      STATUS)
-                   VALUES(""" + \
-                        ('"%s",'%(header['START-OF-LOG'])) +\
-                        ('"%s",'%(header['CALLSIGN'])) +\
-                        ('"%s",'%(header['CREATED-BY'])) +\
-                        ('"%s",'%(header['LOCATION'])) +\
-                        ('"%s",'%(header['CONTEST'])) +\
-                        ('"%s",'%(header['NAME'])) +\
-                        ('"%s",'%(header['ADDRESS'])) +\
-                        ('"%s",'%(header['ADDRESS-CITY'])) +\
-                        ('"%s",'%(header['ADDRESS-STATE-PROVINCE'])) +\
-                        ('"%s",'%(header['ADDRESS-POSTALCODE'])) +\
-                        ('"%s",'%(header['ADDRESS-COUNTRY'])) +\
-                        ('"%s",'%(header['EMAIL'])) +\
-                        ('"%s",'%(header['CATEGORY-ASSISTED'])) +\
-                        ('"%s",'%(header['CATEGORY-BAND'])) +\
-                        ('"%s",'%(header['CATEGORY-MODE'])) +\
-                        ('"%s",'%(header['CATEGORY-OPERATOR'])) +\
-                        ('"%s",'%(header['CATEGORY-OVERLAY'])) +\
-                        ('"%s",'%(header['CATEGORY-POWER'])) +\
-                        ('"%s",'%(header['CATEGORY-STATION'])) +\
-                        ('"%s",'%(header['CATEGORY-TRANSMITTER'])) +\
-                        ('"%s",'%(header['CERTIFICATE'])) +\
-                        ('"%s",'%(header['OPERATORS'])) +\
-                        ('"%s",'%(header['CLAIMED-SCORE'])) +\
-                        ('"%s",'%(header['CLUB'])) +\
-                        ('"%s",'%(header['IOTA-ISLAND-NAME'])) +\
-                        ('"%s",'%(header['OFFTIME'])) +\
-                        ('"%s",'%(header['SOAPBOX'])) +\
-                        ('"%s",'%(header['END-OF-LOG'])) +\
-                        ('"%s",'%(catg)) +\
-                        ('"%s")'%(qsostatus))      
-        logID = self._write_query(db, query)
-        """
-        #print('query = %s'%(query))
-        cursor = db.cursor()
-        cursor.execute(query)
-        db.commit()
-        logID = cursor.lastrowid
-        """
-        return logID
-        
-    def write_qsodata(self, db, logID, qsodata):
-        qsoID = None
-        query = """INSERT INTO QSOS(LOGID,
-                                    FREQ,
-                                    MODE,
-                                    DATE,
-                                    TIME,
-                                    MYCALL,
-                                    MYREPORT,
-                                    MYQTH,
-                                    URCALL,
-                                    URREPORT,
-                                    URQTH)
-                      VALUES(""" + \
-                         ('"%d",'%(logID)) +\
-                         ('"%s",'%(qsodata['FREQ'])) +\
-                         ('"%s",'%(qsodata['MODE'])) +\
-                         ('"%s",'%(qsodata['DATE'])) +\
-                         ('"%s",'%(qsodata['TIME'])) +\
-                         ('"%s",'%(qsodata['MYCALL'])) +\
-                         ('"%s",'%(qsodata['MYREPORT'])) +\
-                         ('"%s",'%(qsodata['MYQTH'])) +\
-                         ('"%s",'%(qsodata['URCALL'])) +\
-                         ('"%s",'%(qsodata['URREPORT'])) +\
-                         ('"%s")'%(qsodata['URQTH']))
-
-        qsoID = self._write_query(db, query)
-        """
-        print('Writeing QSO data Data: %s'%(query))
-        cursor = db.cursor()
-        cursor.execute(query)
-        db.commit()
-        qsoID = cursor.lastrowid
-        """
-        return qsoID
-
-    def writeSummary(self, db, logID, log, smresult):
-        if (smresult['BONUS']['W0MA']):
-            w0mabonus = 100
-        else:
-            w0mabonus = 0
-
-        if (smresult['BONUS']['K0GQ']):
-            k0gqbonus = 100
-        else:
-            k0gqbonus = 0
-
-        cabbonus = 100
-
-        if (log['MOQPCAT']['DIGITAL'] == 'DIGITAL'):
-            digital_log = True
-        else:
-            digital_log = False
-
-        if (log['MOQPCAT']['VHF'] == 'VHF'):
-            vhf_log = True
-        else:
-            vhf_log = False
-
-        if (log['MOQPCAT']['ROOKIE'] == 'ROOKIE'):
-            rookie_log = True
-        else:
-            rookie_log = False
-
-        query = """INSERT INTO SUMMARY(LOGID,
-                                       CWQSO,
-                                       PHQSO,
-                                       RYQSO,
-                                       VHFQSO,
-                                       MULTS,
-                                       QSOSCORE,
-                                       W0MABONUS,
-                                       K0GQBONUS,
-                                       CABBONUS,
-                                       MOQPCAT,
-                                       DIGITAL,
-                                       VHF,
-                                       ROOKIE)
-                      VALUES(""" + \
-                         ('"%d",'%(logID)) +\
-                         ('"%d",'%(log['QSOSUM']['CW'])) +\
-                         ('"%d",'%(log['QSOSUM']['PH'])) +\
-                         ('"%d",'%(log['QSOSUM']['DG'])) +\
-                         ('"%d",'%(log['QSOSUM']['VHF'])) +\
-                         ('"%d",'%(log['MULTS'])) +\
-                         ('"%d",'%(log['SCORE'])) +\
-                         ('"%d",'%(w0mabonus)) +\
-                         ('"%d",'%(k0gqbonus)) +\
-                         ('"%d",'%(cabbonus)) +\
-                         ('"%s",'%(log['MOQPCAT']['MOQPCAT'])) +\
-                         ('"%d",'%(digital_log)) +\
-                         ('"%d",'%(vhf_log)) +\
-                         ('"%d")'%(rookie_log))
-
-        sumID = self._write_query(db, query)
-        return sumID
-        
-    def writeSHOWME(self, db, logID, smresult):
-
-        query = """INSERT INTO SHOWME(LOGID,
-                                       S,
-                                       H,
-                                       O,
-                                       W,
-                                       M,
-                                       E,
-                                       WC,
-                                       QUALIFY)
-                      VALUES(""" + \
-                         ('"%d",'%(logID)) +\
-                         ('"%s",'%(smresult['CALLS']['S'])) +\
-                         ('"%s",'%(smresult['CALLS']['H'])) +\
-                         ('"%s",'%(smresult['CALLS']['O'])) +\
-                         ('"%s",'%(smresult['CALLS']['W'])) +\
-                         ('"%s",'%(smresult['CALLS']['M'])) +\
-                         ('"%s",'%(smresult['CALLS']['E'])) +\
-                         ('"%s",'%(smresult['WILDCARD'])) +\
-                         ('"%d")'%(smresult['QUALIFY']))
-
-        sumID = self._write_query(db, query)
-        return sumID
-
-    def writeMO(self, db, logID, smresult):
-
-        query = """INSERT INTO MISSOURI(LOGID,
-                                       M,
-                                       I_1,
-                                       S_1,
-                                       S_2,
-                                       O,
-                                       U,
-                                       R,
-                                       I_2,
-                                       WC,
-                                       QUALIFY)
-                      VALUES(""" + \
-                         ('"%d",'%(logID)) +\
-                         ('"%s",'%(smresult['CALLS']['M'])) +\
-                         ('"%s",'%(smresult['CALLS']['I0'])) +\
-                         ('"%s",'%(smresult['CALLS']['S0'])) +\
-                         ('"%s",'%(smresult['CALLS']['S1'])) +\
-                         ('"%s",'%(smresult['CALLS']['O'])) +\
-                         ('"%s",'%(smresult['CALLS']['U'])) +\
-                         ('"%s",'%(smresult['CALLS']['R'])) +\
-                         ('"%s",'%(smresult['CALLS']['I1'])) +\
-                         ('"%s",'%(smresult['WILDCARD'])) +\
-                         ('"%d")'%(smresult['QUALIFY']))
-
-        sumID = self._write_query(db, query)
-        return sumID
-
-    def write_qsolist(self, db, logID, qsolist):
-        success = None
-
-        for qso in qsolist:
-            qID = self.write_qsodata(db, logID, qso)
-            if (qID):
-                continue
-            else:
-                print('Error writing QSO data!')
-                break
-            
-    def oneFile(self, fileName):
-        log = self.parseLog(fileName)
-#        print(log)
-#        dir(log)
-        if(log):
-            bawards = BothAwards()
-            smresult = (bawards.appMain(\
-                        log['HEADER']['CALLSIGN'],
-                        log['QSOLIST']))
-            #print(dir(smresult))
-            #print(smresult)
-            print('MOQPLoadLogs: Importing %s...'%(fileName))    
-            self.show_details(log)
-            db = self.dbconnect(HOSTNAME, USER, PW, DBNAME)
-            cursor = db.cursor()
-            cursor.execute ("SELECT VERSION()")
-            row = cursor.fetchone()
-            print("server version:", row[0])
-            logID = self.write_header(db, log['HEADER'], 
-                              log['MOQPCAT']['MOQPCAT'],
-                              'QSOSTATUS')
-            if (logID):
-                self.write_qsolist(db, logID, log['QSOLIST'])
-                self.writeSummary(db, logID, log, smresult)
-                self.writeSHOWME(db, logID, smresult['SHOWME'])
-                self.writeMO(db, logID, smresult['MO'])
-            cursor.close()
-            db.close()
-
-    def fileList(self, pathname):
-        for (dirName, subdirList, fileList) in os.walk(pathname, 
-                                                   topdown=True):
-           if (fileList != ''): 
-               for fileName in fileList:
-                   fullPath = ('%s/%s'%(dirName, fileName))
-                   #print('Loading: %s'%(fullPath))
-                   self.oneFile(fullPath)
-
-    def appMain(self, pathname):
+    def appMain(self, pathname, errcopypath, cabbonus):
+       csvdata = 'Nothing.'
        if (os.path.isfile(pathname)):
-          self.oneFile(pathname)
+          csvdata = self.processOneFile(pathname, 
+                                        errcopypath, 
+                                        cabbonus)
        else:
-          self.fileList(pathname)
-
+          csvdata = self.processFileList(pathname, errcopypath)
+       if (csvdata):
+          print('%s'%(csvdata))
 
 if __name__ == '__main__':
-   args = get_args()
-   app = MOQPCategory(args.args.inputpath.strip())
+    app = MOQPLoadLogs()
+    print('Class MOQPLoadLogs() Version %s'%(app.getVersion))
 
-"""
-'FREQ', 'MODE', 'DATE', 'TIME', 'MYCALL',
-               'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH'
-"""

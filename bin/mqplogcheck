@@ -64,7 +64,7 @@ EPILOG = \
 """
 Running with no parameters will launch the GUI.
 """
-
+"""
 import os.path
 import sys
 import argparse
@@ -79,7 +79,7 @@ for mypath in DEVMODPATH:
                        (os.path.isfile(mypath) == False) ):
         sys.path.insert(0,mypath)
 #print('Python path = %s'%(sys.path))
-        
+"""        
 class get_args():
     def __init__(self):
         if __name__ == '__main__':
@@ -93,21 +93,30 @@ class get_args():
         parser.add_argument('-i', '--inputpath', default=None,
             help='Specifies the path to the folder that contains the log files to summarize.')
         parser.add_argument('-e', '--errcpypath', default=None,
-            help='Specifies the path to the folder where log files with errors get moved to.')
+            help='Specifies the path to the folder where log files with errors get moved to. Allows for sorting of log files with errors.')
+        parser.add_argument('-l', '--loadlog', 
+                                  action='store_true',
+                                  default=False,
+            help='Load error free logs into the MOQP database.')
+        parser.add_argument('-b', '--cabbonus', 
+                                   action='store_true', 
+                                   default=False,
+                                   help='Specifies the the CABRILLO BONUS applies to this log.')
         return parser.parse_args()
 
 
 if __name__ == '__main__':
    args = get_args()
-   
    if (args.args.inputpath):
-       #print(args.args.inputpath)
-       from moqplogcheck import MOQPLogcheck
-       if (args.args.errcpypath):
-           app = MOQPLogcheck(args.args.inputpath,
-                               args.args.errcpypath)
+       if (args.args.loadlog):
+          from moqploadlogs import MOQPLoadLogs
+          app = MOQPLoadLogs(args.args.inputpath,
+                                  args.args.errcpypath,
+                                  args.args.cabbonus)
        else:
-           app = MOQPLogcheck(args.args.inputpath)
+          from moqplogcheck import MOQPLogcheck
+          app = MOQPLogcheck(args.args.inputpath,
+                              args.args.errcpypath)
    else:
        from gui_moqpcategory import gui_MOQPChecklog
        app=gui_MOQPChecklog()
