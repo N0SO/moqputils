@@ -460,9 +460,10 @@ class MOQPDBUtils():
             all_logs = self.read_query(query)
         if(all_logs):
             for nextlog in all_logs:
+               #print(call, nextlog['CALLSIGN'])
                if (nextlog['CALLSIGN'] == call):
                   logID = nextlog['ID']
-               break
+                  break
         return logID
 
     def showQSO(self, qso):
@@ -701,7 +702,8 @@ class MOQPDBUtils():
                                     MYQTH,
                                     URCALL,
                                     URREPORT,
-                                    URQTH)
+                                    URQTH,
+                                    DUPE)
                       VALUES(""" + \
                          ('"%d",'%(logID)) +\
                          ('"%s",'%(qsodata['FREQ'])) +\
@@ -713,21 +715,32 @@ class MOQPDBUtils():
                          ('"%s",'%(qsodata['MYQTH'])) +\
                          ('"%s",'%(qsodata['URCALL'])) +\
                          ('"%s",'%(qsodata['URREPORT'])) +\
-                         ('"%s")'%(qsodata['URQTH']))
+                         ('"%s",'%(qsodata['URQTH'])) +\
+                         ('"%s")'%(qsodata['DUPE']))
 
         qsoID = self.write_query(query)
         return qsoID
 
     def write_qsolist(self, logID, qsolist):
         success = None
+        #qcount = 0
+        qidlist = []
+        #oqidlist = []
 
         for qso in qsolist:
+            if (qso['DUPE'] > 0):
+                di = qso['DUPE']
+                if (di >= 1):
+                    qso['DUPE'] = qidlist[di-1]
             qID = self.write_qsodata(logID, qso)
             if (qID):
-                continue
+                qidlist.append(qID)
+                #oqidlist.append(qso['DUPE'])
+                #qcount += 1
             else:
                 print('Error writing QSO data!')
                 break
+        #print(oqidlist, qidlist)
        
 
 if __name__ == '__main__':

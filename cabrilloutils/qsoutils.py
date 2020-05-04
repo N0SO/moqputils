@@ -5,6 +5,9 @@ qsoutils - Utilities for processing and validating QSO: lines
 Update History:
 * Thu Apr 16 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - First interation
+* Sun May 03 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.2 - Added more date formats to QSO date checks
+- two-digit year formats added.
 """
 from datetime import datetime
 from datetime import date
@@ -50,7 +53,17 @@ class QSOUtils(CabrilloUtils):
        return band
        
     def qsotimeOBJ(self, ldate, ltime):
-       datefmts = ['%Y-%m-%d', '%Y/%m/%d', '%Y%m%d', '%m-%d-%Y', '%m/%d/%Y']
+       datefmts = ['%Y-%m-%d', 
+                   '%Y/%m/%d', 
+                   '%Y%m%d', 
+                   '%m-%d-%Y', 
+                   '%m/%d/%Y',
+                   '%y-%m-%d', 
+                   '%y/%m/%d', 
+                   '%y%m%d', 
+                   '%m-%d-%y', 
+                   '%m/%d/%y']
+                   
        timefmts = ['%H%M', '%H:%M', '%H %M']
        logtimeobj = None
 
@@ -58,25 +71,27 @@ class QSOUtils(CabrilloUtils):
        logdate = ldate
 
        #Date
+       datefcount = len(datefmts)
+       timefcount = len(timefmts)
        d=0
-       while (d<5):
+       while (d<datefcount):
            try:
                datefstg = datefmts[d]
                dateobj=datetime.strptime(logdate, datefstg)
                #print(dateobj)
-               d=5
+               d=datefcount
            except:
                #print('Format %s did not work for date %s.'%(datefstg, logdate))
                d += 1
 
        #time
        t=0
-       while (t<2):
+       while (t<timefcount):
            try:
                timefstg = timefmts[t]
                timeobj=datetime.strptime(logtime, timefstg)
                #print(timeobj)
-               t=3
+               t=timefcount
            except:
               #print('Format %s did not work for time %s.'%(timefstg, logtime))
               t += 1
