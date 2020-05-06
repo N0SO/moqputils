@@ -14,7 +14,7 @@ Update History:
 - by inheriting from MOQPLogCheck
 """
 from moqplogcheck import MOQPLogcheck
-import os
+import os, shutil
 from moqpdbconfig import *
 from moqpdbutils import *
 from qsoutils import QSOUtils
@@ -28,11 +28,11 @@ VERSION = '0.1.0'
 class MOQPLoadLogs(MOQPLogcheck):
 
     def __init__(self, filename = None, 
-                       errcopypath = None,
+                       acceptedpath = None,
                        cabbonus = False):
         if (filename):
            if (filename):
-              self.appMain(filename, errcopypath, cabbonus)
+              self.appMain(filename, acceptedpath, cabbonus)
 
 
     def loadToDB(self, log, cabBonus):
@@ -40,6 +40,8 @@ class MOQPLoadLogs(MOQPLogcheck):
         call = log['HEADER']['CALLSIGN']
         dupecount = log['QSOSUM']['DUPES']
         errorcount = len(log['ERRORS'])
+        if (cabBonus):
+            print('Applying CABRILLO Bonus to %s'%(call))
         if ( (errorcount == 0) or \
                  (errorcount == dupecount)):
             mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
@@ -50,8 +52,18 @@ class MOQPLoadLogs(MOQPLogcheck):
                     print('Log for %s already exists as ID %s - use UPDATE to load new log data'%(call, testID))
                 else:
                     newLogID = mydb.write_header(log['HEADER'], cabBonus)
-                    print('New log ID = %d for %s -- writing QSOS...'%(newLogID, call))
-                    mydb.write_qsolist(newLogID, log['QSOLIST'])
+                    if (newLogID):
+                        #print('New log ID = %d for %s -- writing QSOS...'%(newLogID, call))
+                        result = mydb.write_qsolist(newLogID, log['QSOLIST'])
+                        if (result):
+                            sucsess = True
+                        else:
+                            print("Error writing QSO list for call %s to database."%(call))
+                            #exit()
+                            
+                    else:
+                        print("Error writing log header for call %s"%(call))
+                        #exit()
             else: 
                 print('Error opening database - log %s data not written to database.'%(callsig))
         else: # Log has errors 
@@ -59,55 +71,77 @@ class MOQPLoadLogs(MOQPLogcheck):
         return sucsess
     
 
-    def processOneFile(self, filename, headers=True, cabBonus=False):
+    def processOneFile(self, filename, 
+                             destpath = False,
+                             cabBonus=False):
        qutil = QSOUtils()   
-       csvdata = None        
+       csvdata = ''       
        if (os.path.isfile(filename)):
           log = self.checkLog(filename)
           if (log):
-              self.loadToDB(log, cabBonus)
-              #for qso in log['QSOLIST']:
-              #    print(qutil.showQSO(qso))
+              if ( self.loadToDB(log, cabBonus)):
+                  print('File %s successfully loaded to database.'%(filename))
+                  """The following code needs to be made a 
+                     commandline option with destpath 
+                     parameterized. """
+                  if (destpath): 
+                     if (os.path.exists(destpath)):
+                        try:
+                          dest = shutil.move(filename, destpath)
+                          print('mv %s %s'%(filename, destpath))
+                        except Exception as e:
+                          print('Move of %s to %s failed\n%s!'% \
+                                                     (filename,
+                                                      destpath,
+                                                      e.args))
+
+              else:
+                  print("Errors writing %s data to database."%(filename))
+                  exit()
           else:
               csvdata = ( \
                'True\tFile %s is not in MOQP Cabrillo format.\n'\
                                                      %(filename))
        return csvdata 
 
-    def processFileList(self, pathname, errcopypath=False, cabBonus=False):
+    def processFileList(self, pathname, destpath=None, cabBonus=False):
         csvdata = ''
         for (dirName, subdirList, fileList) in  \
                       os.walk(pathname, topdown=True):
            if (fileList != ''): 
-              Headers = True
+              #Headers = True
               for fileName in fileList:
                  if (fileName.startswith('.')):
                      pass
                  else:
                      fullPath = ('%s/%s'%(dirName, fileName))
                      thislog = self.processOneFile(fullPath, 
-                                                   Headers,
+                                                   destpath,
                                                    cabBonus)
                      csvdata += thislog
+                     """
                      moved = self.moveLogwithErrs(thislog,
                                                   fullPath,
                                                   errcopypath)
                      Headers = False
                      #if moved: break
+                     """
            else: 
               csvdata += ('True\tLog File %s does not exist\n'% \
                           (fileName))
         return csvdata
 
 
-    def appMain(self, pathname, errcopypath, cabbonus):
+    def appMain(self, pathname, acceptedpath, cabbonus):
        csvdata = 'Nothing.'
        if (os.path.isfile(pathname)):
           csvdata = self.processOneFile(pathname, 
-                                        errcopypath, 
+                                        acceptedpath, 
                                         cabbonus)
        else:
-          csvdata = self.processFileList(pathname, errcopypath)
+          csvdata = self.processFileList(pathname, 
+                                         acceptedpath,
+                                         cabbonus)
        if (csvdata):
           print('%s'%(csvdata))
 

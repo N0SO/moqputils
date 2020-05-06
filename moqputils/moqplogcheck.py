@@ -86,10 +86,10 @@ class MOQPLogcheck(CabrilloUtils):
     QSOTAGS = ['FREQ', 'MODE', 'DATE', 'TIME', 'MYCALL',
                'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH']
 
-    def __init__(self, filename = None, errcopypath = None):
+    def __init__(self, filename = None, acceptedpath = None):
         if (filename):
            if (filename):
-              self.appMain(filename, errcopypath)
+              self.appMain(filename, acceptedpath)
 
     def getVersion(self):
        return VERSION
@@ -644,10 +644,18 @@ class MOQPLogcheck(CabrilloUtils):
         return log
 
 
-    def processOneFile(self, filename, headers=True):               
+    def processOneFile(self, filename, headers=True, acceptedMovePath=None): 
+       dupecount = None
+       errorcount = None
+       logAccepted = False              
        if (os.path.isfile(filename)):
           log = self.checkLog(filename)
           if (log):
+             call = log['HEADER']['CALLSIGN']
+             dupecount = log['QSOSUM']['DUPES']
+             errorcount = len(log['ERRORS'])
+             #print("errorcount = %d, DUPE count = %d, PATH = %s"%(errorcount, dupecount, acceptedMovePath))
+             if (errorcount == dupecount): logAccepted = True
              csvdata = self.exportcsv(log, headers)
              if (csvdata == None):
                 csvdata = ('True\tFile %s is not in MOQP Cabrillo format Dude.\n'\
@@ -658,8 +666,20 @@ class MOQPLogcheck(CabrilloUtils):
        else:
           csvdata = ('True\tLog File %s does not exist\n'% \
                           (filename))
+       if (logAccepted and acceptedMovePath): 
+          if (os.path.exists(acceptedMovePath)):
+              # Move to accepted logs folder 
+              try:
+                 dest = shutil.move(filename, acceptedMovePath)
+                 print('mv %s %s'%(filename, acceptedMovePath))
+              except Exception as e:
+                 print('Move of %s to %s failed\n%s!'% \
+                                             (filename,
+                                              acceptedMovePath,
+                                              e.args))
+
        return csvdata 
-       
+    """   
     def moveLogwithErrs(self, thislog, filename, errormovepath):
        moved = False
        if (errormovepath):
@@ -684,8 +704,8 @@ class MOQPLogcheck(CabrilloUtils):
                                               (filename,
                                                errormovepath))
        return moved 
-
-    def processFileList(self, pathname, errcopypath):
+    """
+    def processFileList(self, pathname, acceptedPath=None):
         csvdata = ''
         for (dirName, subdirList, fileList) in  \
                       os.walk(pathname, topdown=True):
@@ -697,11 +717,14 @@ class MOQPLogcheck(CabrilloUtils):
                  else:
                      fullPath = ('%s/%s'%(dirName, fileName))
                      thislog = self.processOneFile(fullPath, 
-                                                  Headers)
+                                                   Headers,
+                                                   acceptedPath)
                      csvdata += thislog
+                     """
                      moved = self.moveLogwithErrs(thislog,
                                                   fullPath,
                                                   errcopypath)
+                     """
                      Headers = False
                      #if moved: break
            else: 
@@ -709,11 +732,13 @@ class MOQPLogcheck(CabrilloUtils):
                           (fileName))
         return csvdata
 
-    def appMain(self, pathname, errcopypath):
+    def appMain(self, pathname, acceptedpath):
        csvdata = 'Nothing.'
        if (os.path.isfile(pathname)):
-          csvdata = self.processOneFile(pathname)
+          csvdata = self.processOneFile(pathname, 
+                                        True, 
+                                        acceptedpath)
        else:
-          csvdata = self.processFileList(pathname, errcopypath)
+          csvdata = self.processFileList(pathname, acceptedpath)
        if (csvdata):
           print('%s'%(csvdata))

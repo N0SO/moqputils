@@ -92,12 +92,12 @@ class get_args():
         parser.add_argument('-v', '--version', action='version', version = VERSION)
         parser.add_argument('-i', '--inputpath', default=None,
             help='Specifies the path to the folder that contains the log files to summarize.')
-        parser.add_argument('-e', '--errcpypath', default=None,
-            help='Specifies the path to the folder where log files with errors get moved to. Allows for sorting of log files with errors.')
+        parser.add_argument('-a', '--acceptedpath', default=None,
+            help='Specifies path to the folder where acceptable log files with no errors get moved to. Allows for sorting of log files without errors.')
         parser.add_argument('-l', '--loadlog', 
                                   action='store_true',
                                   default=False,
-            help='Load error free logs into the MOQP database.')
+            help='Load error free logs into the MOQP database. The -a option will move the file to a different folder if the file loads into the database successfully.')
         parser.add_argument('-b', '--cabbonus', 
                                    action='store_true', 
                                    default=False,
@@ -111,12 +111,12 @@ if __name__ == '__main__':
        if (args.args.loadlog):
           from moqploadlogs import MOQPLoadLogs
           app = MOQPLoadLogs(args.args.inputpath,
-                                  args.args.errcpypath,
+                                  args.args.acceptedpath,
                                   args.args.cabbonus)
        else:
           from moqplogcheck import MOQPLogcheck
           app = MOQPLogcheck(args.args.inputpath,
-                              args.args.errcpypath)
+                              args.args.acceptedpath)
    else:
        from gui_moqpcategory import gui_MOQPChecklog
        app=gui_MOQPChecklog()

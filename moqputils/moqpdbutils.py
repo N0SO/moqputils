@@ -84,7 +84,7 @@ class MOQPDBUtils():
                 #qresult = self.cursor.fetchall()
                 #print(qresult)
         except Exception as e:
-            print ("write_query Error %s executing query: %sn"%\
+            print ("write_query Error %s executing query:\n %s"%\
                                            (e.args,query))  
         return qstat
         
@@ -611,22 +611,36 @@ class MOQPDBUtils():
         #print('\n\n\n\nUpdating SUMMARY - query = %s'%(query))
         ures = self.write_query(query)
         return sumID
+
+    def trimAndEscape(self, unsafeString, maxLen):
+        badchars = '\"\''
+        if (len(unsafeString) > maxLen):
+            workString = unsafeString[:maxLen-1]
+        else:
+            workString = unsafeString
+        for bad in badchars:
+            workString = workString.replace(bad, ' ')
+        return workString
+        
        
     def write_header(self, header, cabBonus):
         logID = None
-
-
-        if (len(header['CREATED-BY']) > 50):
-            #limit CREATED-BY to 50 chars
-            header['CREATED-BY'] = header['CREATED-BY'][:49]
-
-        if (len(header['CLUB']) > 50):
-            #limit CLUB NAME to 120 chars
-            header['CLUB'] = header['CLUB'][:119]
-
-        if (len(header['SOAPBOX']) >120):
-            #Limit soapbox to 120
-            header['SOAPBOX'] = header['SOAPBOX'][:119] 
+        header['CREATED-BY'] = \
+                  self.trimAndEscape(header['CREATED-BY'], 50)
+        header['CLUB'] = self.trimAndEscape(header['CLUB'], 50)
+        header['SOAPBOX'] = \
+                  self.trimAndEscape(header['SOAPBOX'], 120)
+        header['NAME'] = self.trimAndEscape(header['NAME'], 40)
+        header['ADDRESS'] = \
+                  self.trimAndEscape(header['ADDRESS'], 120)
+        header['ADDRESS-CITY'] = \
+                  self.trimAndEscape(header['ADDRESS-CITY'], 40)
+        header['ADDRESS-STATE-PROVINCE'] = \
+          self.trimAndEscape(header['ADDRESS-STATE-PROVINCE'], 40)
+        header['ADDRESS-POSTALCODE'] = \
+          self.trimAndEscape(header['ADDRESS-POSTALCODE'], 12)
+        header['ADDRESS-COUNTRY'] = \
+          self.trimAndEscape(header['ADDRESS-COUNTRY'], 25)
 
         query = """INSERT INTO LOGHEADER(START,
                       CALLSIGN,
@@ -722,7 +736,7 @@ class MOQPDBUtils():
         return qsoID
 
     def write_qsolist(self, logID, qsolist):
-        success = None
+        success = False
         #qcount = 0
         qidlist = []
         #oqidlist = []
@@ -735,12 +749,15 @@ class MOQPDBUtils():
             qID = self.write_qsodata(logID, qso)
             if (qID):
                 qidlist.append(qID)
+                success = True
                 #oqidlist.append(qso['DUPE'])
                 #qcount += 1
             else:
                 print('Error writing QSO data!')
+                success = False
                 break
         #print(oqidlist, qidlist)
+        return success
        
 
 if __name__ == '__main__':
