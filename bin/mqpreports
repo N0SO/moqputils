@@ -60,9 +60,12 @@ class get_args():
             help="CALLSIGN in MOQP database to summarize. "+ \
                  "Entering 'ALLCALLS' will run the report "+ \
                  "on all calls in the database. Entering ")
-        parser.add_argument('-C', '--countiesworked', default=True,
+        parser.add_argument('-C', '--countiesworked', default=None,
             help="Summarize all valid QSOS for a total "+ \
                  "Counties Worked report. ")
+        parser.add_argument('-D', '--deletelog', default=None,
+            help="Delete log for callsign specified.")
+
         args = parser.parse_args()
         #print(args)
         return args
@@ -85,6 +88,9 @@ if __name__ == '__main__':
    elif (args.args.countiesworked):
        from moqpdbcountycount import *
        app = MOQPDBCountyCountRpt(args.args.logreport)
+   elif (args.args.deletelog):
+       from deletelog import deleteLog
+       app = deleteLog(args.args.deletelog)
    else:
        from gui_reports import reports_ui
        app=gui_reports()

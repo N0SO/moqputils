@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
 Update History:
-* Thu Apr 29 Mike Heitmann, N0SO <n0so@arrl.net>
+* Thu Apr 29 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 - Retired code from 2019 QSO Party
 - and added enhanced log header/QSO checking
 - by inheriting from MOQPLogCheck
+* Thu May 07 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Added method delete_log
 """
 
 import MySQLdb
@@ -15,7 +17,7 @@ from datetime import date
 from datetime import time
 from datetime import timedelta
 
-VERSION = '0.1.0' 
+VERSION = '0.1.1' 
 """
 DEVMODPATH = ['moqputils', 'cabrilloutils']
 # If the development module source paths exist, 
@@ -27,8 +29,8 @@ for mypath in DEVMODPATH:
 #print('Python path = %s'%(sys.path))
 from moqpdbconfig import *
 from generalaward import GenAward
-from CabrilloUtils import CabrilloUtils
 """
+from CabrilloUtils import CabrilloUtils
 
 
 class MOQPDBUtils():
@@ -96,6 +98,31 @@ class MOQPDBUtils():
         except Exception as e:
             print( \
             "read_query Error %s reading results from query:\n %s"%\
+                                              (e.args,query))
+        return qresult
+        
+    def write_pquery(self, query, params, commit = True):
+        qstat = None
+        try:
+            self.cursor.execute(query, params)
+            if (commit):
+                self.mydb.commit()
+                qstat = self.cursor.lastrowid
+        except Exception as e:
+            print ("write_pquery Error %s executing query:\n %s %s'"%\
+                                           (e.args,
+                                            query,
+                                            params))  
+        return qstat
+        
+    def read_pquery(self, query, params):
+        qresult = None
+        qstat = self.write_pquery(query, params)
+        try:
+            qresult = self.cursor.fetchall()
+        except Exception as e:
+            print( \
+            "read_pquery Error %s reading results from query:\n %s"%\
                                               (e.args,query))
         return qresult
         
@@ -758,7 +785,62 @@ class MOQPDBUtils():
                 break
         #print(oqidlist, qidlist)
         return success
-       
+        
+    def get_log_parts(self, call):
+        log=None
+        headerID = self.CallinLogDB(call)
+        if (headerID):
+            query = "SELECT ID FROM `QSOS` WHERE LOGID=%s" 
+            params = [headerID]
+            qsos = self.read_pquery(query, params)
+            if (qsos):
+                log = {'CALL': call,
+                       'HEADERID' : headerID,
+                       'QSOIDS' : qsos }
+        return log
+        
+
+    def delete_log(self, call, confirm = False):
+        success = False
+        log = self.get_log_parts(call)
+        if (log):
+            headerID = log['HEADERID']
+            theseqsos = log['QSOIDS']
+        if (headerID):
+            print('Deleting log %s, LOGID = %d...'%(\
+                                                 call,
+                                                 headerID))
+            if (theseqsos):
+                # Delete QSO records
+                qcount = len(theseqsos)
+                print('Number of QSOS in log %s to delete: %d'\
+                                         %(call, qcount))
+                thisQ = 0
+                for qid in theseqsos:
+                    thisQ+=1
+                    print('Deleting QSO#%d ID: %d...'%(thisQ, qid['ID']))
+                    query = "DELETE FROM `QSOS` WHERE `ID`=%s"
+                    params = [qid['ID']]
+                    if (self.write_pquery(query, params) \
+                                                     == None):
+                        print('Error - QSO %d not deleted!'%\
+                                                     (QSO['ID']))
+                        print('Header and remaining QSOS not deleted.')
+                        break                
+                if (thisQ == qcount): 
+                    #All qsos deleted, delete log header 
+                    params = [headerID]     
+                    query = "DELETE FROM LOGHEADER WHERE ID=%s"
+                    if (self.write_pquery(query, params)==None):
+                         print(\
+                           'Log Header %d for call %s not deleted.'%\
+                                                     (headerID, call))
+                    else:
+                         print('Log for call %s deleted!'%(call))
+                         success=True                          
+            else: 
+                print('No QSOS to delete!')        
+            return success
 
 if __name__ == '__main__':
     
