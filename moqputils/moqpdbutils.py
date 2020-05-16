@@ -18,19 +18,9 @@ from datetime import time
 from datetime import timedelta
 
 VERSION = '0.1.1' 
-"""
-DEVMODPATH = ['moqputils', 'cabrilloutils']
-# If the development module source paths exist, 
-# add them to the python path
-for mypath in DEVMODPATH:
-    if ( os.path.exists(mypath) and \
-                       (os.path.isfile(mypath) == False) ):
-        sys.path.insert(0,mypath)
-#print('Python path = %s'%(sys.path))
-from moqpdbconfig import *
-from generalaward import GenAward
-"""
+
 from CabrilloUtils import CabrilloUtils
+from qsoutils import QSOUtils
 
 
 class MOQPDBUtils():
@@ -176,8 +166,8 @@ class MOQPDBUtils():
         header = None
         logID = self.CallinLogDB(call)
         if (logID):
-            header = self.read_query( \
-                "SELECT * FROM `LOGHEADER` WHERE ID=%d"%(logID))
+            header = self.read_pquery( \
+                "SELECT * FROM `LOGHEADER` WHERE ID=%s", [logID])
         return header
 
     def fetchCABHeader(self, call):
@@ -246,237 +236,6 @@ class MOQPDBUtils():
         logsum = self.read_query(query)
         return logsum[0]
  
-    def padtime(self, timestg):
-        count = len(timestg)
-        if (count < 4):
-            pads = 4 - count
-            padtime =''
-            for i in range(pads):
-                padtime += '0'
-            padtime += timestg
-        elif (count > 4):
-            padtime = timestg[:3]
-        else:
-            padtime = timestg
-        return padtime
-
-        
-    def qsoqslCheck(self, myqso, urqso):
-        qslstat = False
-        logerrors = []
-        gutil = GenAward()
-        cabutil = CabrilloUtils()
-        """
-        TBD - compare date/time, BAND, MODE, REPORT, QTH
-        """
-
-        count = len(myqso['TIME'])
-        if (count != 4):
-            newtime = self.padtime(myqso['TIME'])
-            print('QSO %d: Time string wrong length - changing %s to %s...'%(myqso['ID'], myqso['TIME'], newtime))
-            myqso['TIME'] = newtime
-            
-        count = len(urqso['TIME'])
-        if (count != 4):
-            newtime = self.padtime(urqso['TIME'])
-            print('QSO %d: Time string wrong length - changing %s to %s...'%(urqso['ID'], urqso['TIME'], newtime))
-            urqso['TIME'] = newtime
-            
-        myqtime = self.logtimes(myqso['DATE'], myqso['TIME'])
-        urqtime = self.logtimes(urqso['DATE'], urqso['TIME'])
-        myqband = gutil.getBand(myqso['FREQ'])
-        urqband = gutil.getBand(urqso['FREQ'])
-        urqsomycall = cabutil.stripCallsign(urqso['MYCALL'])
-        myqsourcall = cabutil.stripCallsign(myqso['URCALL'])
-
-        if (myqtime > urqtime):
-            timediff = myqtime - urqtime
-        else:
-            timediff = urqtime - myqtime
-        
-        #print('MYQSO: %s\nURQSO: %s'%(myqso, urqso))
-        #print('Time difference: %s, MYCALL: %s, URCALL:%s'%(timediff, myqsourcall, urqsomycall))
-        
-        if ( (timediff < timedelta(minutes=30) ) and \
-             (myqband == urqband) and \
-             (myqso['MODE'] == urqso['MODE']) and \
-             (myqsourcall == urqsomycall) and \
-             (myqso['URQTH'] == urqso['MYQTH']) and \
-             (myqso['URREPORT'] != '') ):
-            qslstat = True
-            #print('QSL!\n')
-        else:
-            logerrors.append('%s...'%(self.showQSO(urqso)))
-            #logerrors.append('for MYQSO %d, tried URQSO: %d...'%(myqso['ID'], urqso['ID']))
-            if (timediff > timedelta(minutes=30)):
-                logerrors.append('Log time diff: %s > than 30 min.'%(timediff))
-            if (myqband != urqband):
-                logerrors.append('BAND does not match')
-            if (myqsourcall != urqsomycall):
-                logerrors.append('CALLSIGN %s in URREPORT does not match CALLSIGN %s in MYREPORT.'%(myqsourcall, urqsomycall))
-            if (myqso['URQTH'] != urqso['MYQTH']):
-                logerrors.append('QTH %s in URREPORT does not match QTH %s in MYREPORT'%(myqso['URQTH'], urqso['MYQTH']))
-            if (myqso['URREPORT'] == ''):
-                logerrors.append('REPORT %s looks bogus'%(myqso['URREPORT']))
-        if (logerrors == []):
-            logerrors = None
-        return { 'QSLSTAT':qslstat,
-                 'QSLERR':logerrors }
-        
-    def logqslCheck(self, call, loglist = None):
-        statList = None
-
-        if (loglist):
-            all_logs = loglist
-        else:
-            query =  "SELECT `ID`, `CALLSIGN` FROM `LOGHEADER` WHERE 1"
-            all_logs = self.read_query(query)
-        
-        callID = self.CallinLogDB(call, all_logs)
-        
-        if (callID):
-            myqsos = self.fetchlogQSOS(callID)
-            if (myqsos):
-                statList = []
-                for qso in myqsos:
-                    qsostat = dict()
-                    nextCall = qso['URCALL']
-                    nextID = self.CallinLogDB(nextCall, all_logs)
-                    if (nextID):
-                        #print('Fetching QSOs for %s, LOGID %d'%(qso['URCALL'], nextID))
-                        #query= ("SELECT * FROM `QSOS` WHERE ( (`LOGID` = %d) AND (`URCALL` IN ('%s')) )"%(nextID, call) )
-                        #print(query)
-                        #urqsos = mydb.read_query(query)
-                        urqsos = self.fetchIDQSOSwithCall(nextID, call)
-                        if (urqsos):
-                            
-                            print('Source QSO from %s:\n%s'%(call, 
-                                               self.showQSO(qso)))
-                            print('Possible QSLs from %s:\n'%(qso['URCALL']))
-                            for nq in urqsos:
-                                print(self.showQSO(nq))
-                            
-                            qslstatus = False
-                            qslIndex = 0
-                            urqsoCount = len(urqsos)
-                            urqsoerrors = []
-                            while ( (qslstatus == False) and \
-                                    (qslIndex < urqsoCount) ):
-                                #print('Checking:\n%s\n%s\n\n'%(qso, urqsos[qslIndex]))
-                                qsostatus = self.qsoqslCheck(qso,
-                                                urqsos[qslIndex])
-                                qslstatus = qsostatus['QSLSTAT']
-                                if (qslstatus):
-                                    qsostat['STATUS']='QSL'
-                                    qsostat['MYQSO'] = qso
-                                    qsostat['URQSO'] = urqsos[qslIndex]
-                                    statList.append(qsostat)
-                                else: # Save reason for no match this QSO
-                                    for ln in qsostatus['QSLERR']:
-                                        urqsoerrors.append(ln)
-                                qslIndex += 1
-                                #print(qslIndex, qslstatus)
-
-                            if (qslstatus == False):
-                                """
-                                QSOs with URCALL found, but none 
-                                match this QSO - Busted?
-                                """
-                                qsostat['STATUS']='BUSTED'
-                                qsostat['MYQSO'] = qso
-                                qsostat['URQSO'] = urqsoerrors
-                                statList.append(qsostat)
-                                    
-                        else: #(if urqsos)
-                            """
-                            No qsos for nextCall in database.log for QSO with station qso['URCALL']
-                            """
-                            #print('For %s QSO %d, No matching QSOS for station %s in database.'%(call, qso['ID'], nextCall))
-                            qsostat['STATUS']='NO URCALL QSOS'
-                            qsostat['MYQSO'] = qso
-                            qsostat['URQSO'] = None
-                            statList.append(qsostat)
-                        
-                        
-                    else: #(if nextID)
-                        """
-                        No log for QSO with station qso['URCALL']
-                        """
-                        #print('For %s QSO %d, No log for station %s in database.'%(call, qso['ID'], nextCall))
-                        qsostat['STATUS']='NO URCALL LOG'
-                        qsostat['MYQSO'] = qso
-                        qsostat['URQSO'] = None
-                        statList.append(qsostat)
-
-                    self.recordQSOStatus(qsostat)            
-
-            else: #(if myqsos)
-                """
-                The call for supplier parameter call is in
-                the database, but no QSOs are recorded.
-                Return None for status
-                """
-                print('No QSOS for %s in database.'%(call))
-        
-        else: #(if callID)   
-            """
-            No log for supplied parameter call in the database.
-            Return None status
-            """
-            print('%s not in database.'%(call))
-            
-        return statList
-        
-    def recordQSOStatus(self, qsostat):
-        success = None
-        qsorec = { 'QSOID': qsostat['MYQSO']['ID'],
-                   'QSL': 0,
-                   'NOLOG': False,
-                   'NOQSOS': False,
-                   'VALID': False,
-                   'NOTE': ' '}
-               
-        if qsostat['STATUS'] == 'QSL':
-            """
-            QSL - Save matching QSO ID and set VALID flag
-            """
-            qsorec['QSL'] = qsostat['URQSO']['ID']
-            qsorec['VALID'] = True
-        elif qsostat['STATUS'] == 'BUSTED':
-            """
-            QSOS with URCALL found, but no match
-            to this QSO
-            """
-            qsorec['VALID'] = False
-        elif qsostat['STATUS'] == 'NO URCALL QSOS':
-            """
-            Log for other station exists, but no QSO matching
-            this one was found - CLEAR VALID flag
-            """
-            qsorec['VALID'] = False
-            qsorec['NOQSOS'] = True
-        elif qsostat['STATUS'] == 'NO URCALL LOG':
-            """
-            No Log for other station exists. Give beneit of doubt
-            and SET VALID flag
-            """
-            qsorec['VALID'] = True
-            qsorec['NOLOG'] = True
-            
-        """
-        keys = str(qsorec.keys())[9:].replace('[', '').replace(']','')
-        vals = str(qsorec.values())[11:].replace('[','').replace(']','')
-        query = 'INSERT INTO QSOSTATUS %s VALUES %s' % (keys, vals)
-        """
-        
-        query="UPDATE QSOS SET QSL=%d, VALID=%s, NOLOG=%s, NOQSOS=%s WHERE ID=%s" % \
-                 (qsorec['QSL'], qsorec['VALID'], qsorec['NOLOG'],
-                                 qsorec['NOQSOS'], qsorec['QSOID'])
-
-        #print('Writing QSO status:\n%s'%(query))
-        success = self.write_query(query)
-            
-        return success
         
     def CallinLogDB(self, call, loglist=None):
         logID = None
@@ -697,7 +456,8 @@ class MOQPDBUtils():
                       OFFTIME,
                       SOAPBOX,
                       ENDOFLOG,
-                      CABBONUS)
+                      CABBONUS,
+                      STATUS)
                    VALUES(""" + \
                         ('"%s",'%(header['START-OF-LOG'])) +\
                         ('"%s",'%(header['CALLSIGN'])) +\
@@ -727,7 +487,8 @@ class MOQPDBUtils():
                         ('"%s",'%(header['OFFTIME'])) +\
                         ('"%s",'%(header['SOAPBOX'])) +\
                         ('"%s",'%(header['END-OF-LOG'])) +\
-                        ('"%d")'%(cabBonus))      
+                        ('"%d",'%(cabBonus)) +\
+                        ('"%s")'%(header['NOTES']))      
         logID = self.write_query(query)
         return logID
     
@@ -744,7 +505,8 @@ class MOQPDBUtils():
                                     URCALL,
                                     URREPORT,
                                     URQTH,
-                                    DUPE)
+                                    DUPE,
+                                    NOTE)
                       VALUES(""" + \
                          ('"%d",'%(logID)) +\
                          ('"%s",'%(qsodata['FREQ'])) +\
@@ -757,7 +519,8 @@ class MOQPDBUtils():
                          ('"%s",'%(qsodata['URCALL'])) +\
                          ('"%s",'%(qsodata['URREPORT'])) +\
                          ('"%s",'%(qsodata['URQTH'])) +\
-                         ('"%s")'%(qsodata['DUPE']))
+                         ('"%s",'%(qsodata['DUPE'])) +\
+                         ('"%s")'%(qsodata['NOTES']))
 
         qsoID = self.write_query(query)
         return qsoID
@@ -803,6 +566,7 @@ class MOQPDBUtils():
     def delete_log(self, call, confirm = False):
         success = False
         log = self.get_log_parts(call)
+        print(log)
         if (log):
             headerID = log['HEADERID']
             theseqsos = log['QSOIDS']

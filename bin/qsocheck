@@ -45,8 +45,9 @@ class get_args():
         return parser.parse_args()
 
 
-def checkOneCall(call):
-    qslresult = mydb.logqslCheck(call)
+def checkOneCall(call, mydb):
+    qslval = MOQPQSOValidator(mydb)
+    qslresult = qslval.logqslCheck(call)
     #print(qslresult)
     if (qslresult):
         qslreport = mydb.showQSLs(qslresult)
@@ -58,6 +59,8 @@ def checkOneCall(call):
 if __name__ == '__main__':
     args = get_args()
     from moqpdbutils import *
+    from moqpdbconfig import *
+    from moqpqsovalidator import MOQPQSOValidator
     mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
     mydb.setCursorDict()
     if (args.args.callsign):
@@ -70,7 +73,7 @@ if __name__ == '__main__':
             for nextlog in loglist:
                 checkOneCall(nextlog['CALLSIGN'])
         else:
-            checkOneCall(args.args.callsign)
+            checkOneCall(args.args.callsign, mydb)
     else:
        print('Nothing to do.')   
      

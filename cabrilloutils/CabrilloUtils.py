@@ -191,6 +191,7 @@ class CabrilloUtils():
            header[tag] = ''
        """
        header = self.MakeEmptyDict(self.CABRILLOTAGS, '')
+       header['ERRORS'] = ''
        return header
 
 
@@ -255,6 +256,7 @@ class CabrilloUtils():
        splitchar = None
        if ('/' in callsign): splitchar = '/'
        elif ('-' in callsign): splitchar = '-'
+       elif ('\\' in callsign): splitchar = '\\'
        if (splitchar):
           temp = callsign.split(splitchar)
           call = temp[0]

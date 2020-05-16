@@ -8,6 +8,9 @@ Update History:
 * Sun May 03 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.2 - Added more date formats to QSO date checks
 - two-digit year formats added.
+* Fri May 15 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.3 - Added more qso time utils
+- Fixed a bug in getBand causing false DUPES
 """
 from datetime import datetime
 from datetime import date
@@ -26,7 +29,10 @@ class QSOUtils(CabrilloUtils):
 
     def getBand(self, freq):
        band = None
-       nfreq = float(freq)
+       try:
+           nfreq = float(freq)
+       except:
+           nfreq = 0
        
        if (nfreq >= 1800.0 and nfreq <= 2000.0):
            band = '160M'
@@ -36,7 +42,7 @@ class QSOUtils(CabrilloUtils):
            band = '40M'
        elif (nfreq >= 14000.0 and nfreq <= 14350.0):
            band = '20M'
-       elif (nfreq >= 21000.0 and nfreq <= 214500.0):
+       elif (nfreq >= 21000.0 and nfreq <= 21450.0):
            band = '15M'
        elif (nfreq >= 28000.0 and nfreq <= 29700.0):
            band = '10M'
@@ -116,6 +122,23 @@ class QSOUtils(CabrilloUtils):
             padtime = timestg
         return padtime
 
+    def validateQSOtime(self, qsodate, qsotime):
+        timeValid = False
+        """ Defines contest period in UTC. This needs to be 
+            read in from a config file. """
+        day1Start = self.qsotimeOBJ('2020-04-04', '1400')
+        day1Stop = self.qsotimeOBJ('2020-04-05', '0400')
+        day2Start = self.qsotimeOBJ('2020-04-05', '1400')
+        day2Stop = self.qsotimeOBJ('2020-04-05', '2000')
+        logtime = self.qsotimeOBJ(qsodate, qsotime)
+        if (logtime):
+           if ( ((logtime >= day1Start) and \
+                                       (logtime <= day1Stop)) \
+              or ((logtime >= day2Start) and \
+                                       (logtime <= day2Stop)) ):
+              timeValid = True
+        return timeValid
+
     def showQSO(self, qso):
         fmt = '%s %s %s %s %s %s %s %s %s %s %s'
         qsoLine = (fmt %( qso['DUPE'],
@@ -130,3 +153,14 @@ class QSOUtils(CabrilloUtils):
                           qso['URREPORT'],
                           qso['URQTH']))
         return qsoLine
+
+    def compareCalls(self, call1, call2):
+        callvalid=False
+        """ Strip off any extra stuff after a / or \ at the
+            end of the callsigns """
+        call1_s = self.stripCallsign(call1)
+        call2_s = self.stripCallsign(call2)
+        if (call1_s == call2_s):
+            callvalid=True
+        return callvalid
+

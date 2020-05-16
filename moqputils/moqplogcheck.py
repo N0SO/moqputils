@@ -42,13 +42,16 @@ Update History:
 * Mon Apr 27 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.4 - Added ERROR flags for sorting of files with errors.
 * Mon Apr 29 Mike Heitmann, N0SO <n0so@arrl.net>
-- V0.0.5 - Added Added option tp move logs with errors to
+- V0.0.5 - Added Added option to move logs with errors to
 - another folder.
+* Sun May 10 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.6 - Added CABRILLO bonus processing and improved 
+- error handling.
 """
 
 from CabrilloUtils import *
 from moqpmults import *
-from generalaward import GenAward
+from qsoutils import QSOUtils
 from dupecheck import DUPECheck
 from bonusaward import BonusAward
 import os, shutil
@@ -65,52 +68,38 @@ MODES = 'SSB USB LSB FM PH CW RY RTTY DIG DIGI MIXED'
 
 OVERLAY = 'ROOKIE'
 
-US = 'CT EMA ME NH RI VT WMA ENY NLI NNJ NNY SNJ WNY DE EPA MDC WPA '
-US += 'AL GA KY NC NFL SC SFL WCF TN VA PR VI AR LA MS NM NTX OK STX '
-US+= 'WTX EB LAX ORG SB SCV SDG SF SJV SV PAC AZ EWA ID MT NV OR UT '
-US+= 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD CA '
+US = \
+'CT EMA ME NH RI VT WMA ENY NLI NNJ NNY SNJ WNY DE EPA MDC WPA '+\
+'AL GA KY NC NFL SC SFL WCF TN VA PR VI AR LA MS NM NTX OK STX '+\
+'WTX EB LAX ORG SB SCV SDG SF SJV SV PAC AZ EWA ID MT NV OR UT '+\
+'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD CA '
 
 DX = 'DX DK2 DL8 HA8 ON4'
 
-COLUMNHEADERS = 'LOG ERRORS\tCALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
+COLUMNHEADERS = 'LOG ERRORS\tCALLSIGN\tOPS\tSTATION\tOPERATOR\t'+\
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tTOTAL\tVHF QSO\t' + \
-                'MULTS\tDUPES\tW0MA\tK0GQ\tSCORE\t' + \
+                'MULTS\tDUPES\tW0MA\tK0GQ\tCAB FILE\tSCORE\t' + \
                 'MOQP CATEGORY\tDIGITAL\tVHF\tROOKIE\n'
 
 
-VERSION = '0.0.5'
+VERSION = '0.0.6'
 
 class MOQPLogcheck(CabrilloUtils):
 
     QSOTAGS = ['FREQ', 'MODE', 'DATE', 'TIME', 'MYCALL',
-               'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH']
+               'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH', 'NOTES']
 
-    def __init__(self, filename = None, acceptedpath = None):
+    def __init__(self, filename = None, 
+                       acceptedpath = None,
+                       cabbonus = None):
         if (filename):
            if (filename):
-              self.appMain(filename, acceptedpath)
+              self.appMain(filename, acceptedpath, cabbonus)
 
     def getVersion(self):
        return VERSION
 
-    def validateQSOtime(self, qso):
-        qsoutils = DUPECheck()
-        timeValid = False
-        day1Start = qsoutils.qsotimeOBJ('2020-04-04', '1400')
-        day1Stop = qsoutils.qsotimeOBJ('2020-04-05', '0400')
-        day2Start = qsoutils.qsotimeOBJ('2020-04-05', '1400')
-        day2Stop = qsoutils.qsotimeOBJ('2020-04-05', '2000')
-        logtime = qsoutils.qsotimeOBJ(qso['DATE'], qso['TIME'])
-        if (logtime):
-           if ( ((logtime >= day1Start) and \
-                 (logtime <= day1Stop)) \
-              or \
-              ((logtime >= day2Start) and \
-               (logtime <= day2Stop)) ):
-                timeValid = True
-        return timeValid
-    
     def makeQSOdict(self):
        """
        Return an empty dictionary for Cabrillo QSO Data
@@ -124,10 +113,10 @@ class MOQPLogcheck(CabrilloUtils):
        qsovalid = True
        valid_date_chars = set('0123456789/-')
        valid_call_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-')
-       genaward = GenAward()
+       qutils = QSOUtils()
        #if ( qso['FREQ'].isnumeric() ):
        if ( self.is_number(qso['FREQ']) ):
-          if (genaward.getBand(qso['FREQ'])):
+          if (qutils.getBand(qso['FREQ'])):
               pass
           else:
               errorData.append( \
@@ -154,7 +143,7 @@ class MOQPLogcheck(CabrilloUtils):
           qsovalid = False
           qso['TIME'] = None
        if ( qso['DATE'] and qso['TIME'] ):
-          if (self.validateQSOtime(qso)):
+          if (qutils.validateQSOtime(qso['DATE'], qso['TIME'])):
              pass
           else:
              errorData.append(  (\
@@ -204,32 +193,47 @@ class MOQPLogcheck(CabrilloUtils):
        return errorData
 
     def getQSOdict(self, qsodata):
+       qelements = 10
        qso = None
        qso_errors = []
-       qso_data = dict()
+       q_errors = []
+       #qso_data = dict()
        temp = qsodata.replace(':','')
        qsoparts = temp.split(' ')
-       #print(len(qsoparts))
-       if (len(qsoparts) >= 10):
-          i=0
-          qso = self.makeQSOdict()
+       qsolen = len(qsoparts)
+       qso_elements_parsed=0
+       qso = self.makeQSOdict()
+       if (qsolen >= 10):
           for tag in self.QSOTAGS:
              #print('qso[%s] = %s %d'%(tag, qsoparts[i], i))
-             qso[tag] = self.packLine(qsoparts[i])
-             i += 1
-          #print qso
-          qso_errors = self.qso_valid(qso)
-       else:
-          qso_errors = ['QSO has %d elements, should have at least 10.'%(len(qsoparts))]
-       qso_data['ERRORS'] = qso_errors
-       qso_data['DATA'] = qso
-       return qso_data       
+             if (tag != 'NOTES'):
+                 qso[tag] = \
+                    self.packLine(qsoparts[qso_elements_parsed])
+             qso_elements_parsed += 1
+          #Validate QSO
+          q_errors = self.qso_valid(qso)
+       #print(qsodata, qso_elements_parsed, qsolen)
+       if ( (qso_elements_parsed -1 != qelements) or len(q_errors) ):
+          qso_errors.append(qsodata)
+          if (qso_elements_parsed -1 != qelements):
+             qso_errors.append(\
+              '\tQSO has %d elements, it should have 10.'\
+                                                    %(qsolen))
+          if (len(q_errors)):
+              for i in range(len(q_errors)): 
+                  qso_errors.append('\t%s'%(q_errors[i]))
+       #qso_data['ERRORS'] = qso_errors
+       #print(qsodata, qso_errors)
+       qso['NOTES'] = qso_errors
+       #qso_data['DATA'] = qso
+       return qso       
 
     def getQSOdata(self, logtext):
        thislog = dict()
        mults = MOQPMults()
        qsos = []
        errorData = []
+       headerNotes =[]
        header = self.makeHEADERdict()
        linecount = 0
        for line in logtext:
@@ -250,29 +254,36 @@ class MOQPLogcheck(CabrilloUtils):
                 recdata = self.packLine(templine)
              if (cabkey == 'QSO'):
                 qso = self.getQSOdict(recdata)
+                qsos.append(qso)
+                #print(qso)
                 #print('qso errors = %s'%(qso['ERRORS']))
-                if (qso['ERRORS'] == []):
+                if (qso['NOTES'] == []):
                    #print(qso['DATA'])
-                   qsos.append(qso['DATA'])
-                   mults.setMult(qso['DATA']['URQTH'])
+                   mults.setMult(qso['URQTH'])
                 else:
                    errorData.append( \
-                      ('QSO BUSTED, line %d: \"%s\" '% \
-                        (linecount, cabline)) )
-                   for err in qso['ERRORS']:
+                      ('QSO BUSTED, log file line %d: '% \
+                        (linecount)) )
+                   for err in qso['NOTES']:
                       errorData.append(" %s"%(err))
 
              elif (cabkey in header):
                 header[cabkey] += recdata
              else:
-                errorData.append( \
-                  ('CAB TAG unknown, line %d: \"%s\"'% \
-                            (linecount, cabline)) )
+                errString =\
+                 'CAB TAG ERROR, log file line %d: \"%s\"'% \
+                                       (linecount, cabline)
+                headerNotes.append(errString)
+                errorData.append(errString)
           else:
-            errorData.append( \
-           ('CAB data bad, line %d: \"%s\" skipping'% \
+            errString =\
+              'CAB DATA BAD, log line %d: \"%s\" skipping'% \
                                                (linecount, 
-                                                  cabline)) )
+                                                    cabline)
+            headerNotes.append(errString)
+            errorData.append(errString)
+       # Done processing
+       header['NOTES'] = headerNotes
        thislog['HEADER'] = header
        thislog['QSOLIST'] = qsos
        thislog['MULTS'] = mults.sumMults()
@@ -303,6 +314,7 @@ class MOQPLogcheck(CabrilloUtils):
              freq = float(tfreq)
            except:
              freq = 0.0
+
            if ((freq >= 50000.0) or (tfreq in self.VHFFREQ) ):
              summary['VHF'] += 1
                                    
@@ -316,7 +328,8 @@ class MOQPLogcheck(CabrilloUtils):
            else:
              badmodeline = ('QSO:')
              for tag in self.QSOTAGS:
-                 badmodeline += (' %s'%(data[tag]))
+                 #print('%s : %s'%(tag, thisqso[tag]))
+                 badmodeline += (' %s'%(thisqso[tag]))
              print('UNDEFINED MODE: %s -- QSO data = %s'%(mode, badmodeline))
          else:
            summary['DUPES'] += 1
@@ -331,11 +344,18 @@ class MOQPLogcheck(CabrilloUtils):
             k0gqbonus = 100
         else:
             k0gqbonus = 0
+        if (bonus['CABRILLO']):
+            cab_bonus = 100
+        else:
+            cab_bonus = 0
         Score = 0
         cwpoints = qsosum['CW'] * 2
         digipoints = qsosum['DG'] * 2
         qsopoints = cwpoints + digipoints + qsosum['PH']
-        Score = (qsopoints * mults)  + w0mabonus + k0gqbonus
+        Score = (qsopoints * mults)  + \
+                           w0mabonus + \
+                           k0gqbonus + \
+                           cab_bonus
         return Score
 
     def _moqpcatloc_(self, log):
@@ -530,6 +550,11 @@ class MOQPLogcheck(CabrilloUtils):
            else:
                k0gqbonus = '0'        
            csvdata += ('%s\t'%(k0gqbonus))         
+           if (log['BONUS']['CABRILLO']):
+               cab_bonus = '100'
+           else:
+               cab_bonus = '0'        
+           csvdata += ('%s\t'%(cab_bonus))         
            csvdata += ('%s\t'%(log['SCORE']))         
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
@@ -603,7 +628,7 @@ class MOQPLogcheck(CabrilloUtils):
         return log
 
 
-    def checkLog(self, fileName):
+    def checkLog(self, fileName, cabbonus=False):
         result = dict()
         log = self.getMOQPLog(fileName)
         if ( log ):
@@ -635,7 +660,8 @@ class MOQPLogcheck(CabrilloUtils):
             log['QSOSUM'] = qsosummary
 
             log['BONUS'] = { 'W0MA': Bonus.Award['W0MA']['INLOG'],
-                               'K0GQ':Bonus.Award['K0GQ']['INLOG']}
+                               'K0GQ':Bonus.Award['K0GQ']['INLOG'],
+                               'CABRILLO' : cabbonus}
             log['MOQPCAT'] = self.determineMOQPCatdict(log)
             log['SCORE'] = self.calculate_score(log['QSOSUM'], 
                                                 log['MULTS'],
@@ -644,12 +670,16 @@ class MOQPLogcheck(CabrilloUtils):
         return log
 
 
-    def processOneFile(self, filename, headers=True, acceptedMovePath=None): 
+    def processOneFile(self, filename, 
+                             headers=True, 
+                             acceptedMovePath=None,
+                             cabbonus=False): 
        dupecount = None
        errorcount = None
        logAccepted = False              
        if (os.path.isfile(filename)):
-          log = self.checkLog(filename)
+          print(filename)
+          log = self.checkLog(filename, cabbonus)
           if (log):
              call = log['HEADER']['CALLSIGN']
              dupecount = log['QSOSUM']['DUPES']
@@ -679,33 +709,10 @@ class MOQPLogcheck(CabrilloUtils):
                                               e.args))
 
        return csvdata 
-    """   
-    def moveLogwithErrs(self, thislog, filename, errormovepath):
-       moved = False
-       if (errormovepath):
-           lines = thislog.splitlines()
-           #print(len(lines), lines)
-           if(len(lines) > 1):
-               if (lines[0].startswith('LOG ERROR')):
-                   index = 1
-               else:
-                   index = 0
-           else:
-               index = 0
-           #print(lines[index])
-           if (lines[index].startswith('True')):
-               print('Moving file %s to %s'% \
-               (filename, errormovepath))
-               try:
-                   dest = shutil.move(filename, errormovepath)
-                   moved = True
-               except:
-                   print('Move of %s to %s failed!'% \
-                                              (filename,
-                                               errormovepath))
-       return moved 
-    """
-    def processFileList(self, pathname, acceptedPath=None):
+
+    def processFileList(self, pathname, 
+                              acceptedPath=None,
+                              cabbonus=False):
         csvdata = ''
         for (dirName, subdirList, fileList) in  \
                       os.walk(pathname, topdown=True):
@@ -718,27 +725,25 @@ class MOQPLogcheck(CabrilloUtils):
                      fullPath = ('%s/%s'%(dirName, fileName))
                      thislog = self.processOneFile(fullPath, 
                                                    Headers,
-                                                   acceptedPath)
+                                                   acceptedPath,
+                                                   cabbonus)
                      csvdata += thislog
-                     """
-                     moved = self.moveLogwithErrs(thislog,
-                                                  fullPath,
-                                                  errcopypath)
-                     """
                      Headers = False
-                     #if moved: break
            else: 
               csvdata += ('True\tLog File %s does not exist\n'% \
                           (fileName))
         return csvdata
 
-    def appMain(self, pathname, acceptedpath):
+    def appMain(self, pathname, acceptedpath, cabbonus):
        csvdata = 'Nothing.'
        if (os.path.isfile(pathname)):
           csvdata = self.processOneFile(pathname, 
                                         True, 
-                                        acceptedpath)
+                                        acceptedpath,
+                                        cabbonus)
        else:
-          csvdata = self.processFileList(pathname, acceptedpath)
+          csvdata = self.processFileList(pathname, 
+                                         acceptedpath,
+                                         cabbonus)
        if (csvdata):
           print('%s'%(csvdata))
