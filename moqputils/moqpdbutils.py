@@ -7,6 +7,9 @@ Update History:
 - by inheriting from MOQPLogCheck
 * Thu May 07 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.1 - Added method delete_log
+* Sat May 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.2 - Updates for 2020 MOQP changes
+
 """
 
 import MySQLdb
@@ -366,36 +369,42 @@ class MOQPDBUtils():
                     (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, sumID)
             ures = self.write_query(query)
         else:
-            query = "INSERT INTO SUMMARY LOGID=%s, \
-                                        CWQSO=%s, \
-                                        PHQSO=%s, \
-                                        RYQSO=%s, \
-                                        VHFQSO=%s, \
-                                        MULTS=%s, \
-                                        QSOSCORE=%s, \
-                                        W0MABONUS=%s, \
-                                        K0GQBONUS=%s, \
-                                        CABBONUS=%s, \
-                                        MOQPCAT=%s, \
-                                        DIGITAL=%s, \
-                                        VHF=%s, \
-                                        ROOKIE=%s" % \
-                         (logID,
+            query = "INSERT INTO SUMMARY ("+\
+                    "LOGID, "+\
+                    "CWQSO, "+\
+                    "PHQSO, "+\
+                    "RYQSO, "+\
+                    "VHFQSO, "+\
+                    "MULTS, "+\
+                    "QSOSCORE, "+\
+                    "W0MABONUS, "+\
+                    "K0GQBONUS, "+\
+                    "CABBONUS, "+\
+                    "SCORE, "+\
+                    "MOQPCAT, "+\
+                    "DIGITAL, "+\
+                    "VHF, "+\
+                    "ROOKIE) "+\
+                    "VALUES "+\
+                    "(%s, %s, %s, %s, %s, %s, %s, %s, "+\
+                    "%s, %s, %s, %s, %s, %s, %s)"
+            params = (   logID,
                          log['QSOSUM']['CW'],
                          log['QSOSUM']['PH'],
                          log['QSOSUM']['DG'],
                          log['QSOSUM']['VHF'],
                          log['MULTS'],
-                         log['SCORE'],
-                         w0mabonus,
-                         k0gqbonus,
-                         cabbonus,
+                         log['SCORE']['SCORE'],
+                         log['SCORE']['W0MA'],
+                         log['SCORE']['K0GQ'],
+                         log['SCORE']['CABFILE'],
+                         log['SCORE']['TOTAL'],
                          log['MOQPCAT']['MOQPCAT'],
                          digital_log,
                          vhf_log,
-                         rookie_log)
-        #print('\n\n\n\nUpdating SUMMARY - query = %s'%(query))
-        ures = self.write_query(query)
+                         rookie_log )
+            #print('\n\n\n\nUpdating SUMMARY - query = %s\n%s\n%s,%s,%s'%(query, params,log['SCORE']['W0MA'],log['SCORE']['K0GQ'],log['SCORE']['CABFILE']))
+            ures = self.write_pquery(query, params)
         return sumID
 
     def trimAndEscape(self, unsafeString, maxLen):

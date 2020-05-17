@@ -16,13 +16,15 @@ Update History:
 - V0.3.0 - Copied method processQSOList from logsummay.py.
 - This ended dependancy on logsummary in preparation for
 - making a child class to read all QSO data from SQL database.
+* Sat May 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.3.1 - Updates for 2020 MOQP changes
 """
 from CabrilloUtils import *
 from moqpmults import *
 from generalaward import GenAward
 import os
 
-VERSION = '0.3.0' 
+VERSION = '0.3.1' 
 FILELIST = './'
 ARGS = None
 
@@ -187,7 +189,7 @@ class MOQPCategory(CabrilloUtils):
          else:
              badmodeline = ('QSO:')
              for tag in self.QSOTAGS:
-                 badmodeline += (' %s'%(data[tag]))
+                 badmodeline += (' %s'%(thisqso[tag]))
              print('UNDEFINED MODE: %s -- QSO data = %s'%(mode, badmodeline))
 
       return  summary

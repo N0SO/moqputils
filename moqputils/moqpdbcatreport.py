@@ -19,6 +19,7 @@ Update History:
 """
 
 from moqpdbutils import *
+from moqpdbconfig import *
 
 
 VERSION = '0.0.1' 
@@ -122,13 +123,45 @@ class MOQPDBCatReport():
                 Headers = False
             #print(csvdata)
             return csvdata
+   
+    def parseReport(self, mydb, sumdata):
+        if (sumdata):
+            thisSum = sumdata
+            header=mydb.read_pquery(\
+                        'SELECT * FROM LOGHEADER WHERE ID=%s',
+                                            [sumdata['LOGID']])
+            header=header[0]
+            thisSum['CALL']=header['CALLSIGN']
+            thisSum['CATASSISTED']=header['CATASSISTED']
+            thisSum['CATBAND']=header['CATBAND']
+            thisSum['CATOPERATOR']=header['CATOPERATOR']
+            thisSum['CATOVERLAY']=header['CATOVERLAY']
+            thisSum['CATPOWER']=header['CATPOWER']
+            thisSum['CATSTATION']=header['CATSTATION']
+            thisSum['CATXMITTER']=header['CATXMITTER']
+            thisSum['OPERATORS']=header['OPERATORS']
+            
+        return thisSum
+        
+            
+    def processCats(self, mydb):
+        reportList =[]
+        sumdata = mydb.read_query('SELECT * FROM SUMMARY '+\
+                  'ORDER BY MOQPCAT ASC, SCORE DESC')
+        if (sumdata):
+            for thisStation in sumdata:
+                thisreport = self.parseReport(mydb, thisStation)
+                reportList.append(thisreport)
+                print(thisreport)
+        return reportList
     
     def appMain(self, callsign):
        csvdata = 'No Data.'
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
        if (callsign == 'allcalls'):
-           csvdata = self.processAll(mydb)
+           #csvdata = self.processAll(mydb)
+           sumList=self.processCats(mydb)
            for csvLine in csvdata:
                print(csvLine)
        else:

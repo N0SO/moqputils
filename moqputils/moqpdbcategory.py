@@ -20,13 +20,16 @@ moqpdbcategory  - Same features as moqpcategory, except read
 Update History:
 * Fri Jan 24 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
+* Sat May 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.2 - Updates for 2020 MOQP changes
 """
 
 from moqpcategory import *
 from moqpdbutils import *
 from bonusaward import BonusAward
+from moqpdbconfig import *
 
-VERSION = '0.0.1' 
+VERSION = '0.0.2' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
@@ -121,7 +124,10 @@ class MOQPDBCategory(MOQPCategory):
               k0gqbonus = 100
           else:
               k0gqbonus = 0
-          cabBonus = logsummary['HEADER']['CABBONUS']
+          if(logsummary['HEADER']['CABBONUS'] > 0):
+              cabBonus = 100
+          else:
+              cabBonus = 0
           qsoScore = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
           bonuspoints = { 'W0MA':w0mabonus,
                           'K0GQ':k0gqbonus,
@@ -183,7 +189,7 @@ class MOQPDBCategory(MOQPCategory):
         if (logID):
             log=dict()
             dbheader = mydb.read_query( \
-                "SELECT * FROM `logheader` WHERE ID=%d"%(logID))
+                "SELECT * FROM `LOGHEADER` WHERE ID=%d"%(logID))
             header = self.getLogHeader(dbheader)
             #print(header)
             qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=%s) )"%(logID, 1))
@@ -235,8 +241,9 @@ class MOQPDBCategory(MOQPCategory):
        if (callsign == 'allcalls'):
            mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
            mydb.setCursorDict()
-           loglist = mydb.read_query( \
-              "SELECT ID, CALLSIGN FROM logheader WHERE 1")
+           loglist = mydb.fetchLogList()
+           #loglist = mydb.read_query( \
+           #   "SELECT ID, CALLSIGN FROM logheader WHERE 1")
            Headers = True
            for nextlog in loglist:
                #print('callsign = %s'%(nextlog['CALLSIGN']))

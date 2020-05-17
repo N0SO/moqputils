@@ -209,7 +209,7 @@ class MOQPQSOValidator(QSOUtils):
                 qso['NOTE']='MYQTH error: %s'%(qso['MYQTH'])
             else:
                 pass
-            write_pquery(\
+            self.db.write_pquery(\
                 'UPDATE QSOS SET QSL=0, VALID=0, NOLOG=0, '+\
                 'NOQSOS=0, NOLOG=0, NOTE=%s WHERE ID=%s',
                 [ qso['NOTE'], qso['ID'] ])

@@ -2,6 +2,7 @@
 import os.path
 import sys
 import argparse
+import datetime
 
 VERSION = '0.1.1' 
 
@@ -66,12 +67,12 @@ if __name__ == '__main__':
     if (args.args.callsign):
         if (args.args.callsign == 'allcalls'):
             loglist = mydb.fetchLogList()
-            """
-            loglist = mydb.read_query( \
-                "SELECT ID, CALLSIGN FROM logheader WHERE 1")
-            """
             for nextlog in loglist:
-                checkOneCall(nextlog['CALLSIGN'])
+                now=datetime.now()
+                print('%s QSL Checking %s, ID:%s...'%\
+                            (now.strftime('%Y-%m-%d %H:%M:%S'),
+                             nextlog['CALLSIGN'], nextlog['ID']))
+                checkOneCall(nextlog['CALLSIGN'], mydb)
         else:
             checkOneCall(args.args.callsign, mydb)
     else:
