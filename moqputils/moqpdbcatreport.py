@@ -16,6 +16,13 @@ moqpdbcatreport - Same features as moqpcategory, except read
 Update History:
 * Thu Jan 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
+* Sun May 17 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.2 - Updates for 2020 MOQP changes
+- Integrated necessary log header data
+- Used SQL to sort report by:
+-      MOQP Category
+-      Total Score
+-      Location.
 """
 
 from moqpdbutils import *
@@ -24,19 +31,20 @@ from moqpdbconfig import *
 
 VERSION = '0.0.1' 
 
-COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
-                'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
-                'CW QSO\tPH QSO\tRY QSO\tQSO COUNT\tVHF QSO\t' + \
-                'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
-                'CABFILE BONUS\tSCORE\tMOQP CATEGORY\t' +\
-                'DIGITAL\tVHF\tROOKIE\n'
+COLUMNHEADERS = \
+     'CALLSIGN\tOPS\tLOCATION\tMOQP CATEGORY\t'+\
+     'SCORE\tCW QSO\tPH QSO\tRY QSO\tQSO COUNT\t'+\
+     'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t'+\
+     'CABFILE BONUS\tVHF QSO\tVHF\tDIGITAL\tROOKIE\t'+\
+     'STATION\tOPERATOR\tPOWER\tMODE\tOVERLAY\t'
+                
 
 class MOQPDBCatReport():
     def __init__(self, callsign = None):
         if (callsign):
             self.appMain(callsign)
 
-    def exportcsvdata(self, log, Headers=True):
+    def exportcsvsumdata(self, log, Headers=True):
        """
        This method processes a single log file passed in filename
        and returns the summary ino in .CSV format to be printed
@@ -45,9 +53,10 @@ class MOQPDBCatReport():
        If the Headers option is false, it will skip printing the
        csv header info.
        """
-       csvdata = None
+       csvdata= None
 
        if (log):
+           #print(log)
        
            if (Headers): 
                csvdata = COLUMNHEADERS
@@ -55,115 +64,106 @@ class MOQPDBCatReport():
            else:
                csvdata = ''
                
-           cw = int(log['SUMMARY']['CWQSO'])
-           ph = int(log['SUMMARY']['PHQSO'])
-           ry = int(log['SUMMARY']['RYQSO'])
+           cw = int(log['CWQSO'])
+           ph = int(log['PHQSO'])
+           ry = int(log['RYQSO'])
            qsocount = cw + ph + ry
 
-           csvdata += ('%s\t'%(log['HEADER']['CALLSIGN']))
-           csvdata += ('%s\t'%(log['HEADER']['OPERATORS']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-STATION']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OPERATOR']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-POWER']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-MODE']))
-           csvdata += ('%s\t'%(log['HEADER']['LOCATION']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OVERLAY']))
-           csvdata += ('%s\t'%(log['SUMMARY']['CWQSO']))
-           csvdata += ('%s\t'%(log['SUMMARY']['PHQSO']))
-           csvdata += ('%s\t'%(log['SUMMARY']['RYQSO']))
+           csvdata += ('%s\t'%(log['CALLSIGN']))
+           csvdata += ('%s\t'%(log['OPERATORS']))
+           csvdata += ('%s\t'%(log['LOCATION']))
+           csvdata += ('%s\t'%(log['MOQPCAT']))
+           csvdata += ('%s\t'%(log['SCORE']))         
+           csvdata += ('%s\t'%(log['CWQSO']))
+           csvdata += ('%s\t'%(log['PHQSO']))
+           csvdata += ('%s\t'%(log['RYQSO']))
            csvdata += ('%d\t'%(qsocount))
-           csvdata += ('%s\t'%(log['SUMMARY']['VHFQSO']))
-           csvdata += ('%s\t'%(log['SUMMARY']['MULTS']))         
-           csvdata += ('%s\t'%(log['SUMMARY']['QSOSCORE']))         
-           csvdata += ('%s\t'%(log['SUMMARY']['W0MABONUS']))         
-           csvdata += ('%s\t'%(log['SUMMARY']['K0GQBONUS']))         
-           csvdata += ('%s\t'%(log['SUMMARY']['CABBONUS']))         
-           csvdata += ('%s\t'%(log['SUMMARY']['SCORE']))         
-           csvdata += ('%s\t'%(log['SUMMARY']['MOQPCAT']))
-           csvdata += ('%s\t'%(log['SUMMARY']['DIGITAL']))
-           csvdata += ('%s\t'%(log['SUMMARY']['VHF']))
-           csvdata += ('%s\t'%(log['SUMMARY']['ROOKIE']))
+           csvdata += ('%s\t'%(log['MULTS']))         
+           csvdata += ('%s\t'%(log['QSOSCORE']))         
+           csvdata += ('%s\t'%(log['W0MABONUS']))         
+           csvdata += ('%s\t'%(log['K0GQBONUS']))         
+           csvdata += ('%s\t'%(log['CABBONUS']))         
+           csvdata += ('%s\t'%(log['VHFQSO']))
+           csvdata += ('%s\t'%(log['VHF']))
+           csvdata += ('%s\t'%(log['DIGITAL']))
+           csvdata += ('%s\t'%(log['ROOKIE']))
+           csvdata += ('%s\t'%(log['CATSTATION']))
+           csvdata += ('%s\t'%(log['CATOPERATOR']))
+           csvdata += ('%s\t'%(log['CATPOWER']))
+           csvdata += ('%s\t'%(log['CATMODE']))
+           csvdata += ('%s\t'%(log['CATOVERLAY']))
 
        else:
-          csvdata = ('No log data in databas for .'%callsign)
+          csvdata = None
        return csvdata
 
-    def getLog(self, mydb, call):
-        log = dict()
-        logdata = mydb.fetchValidLog(call)
-        log['HEADER']= logdata['HEADER']
-        log['QSOLIST'] = logdata['QSOLIST']
-        logdata = mydb.fetchLogSummary(call)
-        log['SUMMARY'] = logdata
-        return log
-       
-        
-    def processOne(self, mydb, callsign, Headers = True):
-        csvData = None
-        logID = mydb.CallinLogDB(callsign)
-        if (logID):
-            log = self.getLog(mydb, callsign)
-            csvData = self.exportcsvdata(log, Headers)
-            #print(csvData)
-        else:
-           csvData = ('No log data for call %s.'%(callsign))
-        return csvData
-           
-    def processAll(self, mydb):
-        csvdata = []
-        headers = True
-        loglist = mydb.fetchLogList()
-        if (loglist):
-            Headers = True
-            for nextlog in loglist:
-                #print(nextlog)
-                csvd=self.processOne(mydb, 
-                               nextlog['CALLSIGN'], Headers)
-                csvdata.append(csvd)
-                Headers = False
-            #print(csvdata)
-            return csvdata
-   
     def parseReport(self, mydb, sumdata):
         if (sumdata):
             thisSum = sumdata
             header=mydb.read_pquery(\
                         'SELECT * FROM LOGHEADER WHERE ID=%s',
                                             [sumdata['LOGID']])
-            header=header[0]
-            thisSum['CALL']=header['CALLSIGN']
-            thisSum['CATASSISTED']=header['CATASSISTED']
-            thisSum['CATBAND']=header['CATBAND']
-            thisSum['CATOPERATOR']=header['CATOPERATOR']
-            thisSum['CATOVERLAY']=header['CATOVERLAY']
-            thisSum['CATPOWER']=header['CATPOWER']
-            thisSum['CATSTATION']=header['CATSTATION']
-            thisSum['CATXMITTER']=header['CATXMITTER']
-            thisSum['OPERATORS']=header['OPERATORS']
-            
+            if (header):
+                header=header[0]
+                thisSum['CALLSIGN']=header['CALLSIGN']
+                thisSum['CATASSISTED']=header['CATASSISTED']
+                thisSum['CATBAND']=header['CATBAND']
+                thisSum['CATOPERATOR']=header['CATOPERATOR']
+                thisSum['CATOVERLAY']=header['CATOVERLAY']
+                thisSum['CATPOWER']=header['CATPOWER']
+                thisSum['CATSTATION']=header['CATSTATION']
+                thisSum['CATXMITTER']=header['CATXMITTER']
+                thisSum['OPERATORS']=header['OPERATORS']
+                thisSum['CATMODE']=header['CATMODE']
+                thisSum['LOCATION']=header['LOCATION']
+            else:
+                thisSum['CALL']='NO HEADER FOR LOGID %s'\
+                                             %(sumdata['LOGID'])
+                thisSum['CATASSISTED']=''
+                thisSum['CATBAND']=''
+                thisSum['CATOPERATOR']=''
+                thisSum['CATOVERLAY']=''
+                thisSum['CATPOWER']=''
+                thisSum['CATSTATION']=''
+                thisSum['CATXMITTER']=''
+                thisSum['OPERATORS']=''
+                thisSum['CATMODE']=''
         return thisSum
         
+    def processOneSum(self, mydb, call):
+        csvList = ['No log for %s'%(call)]
+        thisStation = mydb.fetchLogSummary(call)
+        if (thisStation):
+            thisreport = self.parseReport(mydb, thisStation)
+            csvdata = self.exportcsvsumdata(thisreport, False)
+            csvList.append(COLUMNHEADERS)
+            csvList.append(csvdata)
+        return csvList
             
-    def processCats(self, mydb):
-        reportList =[]
+    def processSums(self, mydb):
+        csvList=[]
+        reportList = []
         sumdata = mydb.read_query('SELECT * FROM SUMMARY '+\
-                  'ORDER BY MOQPCAT ASC, SCORE DESC')
+              'ORDER BY MOQPCAT ASC, SCORE DESC, LOCATION ASC')
         if (sumdata):
+            csvList.append(COLUMNHEADERS)
             for thisStation in sumdata:
                 thisreport = self.parseReport(mydb, thisStation)
                 reportList.append(thisreport)
-                print(thisreport)
-        return reportList
+                csvdata = self.exportcsvsumdata(thisreport, False)
+                if (csvdata): 
+                    csvList.append(csvdata)
+        return csvList
     
     def appMain(self, callsign):
        csvdata = 'No Data.'
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
        if (callsign == 'allcalls'):
-           #csvdata = self.processAll(mydb)
-           sumList=self.processCats(mydb)
-           for csvLine in csvdata:
-               print(csvLine)
+           csvdata=self.processSums(mydb)
        else:
-           csvdata = self.processOne(mydb, callsign)
-           print(csvdata)
+           csvdata = self.processOneSum(mydb, callsign)
+           #print(csvdata)
+       for csvLine in csvdata:
+           print(csvLine)
+

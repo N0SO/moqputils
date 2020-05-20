@@ -232,4 +232,4 @@ class MOQPQSOValidator(QSOUtils):
             else: #if (myqsoids)         
                 print('No QSOS for log %s in database.'%(call))
         else:
-            print('Log for %s not in database.'%(call))
+            print('Log from %s not in database.'%(call))

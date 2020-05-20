@@ -203,29 +203,28 @@ class MOQPLogcheck(CabrilloUtils):
        qsolen = len(qsoparts)
        qso_elements_parsed=0
        qso = self.makeQSOdict()
-       if (qsolen >= 10):
-          for tag in self.QSOTAGS:
-             #print('qso[%s] = %s %d'%(tag, qsoparts[i], i))
-             if (tag != 'NOTES'):
-                 qso[tag] = \
-                    self.packLine(qsoparts[qso_elements_parsed])
-             qso_elements_parsed += 1
-          #Validate QSO
-          q_errors = self.qso_valid(qso)
-       #print(qsodata, qso_elements_parsed, qsolen)
-       if ( (qso_elements_parsed -1 != qelements) or len(q_errors) ):
+       tagi = 0
+       while (tagi < qelements):
+           qso[self.QSOTAGS[tagi]] = \
+               self.packLine(qsoparts[qso_elements_parsed])
+           qso_elements_parsed += 1
+           tagi += 1
+           if (qso_elements_parsed >= qsolen):
+               # No more elements to parse
+               break
+       #Validate QSO
+       q_errors = self.qso_valid(qso)
+       #print(qsodata, qso_elements_parsed, qsolen, qso)
+       if ( (qso_elements_parsed != qelements) or len(q_errors) ):
           qso_errors.append(qsodata)
-          if (qso_elements_parsed -1 != qelements):
+          if (qso_elements_parsed != qelements):
              qso_errors.append(\
-              '\tQSO has %d elements, it should have 10.'\
-                                                    %(qsolen))
+              '\tQSO has %d elements, it should have %d.'\
+                                                    %(qsolen, qelements))
           if (len(q_errors)):
               for i in range(len(q_errors)): 
                   qso_errors.append('\t%s'%(q_errors[i]))
-       #qso_data['ERRORS'] = qso_errors
-       #print(qsodata, qso_errors)
        qso['NOTES'] = qso_errors
-       #qso_data['DATA'] = qso
        return qso       
 
     def getQSOdata(self, logtext):

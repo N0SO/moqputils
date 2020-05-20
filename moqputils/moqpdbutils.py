@@ -235,9 +235,11 @@ class MOQPDBUtils():
     def fetchLogSummary(self, call):
         logsum = None
         logID = self.CallinLogDB(call)
-        query = "SELECT * FROM SUMMARY WHERE LOGID=%s"%(logID)
-        logsum = self.read_query(query)
-        return logsum[0]
+        #query = "SELECT * FROM SUMMARY WHERE LOGID=%s"%(logID)
+        logsum = self.read_pquery(\
+            "SELECT * FROM SUMMARY WHERE LOGID=%s", [logID])
+        if (logsum): logsum = logsum[0]
+        return logsum
  
         
     def CallinLogDB(self, call, loglist=None):
@@ -365,8 +367,8 @@ class MOQPDBUtils():
             query = 'UPDATE SUMMARY SET W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, SCORE=%s WHERE ID=%s'% \
                     (log['SCORE']['W0MA'], log['SCORE']['K0GQ'], log['SCORE']['CABFILE'], log['SCORE']['TOTAL'], sumID)
             ures = self.write_query(query)
-            query = "UPDATE SUMMARY SET MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s WHERE ID=%s"% \
-                    (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, sumID)
+            query = "UPDATE SUMMARY SET MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s, LOCATION='%s' WHERE ID=%s"% \
+                    (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, log['HEADER']['LOCATION'], sumID)
             ures = self.write_query(query)
         else:
             query = "INSERT INTO SUMMARY ("+\
@@ -384,10 +386,11 @@ class MOQPDBUtils():
                     "MOQPCAT, "+\
                     "DIGITAL, "+\
                     "VHF, "+\
-                    "ROOKIE) "+\
+                    "ROOKIE, "+\
+                    "LOCATION) "+\
                     "VALUES "+\
                     "(%s, %s, %s, %s, %s, %s, %s, %s, "+\
-                    "%s, %s, %s, %s, %s, %s, %s)"
+                    "%s, %s, %s, %s, %s, %s, %s, %s)"
             params = (   logID,
                          log['QSOSUM']['CW'],
                          log['QSOSUM']['PH'],
@@ -402,7 +405,8 @@ class MOQPDBUtils():
                          log['MOQPCAT']['MOQPCAT'],
                          digital_log,
                          vhf_log,
-                         rookie_log )
+                         rookie_log,
+                         log['HEADER']['LOCATION'] )
             #print('\n\n\n\nUpdating SUMMARY - query = %s\n%s\n%s,%s,%s'%(query, params,log['SCORE']['W0MA'],log['SCORE']['K0GQ'],log['SCORE']['CABFILE']))
             ures = self.write_pquery(query, params)
         return sumID
@@ -575,7 +579,7 @@ class MOQPDBUtils():
     def delete_log(self, call, confirm = False):
         success = False
         log = self.get_log_parts(call)
-        print(log)
+        #print(log)
         if (log):
             headerID = log['HEADERID']
             theseqsos = log['QSOIDS']
@@ -601,7 +605,39 @@ class MOQPDBUtils():
                         print('Header and remaining QSOS not deleted.')
                         break                
                 if (thisQ == qcount): 
-                    #All qsos deleted, delete log header 
+                    """All qsos deleted, delete log SUMMARY, 
+                       SHOWE, MISSOURI table entries and then 
+                       delete log header.
+                       NOTE: Add any future results tables to
+                             this list!"""
+                    summary = self.read_pquery(\
+                      'SELECT ID FROM SUMMARY WHERE LOGID=%s',
+                                                   [headerID])
+                    if(summary):
+                       print('Deleting SUMMARY entry %d for %s, LOGID %d'\
+                                %(summary[0]['ID'], call, headerID))
+                       self.write_pquery(\
+                          'DELETE FROM SHOWME WHERE ID=%s',
+                                                  [summary[0]['ID']])
+                     
+                    showme = self.read_pquery(\
+                      'SELECT ID FROM SHOWME WHERE LOGID=%s',
+                                                   [headerID])
+                    if(showme):
+                       print('Deleting SHOWME entry %d for %s, LOGID %d'\
+                                %(showme[0]['ID'], call, headerID))
+                       self.write_pquery(\
+                          'DELETE FROM SHOWME WHERE ID=%s',
+                                                  [showme[0]['ID']])
+                    mo = self.read_pquery(\
+                      'SELECT ID FROM MISSOURI WHERE LOGID=%s',
+                                                   [headerID])
+                    if(mo):
+                       print('Deleting MISSOURI entry %d for %s, LOGID %d'\
+                                %(mo[0]['ID'], call, headerID))
+                       self.write_pquery(\
+                          'DELETE FROM MISSOURI WHERE ID=%s',
+                                                  [mo[0]['ID']])
                     params = [headerID]     
                     query = "DELETE FROM LOGHEADER WHERE ID=%s"
                     if (self.write_pquery(query, params)==None):
