@@ -14,7 +14,7 @@ Update History:
 
 import MySQLdb
 import os.path
-import sys
+import sys, traceback
 from datetime import datetime
 from datetime import date
 from datetime import time
@@ -80,7 +80,8 @@ class MOQPDBUtils():
                 #print(qresult)
         except Exception as e:
             print ("write_query Error %s executing query:\n %s"%\
-                                           (e.args,query))  
+                                           (e.args,query)) 
+            traceback.print_exc(file=sys.stdout) 
         return qstat
         
     def read_query(self, query):
@@ -106,6 +107,7 @@ class MOQPDBUtils():
                                            (e.args,
                                             query,
                                             params))  
+            traceback.print_exc(file=sys.stdout) 
         return qstat
         
     def read_pquery(self, query, params):
@@ -410,7 +412,7 @@ class MOQPDBUtils():
             #print('\n\n\n\nUpdating SUMMARY - query = %s\n%s\n%s,%s,%s'%(query, params,log['SCORE']['W0MA'],log['SCORE']['K0GQ'],log['SCORE']['CABFILE']))
             ures = self.write_pquery(query, params)
         return sumID
-
+    """
     def trimAndEscape(self, unsafeString, maxLen):
         badchars = '\"\''
         if (len(unsafeString) > maxLen):
@@ -420,26 +422,31 @@ class MOQPDBUtils():
         for bad in badchars:
             workString = workString.replace(bad, ' ')
         return workString
-        
+    """    
        
     def write_header(self, header, cabBonus):
+        qutil = QSOUtils()
         logID = None
         header['CREATED-BY'] = \
-                  self.trimAndEscape(header['CREATED-BY'], 50)
-        header['CLUB'] = self.trimAndEscape(header['CLUB'], 50)
+                  qutil.trimAndEscape(header['CREATED-BY'], 50)
+        header['CLUB'] = qutil.trimAndEscape(header['CLUB'], 50)
         header['SOAPBOX'] = \
-                  self.trimAndEscape(header['SOAPBOX'], 120)
-        header['NAME'] = self.trimAndEscape(header['NAME'], 40)
+                  qutil.trimAndEscape(header['SOAPBOX'], 120)
+        header['NAME'] = qutil.trimAndEscape(header['NAME'], 40)
         header['ADDRESS'] = \
-                  self.trimAndEscape(header['ADDRESS'], 120)
+                  qutil.trimAndEscape(header['ADDRESS'], 120)
         header['ADDRESS-CITY'] = \
-                  self.trimAndEscape(header['ADDRESS-CITY'], 40)
+                  qutil.trimAndEscape(header['ADDRESS-CITY'], 40)
         header['ADDRESS-STATE-PROVINCE'] = \
-          self.trimAndEscape(header['ADDRESS-STATE-PROVINCE'], 40)
+          qutil.trimAndEscape(header['ADDRESS-STATE-PROVINCE'], 40)
         header['ADDRESS-POSTALCODE'] = \
-          self.trimAndEscape(header['ADDRESS-POSTALCODE'], 12)
+          qutil.trimAndEscape(header['ADDRESS-POSTALCODE'], 12)
         header['ADDRESS-COUNTRY'] = \
-          self.trimAndEscape(header['ADDRESS-COUNTRY'], 25)
+          qutil.trimAndEscape(header['ADDRESS-COUNTRY'], 25)
+        
+        if(type(header['NOTES']) is list):
+            qu = QSOUtils()
+            header['NOTES'] = qu.packNote(header['NOTES'])
 
         query = """INSERT INTO LOGHEADER(START,
                       CALLSIGN,
@@ -471,42 +478,49 @@ class MOQPDBUtils():
                       ENDOFLOG,
                       CABBONUS,
                       STATUS)
-                   VALUES(""" + \
-                        ('"%s",'%(header['START-OF-LOG'])) +\
-                        ('"%s",'%(header['CALLSIGN'])) +\
-                        ('"%s",'%(header['CREATED-BY'])) +\
-                        ('"%s",'%(header['LOCATION'])) +\
-                        ('"%s",'%(header['CONTEST'])) +\
-                        ('"%s",'%(header['NAME'])) +\
-                        ('"%s",'%(header['ADDRESS'])) +\
-                        ('"%s",'%(header['ADDRESS-CITY'])) +\
-                        ('"%s",'%(header['ADDRESS-STATE-PROVINCE'])) +\
-                        ('"%s",'%(header['ADDRESS-POSTALCODE'])) +\
-                        ('"%s",'%(header['ADDRESS-COUNTRY'])) +\
-                        ('"%s",'%(header['EMAIL'])) +\
-                        ('"%s",'%(header['CATEGORY-ASSISTED'])) +\
-                        ('"%s",'%(header['CATEGORY-BAND'])) +\
-                        ('"%s",'%(header['CATEGORY-MODE'])) +\
-                        ('"%s",'%(header['CATEGORY-OPERATOR'])) +\
-                        ('"%s",'%(header['CATEGORY-OVERLAY'])) +\
-                        ('"%s",'%(header['CATEGORY-POWER'])) +\
-                        ('"%s",'%(header['CATEGORY-STATION'])) +\
-                        ('"%s",'%(header['CATEGORY-TRANSMITTER'])) +\
-                        ('"%s",'%(header['CERTIFICATE'])) +\
-                        ('"%s",'%(header['OPERATORS'])) +\
-                        ('"%s",'%(header['CLAIMED-SCORE'])) +\
-                        ('"%s",'%(header['CLUB'])) +\
-                        ('"%s",'%(header['IOTA-ISLAND-NAME'])) +\
-                        ('"%s",'%(header['OFFTIME'])) +\
-                        ('"%s",'%(header['SOAPBOX'])) +\
-                        ('"%s",'%(header['END-OF-LOG'])) +\
-                        ('"%d",'%(cabBonus)) +\
-                        ('"%s")'%(header['NOTES']))      
-        logID = self.write_query(query)
+                   VALUES(%s,%s,%s,%s,%s,%s,%s,%s,
+                          %s,%s,%s,%s,%s,%s,%s,%s,
+                          %s,%s,%s,%s,%s,%s,%s,%s,
+                          %s,%s,%s,%s,%s,%s)"""
+
+        values = [header['START-OF-LOG'],
+                  header['CALLSIGN'],
+                  header['CREATED-BY'],
+                  header['LOCATION'],
+                  header['CONTEST'],
+                  header['NAME'],
+                  header['ADDRESS'],
+                  header['ADDRESS-CITY'],
+                  header['ADDRESS-STATE-PROVINCE'],
+                  header['ADDRESS-POSTALCODE'],
+                  header['ADDRESS-COUNTRY'],
+                  header['EMAIL'],
+                  header['CATEGORY-ASSISTED'],
+                  header['CATEGORY-BAND'],
+                  header['CATEGORY-MODE'],
+                  header['CATEGORY-OPERATOR'],
+                  header['CATEGORY-OVERLAY'],
+                  header['CATEGORY-POWER'],
+                  header['CATEGORY-STATION'],
+                  header['CATEGORY-TRANSMITTER'],
+                  header['CERTIFICATE'],
+                  header['OPERATORS'],
+                  header['CLAIMED-SCORE'],
+                  header['CLUB'],
+                  header['IOTA-ISLAND-NAME'],
+                  header['OFFTIME'],
+                  header['SOAPBOX'],
+                  header['END-OF-LOG'],
+                  cabBonus,
+                  header['NOTES'] ]     
+        logID = self.write_pquery(query, values)
         return logID
     
     def write_qsodata(self, logID, qsodata):
         qsoID = None
+        if (type(qsodata['NOTES']) is list):
+            qu = QSOUtils()
+            qsodata['NOTES'] = qu.packNote(qsodata['NOTES'])
         query = """INSERT INTO QSOS(LOGID,
                                     FREQ,
                                     MODE,
@@ -578,6 +592,7 @@ class MOQPDBUtils():
 
     def delete_log(self, call, confirm = False):
         success = False
+        headerID = None
         log = self.get_log_parts(call)
         #print(log)
         if (log):

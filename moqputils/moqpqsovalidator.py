@@ -8,72 +8,120 @@ Update History:
 
 from datetime import timedelta
 from qsoutils import QSOUtils
+from moqpdefs import *
 
 
 class MOQPQSOValidator(QSOUtils):
 
     def __init__(self, db = None):
         self.db = db
-
+       
     def qso_valid(self, qso):
-       qsovalid = None
+       errorData = []
+       qsovalid = True
        valid_date_chars = set('0123456789/-')
        valid_call_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-')
-       #qutils = QSOUtils()
-       #if ( qso['FREQ'].isnumeric() ):
+       qutils = QSOUtils()
        if ( self.is_number(qso['FREQ']) ):
-          if (self.getBand(qso['FREQ'])):
-              if ( qso['MODE'] in self.MODES ):  
-                  if all(char in valid_date_chars for char in qso['DATE']):
-                      if ( qso['TIME'].isnumeric() ):
-                          if (self.validateQSOtime(qso['DATE'], qso['TIME'])):
-                              if all(char in valid_call_chars for char in qso['MYCALL']):
-                                  if ( self.is_number(qso['MYREPORT']) ):
-                                      if ( qso['MYQTH'].isalpha() ):
-                                          if all(char in valid_call_chars for char in qso['URCALL']):
-                                              if ( self.is_number(qso['URREPORT']) ):
-                                                  if ( qso['URQTH'].isalpha() ):
-                                                      #QSO looks valid
-                                                      qsovalid = 0
-                                                  else:
-                                                      #Bad URQTH
-                                                      qsovalid = 10
-                                              else:
-                                                  #Bad URREPORT
-                                                  qsovalid = 9
-                                          else:
-                                              #Bad URCALL 
-                                              qsovalid = 8
-                                      else:
-                                          #Bad MYQTH
-                                          qsovalid = 7
-                                  else:
-                                      #Bad MYREPORT
-                                      qsovalid = 6
-                              else:
-                                  #Bad MYCALL chars
-                                  qsovalid = 5
-                          else:
-                              #QSO outside contest date/time boundaries
-                              qsovalid = 4
-                      else:
-                          #Bad date/time chars
-                          qsovalid = 3
-                  else:
-                      #Bad date/time chars
-                      qsovalid = 3
-              else:
-                  #Bad Mode
-                  qsovalid = 2 
+          if (qutils.getBand(qso['FREQ'])):
+              pass
           else:
-              #Bad freq or band
-              qsovalid = 1
+              errorData.append( \
+              ('QSO FREQ Parameter out of band: %s'%(qso['FREQ'])) )
        else:
-          #Bad freq or band
-          qsovalid = 1
-       return qsovalid
+          errorData.append( ('QSO FREQ Parameter invalid: %s'%(qso['FREQ'])) )
+          qsovalid = False
+       
+       if ( qso['MODE'] in self.MODES ):
+          pass
+       else:
+          errorData.append(  ('QSO MODE Parameter invalid: %s'%(qso['MODE'])) )
+          qsovalid = False
+       if all(char in valid_date_chars for char in qso['DATE']):
+          pass
+       else:
+          errorData.append(  ('QSO DATE Parameter invalid: %s'%(qso['DATE'])) )
+          qsovalid = False
+          qso['DATE'] = None
+       if ( qso['TIME'].isnumeric() ):
+          pass
+       else:
+          errorData.append(  ('QSO TIME Parameter invalid: %s'%(qso['TIME'])) )
+          qsovalid = False
+          qso['TIME'] = None
+       if ( qso['DATE'] and qso['TIME'] ):
+          if (qutils.validateQSOtime(qso['DATE'], qso['TIME'])):
+             pass
+          else:
+             errorData.append(  (\
+              'QSO DATE/TIME outside contest time period: %s %s'\
+               %(qso['DATE'],
+                 qso['TIME'])) )
+       if all(char in valid_call_chars for char in qso['MYCALL']):
+          pass
+       else:
+          errorData.append(  ('QSO MYCALL Parameter invalid: %s'%(qso['MYCALL'])) )
+          qsovalid = False
 
+       if ( self.is_number(qso['MYREPORT']) ):
+          if ( \
+               ( (len(qso['MYREPORT']) == 3) and (qso['MODE'] in MODES3) ) or \
+               ( (len(qso['MYREPORT']) == 2) and (qso['MODE'] in MODES2) ) ):
+              pass
+          else:
+              errorData.append( \
+                'QSO MY SIG REPORT %s does not match MODE: %s'%\
+                (qso['MYREPORT'],
+                 qso['MODE']) )
+              qsovalid = False
+       else:
+          errorData.append(  ('QSO MYREPORT Parameter invalid: %s'%(qso['MYREPORT'])) )
+          qsovalid = False
 
+       if ( (qso['MYQTH'].isalpha()) and (\
+            (qso['MYQTH'] in MOCOUNTY) or \
+               (qso['MYQTH'] in US) or \
+               (qso['MYQTH'] in CANADA) or \
+               (qso['MYQTH'] in DX) ) ): 
+          pass
+       else:
+          errorData.append(  ('QSO MYQTH Parameter invalid: %s'%(qso['MYQTH'])) )
+          qsovalid = False
+
+       if all(char in valid_call_chars for char in qso['URCALL']):
+          pass
+       else:
+          errorData.append(  ('QSO URCALL Parameter invalid: %s'%(qso['URCALL'])) )
+          qsovalid = False
+
+       if ( self.is_number(qso['URREPORT']) ):
+          if ( \
+               ( (len(qso['URREPORT']) == 3) and (qso['MODE'] in MODES3) ) or \
+               ( (len(qso['URREPORT']) == 2) and (qso['MODE'] in MODES2) ) ):
+              pass
+          else:
+              errorData.append( \
+                'QSO UR SIG REPORT %s does not match MODE: %s'%\
+                (qso['URREPORT'],
+                 qso['MODE']) )
+              qsovalid = False
+       else:
+          errorData.append(  ('QSO URREPORT Parameter invalid: %s'%(qso['URREPORT'])) )
+          qsovalid = False
+
+       if ( (qso['URQTH'].isalpha()) and (\
+            (qso['URQTH'] in MOCOUNTY) or \
+               (qso['URQTH'] in US) or \
+               (qso['URQTH'] in CANADA) or \
+               (qso['URQTH'] in DX) ) ): 
+          pass
+       else:
+          errorData.append(  ('QSO URQTH Parameter invalid: %s'%(qso['URQTH'])) )
+          qsovalid = False
+          
+       return errorData
+
+    
     def checkThisqso(self, qso, urqid):
         result = False
         qlist = self.db.read_pquery('SELECT * FROM QSOS WHERE ID=%s',
@@ -135,9 +183,6 @@ class MOQPQSOValidator(QSOUtils):
                         if (qslmatch == 0):
                             result = True
                             break
-                        #else:
-                           #print('%s QSO %s fails match with %s QSO %s for %d'%(qso['CALL'], qso['ID'], urq['CALL'], urq['ID'], qslmatch))
-        #print(result, inTheirLog)
         if (result):
             #print('QSL result: %d\n%s\n%s\n'%(qslmatch, qso, urq['ID']))
             qso['NOTE'] = ''
@@ -152,7 +197,7 @@ class MOQPQSOValidator(QSOUtils):
                      'UPDATE QSOS SET QSL=0, VALID=0, NOQSOS=1, '+\
                      'NOTE=%s WHERE ID=%s'
             else:
-                qso['NOTE'] = 'No log received for %s.'\
+                qso['NOTE'] = 'No log received from %s.'\
                                                         %(urcall)
                 query = \
                      'UPDATE QSOS SET QSL=0, VALID=1, NOLOG=1, '+\
@@ -170,7 +215,8 @@ class MOQPQSOValidator(QSOUtils):
                                                      [qid['ID']])
         if (q): qso = q[0] 
         qsovalid = self.qso_valid(qso)
-        if ( (qsovalid != None) and (qsovalid < 8) ):
+        #if ( (qsovalid != None) and (qsovalid < 8) ):
+        if (qsovalid == []):
             """ DUPE Check is performed and saved when log is 
                 loaded to the DB. Use the results."""
             if (qso['DUPE']):
@@ -193,22 +239,7 @@ class MOQPQSOValidator(QSOUtils):
                          'NOQSOS=0, NOTE=%s WHERE ID=%s',
                                       [ qso['NOTE'], qso['ID'] ])
         else:
-            if (qsovalid == 1):
-                qso['NOTE']='FREQ or BAND error: %s'%(qso['BAND'])
-            elif (qsovalid == 2):
-                qso['NOTE']='MODE error: %s'%(qso['MODE'])
-            elif (qsovalid == 3):
-                qso['NOTE']='DATE/TIME error: %s %S'%(qso['DATE'], qso['DATE'])
-            elif (qsovalid == 4):
-                qso['NOTE']='DATE/TIME outside contest boundaries: %s %S'%(qso['DATE'], qso['DATE'])
-            elif (qsovalid == 5):
-                qso['NOTE']='MYCALL error: %s'%(qso['MYCALL'])
-            elif (qsovalid == 6):
-                qso['NOTE']='MYREPORT error: %s'%(qso['MYREPORT'])
-            elif (qsovalid == 7):
-                qso['NOTE']='MYQTH error: %s'%(qso['MYQTH'])
-            else:
-                pass
+            qso['NOTE'] = self.packNote(qsovalid)
             self.db.write_pquery(\
                 'UPDATE QSOS SET QSL=0, VALID=0, NOLOG=0, '+\
                 'NOQSOS=0, NOLOG=0, NOTE=%s WHERE ID=%s',

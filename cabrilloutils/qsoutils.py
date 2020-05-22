@@ -27,6 +27,23 @@ class QSOUtils(CabrilloUtils):
     def getVersion(self):
        return VERSION
 
+    def trimAndEscape(self, unsafeString, maxLen):
+        badchars = '\"\''
+        if (len(unsafeString) > maxLen):
+            workString = unsafeString[:maxLen-1]
+        else:
+            workString = unsafeString
+        for bad in badchars:
+            workString = workString.replace(bad, ' ')
+        return workString
+
+    def packNote(self, note):
+        packedNote = ''
+        for i in note:
+            print(i)
+            packedNote += self.trimAndEscape(i, 67) +'; '
+        return packedNote
+
     def getBand(self, freq):
        band = None
        try:

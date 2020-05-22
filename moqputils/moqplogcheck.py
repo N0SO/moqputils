@@ -47,6 +47,13 @@ Update History:
 * Sun May 10 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.6 - Added CABRILLO bonus processing and improved 
 - error handling.
+* Wed May 20 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.7 - Added QTH checks to qso_valid. Marked
+- QSOs that fail checks as errors.
+- Moved common definitions of counties, state, modes, etc.
+- to moqpdefs.py. 
+- Began consolidation of qso_valid code ( we had three 
+- methods with that name).
 """
 
 from CabrilloUtils import *
@@ -54,34 +61,10 @@ from moqpmults import *
 from qsoutils import QSOUtils
 from dupecheck import DUPECheck
 from bonusaward import BonusAward
+
 import os, shutil
 
-INSTATE = ['MO', 'MISSOURI']
-
-CANADA = 'MAR NL QC ONE ONN ONS GTA MB SK AB BC NT NB'
-
-#STATIONS = 'FIXED MOBILE PORTABLE ROVER EXPEDITION HQ SCHOOL'
-STATIONS = ['FIXED', 'MOBILE','PORTABLE', 'ROVER','EXPEDITION',
-            'HQ','SCHOOL']
-
-MODES = 'SSB USB LSB FM PH CW RY RTTY DIG DIGI MIXED'
-
-OVERLAY = 'ROOKIE'
-
-US = \
-'CT EMA ME NH RI VT WMA ENY NLI NNJ NNY SNJ WNY DE EPA MDC WPA '+\
-'AL GA KY NC NFL SC SFL WCF TN VA PR VI AR LA MS NM NTX OK STX '+\
-'WTX EB LAX ORG SB SCV SDG SF SJV SV PAC AZ EWA ID MT NV OR UT '+\
-'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD CA '
-
-DX = 'DX DK2 DL8 HA8 ON4'
-
-COLUMNHEADERS = 'LOG ERRORS\tCALLSIGN\tOPS\tSTATION\tOPERATOR\t'+\
-                'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
-                'CW QSO\tPH QSO\tRY QSO\tTOTAL\tVHF QSO\t' + \
-                'MULTS\tDUPES\tW0MA\tK0GQ\tCAB FILE\tSCORE\t' + \
-                'MOQP CATEGORY\tDIGITAL\tVHF\tROOKIE\n'
-
+from moqpdefs import *
 
 VERSION = '0.0.6'
 
@@ -114,7 +97,6 @@ class MOQPLogcheck(CabrilloUtils):
        valid_date_chars = set('0123456789/-')
        valid_call_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-')
        qutils = QSOUtils()
-       #if ( qso['FREQ'].isnumeric() ):
        if ( self.is_number(qso['FREQ']) ):
           if (qutils.getBand(qso['FREQ'])):
               pass
@@ -150,41 +132,63 @@ class MOQPLogcheck(CabrilloUtils):
               'QSO DATE/TIME outside contest time period: %s %s'\
                %(qso['DATE'],
                  qso['TIME'])) )
-       #if ( qso['MYCALL'].isalnum() ):
        if all(char in valid_call_chars for char in qso['MYCALL']):
           pass
        else:
           errorData.append(  ('QSO MYCALL Parameter invalid: %s'%(qso['MYCALL'])) )
           qsovalid = False
 
-       #if ( qso['MYREPORT'].isnumeric() ):
        if ( self.is_number(qso['MYREPORT']) ):
-          pass
+          if ( \
+               ( (len(qso['MYREPORT']) == 3) and (qso['MODE'] in MODES3) ) or \
+               ( (len(qso['MYREPORT']) == 2) and (qso['MODE'] in MODES2) ) ):
+              pass
+          else:
+              errorData.append( \
+                'QSO MY SIG REPORT %s does not match MODE: %s'%\
+                (qso['MYREPORT'],
+                 qso['MODE']) )
+              qsovalid = False
        else:
           errorData.append(  ('QSO MYREPORT Parameter invalid: %s'%(qso['MYREPORT'])) )
           qsovalid = False
 
-       if ( qso['MYQTH'].isalpha() ):
+       if ( (qso['MYQTH'].isalpha()) and (\
+            (qso['MYQTH'] in MOCOUNTY) or \
+               (qso['MYQTH'] in US) or \
+               (qso['MYQTH'] in CANADA) or \
+               (qso['MYQTH'] in DX) ) ): 
           pass
        else:
           errorData.append(  ('QSO MYQTH Parameter invalid: %s'%(qso['MYQTH'])) )
           qsovalid = False
 
-       #if ( qso['URCALL'].isalnum() ):
        if all(char in valid_call_chars for char in qso['URCALL']):
           pass
        else:
           errorData.append(  ('QSO URCALL Parameter invalid: %s'%(qso['URCALL'])) )
           qsovalid = False
 
-#       if ( qso['URREPORT'].isnumeric() ):
        if ( self.is_number(qso['URREPORT']) ):
-          pass
+          if ( \
+               ( (len(qso['URREPORT']) == 3) and (qso['MODE'] in MODES3) ) or \
+               ( (len(qso['URREPORT']) == 2) and (qso['MODE'] in MODES2) ) ):
+              pass
+          else:
+              errorData.append( \
+                'QSO UR SIG REPORT %s does not match MODE: %s'%\
+                (qso['URREPORT'],
+                 qso['MODE']) )
+              qsovalid = False
        else:
           errorData.append(  ('QSO URREPORT Parameter invalid: %s'%(qso['URREPORT'])) )
           qsovalid = False
 
-       if ( qso['URQTH'].isalpha() ):
+       if ( (qso['URQTH'].isalpha()) and (\
+            (qso['URQTH'] in MOCOUNTY) or \
+               (qso['URQTH'] in US) or \
+               (qso['URQTH'] in CANADA) or \
+               (qso['URQTH'] in DX) ) ): 
           pass
        else:
           errorData.append(  ('QSO URQTH Parameter invalid: %s'%(qso['URQTH'])) )

@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Apr 25, 2020 at 04:32 PM
+-- Generation Time: May 22, 2020 at 02:17 PM
 -- Server version: 10.3.22-MariaDB
--- PHP Version: 7.3.16
+-- PHP Version: 7.3.18
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
@@ -58,9 +58,9 @@ CREATE TABLE `LOGHEADER` (
   `OFFTIME` varchar(20) NOT NULL,
   `SOAPBOX` varchar(120) NOT NULL,
   `ENDOFLOG` varchar(20) NOT NULL,
-  `MOQPCAT` varchar(60) NOT NULL,
-  `STATUS` varchar(20) NOT NULL,
-  `CABBONUS` int(11) NOT NULL DEFAULT 100,
+  `MOQPCAT` varchar(60) DEFAULT NULL,
+  `STATUS` varchar(2048) DEFAULT NULL,
+  `CABBONUS` int(11) NOT NULL DEFAULT 0,
   `TIMESTAMP` timestamp(6) NOT NULL DEFAULT current_timestamp(6)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -106,9 +106,10 @@ CREATE TABLE `QSOS` (
   `URQTH` varchar(10) NOT NULL,
   `VALID` tinyint(1) NOT NULL DEFAULT 0,
   `QSL` int(11) NOT NULL DEFAULT 0,
+  `DUPE` int(1) NOT NULL DEFAULT 0,
   `NOLOG` tinyint(1) NOT NULL DEFAULT 0,
   `NOQSOS` tinyint(1) NOT NULL DEFAULT 0,
-  `NOTE` varchar(80) DEFAULT NULL
+  `NOTE` varchar(2048) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -152,7 +153,8 @@ CREATE TABLE `SUMMARY` (
   `MOQPCAT` varchar(50) NOT NULL,
   `DIGITAL` tinyint(1) NOT NULL DEFAULT 0,
   `VHF` tinyint(1) NOT NULL DEFAULT 0,
-  `ROOKIE` tinyint(1) NOT NULL DEFAULT 0
+  `ROOKIE` tinyint(1) NOT NULL DEFAULT 0,
+  `LOCATION` varchar(16) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
