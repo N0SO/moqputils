@@ -103,7 +103,8 @@ class MOQPDBCatReport():
             header=mydb.read_pquery(\
                         'SELECT * FROM LOGHEADER WHERE ID=%s',
                                             [sumdata['LOGID']])
-            if (header):
+            #print(header)
+            if (len(header) > 0):
                 header=header[0]
                 thisSum['CALLSIGN']=header['CALLSIGN']
                 thisSum['CATASSISTED']=header['CATASSISTED']
@@ -117,8 +118,8 @@ class MOQPDBCatReport():
                 thisSum['CATMODE']=header['CATMODE']
                 thisSum['LOCATION']=header['LOCATION']
             else:
-                thisSum['CALL']='NO HEADER FOR LOGID %s'\
-                                             %(sumdata['LOGID'])
+                thisSum['CALL']='NO HEADER FOR LOGID %s, SUMMARY ID %s'\
+                                             %(sumdata['LOGID'], sumdata['ID'])
                 thisSum['CATASSISTED']=''
                 thisSum['CATBAND']=''
                 thisSum['CATOPERATOR']=''
@@ -128,6 +129,8 @@ class MOQPDBCatReport():
                 thisSum['CATXMITTER']=''
                 thisSum['OPERATORS']=''
                 thisSum['CATMODE']=''
+                print('%s'%(thisSum['CALL']))
+                exit()
         return thisSum
         
     def processOneSum(self, mydb, call):
@@ -146,8 +149,10 @@ class MOQPDBCatReport():
         sumdata = mydb.read_query('SELECT * FROM SUMMARY '+\
               'ORDER BY MOQPCAT ASC, SCORE DESC, LOCATION ASC')
         if (sumdata):
+            print('sumdata = %s'%(sumdata))
             csvList.append(COLUMNHEADERS)
             for thisStation in sumdata:
+                #print('ID=%s'%(thisStation['ID']))
                 thisreport = self.parseReport(mydb, thisStation)
                 reportList.append(thisreport)
                 csvdata = self.exportcsvsumdata(thisreport, False)

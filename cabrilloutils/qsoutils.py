@@ -11,14 +11,21 @@ Update History:
 * Fri May 15 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.3 - Added more qso time utils
 - Fixed a bug in getBand causing false DUPES
+* Mon May 25 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.5 - Added modeSet method to set all digimodes to RY
+- and all phone modes to PH for QSL checking.
+* Yue May 26 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.6 - Added qthSet method to set QTH strings that are
+- in the list DX to 'DX' for QSL checking and MULT counting.
 """
 from datetime import datetime
 from datetime import date
 from datetime import time
 from datetime import timedelta
 from CabrilloUtils import CabrilloUtils
+from moqpdefs import *
 
-VERSION = '0.0.1' 
+VERSION = '0.0.6' 
            
 class QSOUtils(CabrilloUtils):
     def __init__(self):
@@ -28,6 +35,10 @@ class QSOUtils(CabrilloUtils):
        return VERSION
 
     def trimAndEscape(self, unsafeString, maxLen):
+        """
+        Remove characters SQL statements don't like, and trim
+        strings to the maxLen characters
+        """
         badchars = '\"\''
         if (len(unsafeString) > maxLen):
             workString = unsafeString[:maxLen-1]
@@ -38,13 +49,67 @@ class QSOUtils(CabrilloUtils):
         return workString
 
     def packNote(self, note):
+        """
+        Pack a list into a simple ';' separated string with 
+        bad SQL characteres removed.
+        """
         packedNote = ''
         for i in note:
             print(i)
             packedNote += self.trimAndEscape(i, 67) +'; '
         return packedNote
 
+    def qthSet(self, qth):
+        """
+        Evaluate a QTH string - 
+        if it falls withing the definitions in the list DX:
+           return DX as the QTH.
+        Otherwise return the passed QTH string in upper-case
+        """
+        setqth = qth.upper()
+        if (setqth in DX):
+            setqth = 'DX'
+        return setqth
+
+    def validate_Report_Mode(self, report, mode):
+        """
+        Compare signal REPORT and MODE strings.
+        If a mode is in in the list defined by MODES2,
+             the report must be 2 characters (i,e, 59)
+        If a MODE is in the list defined by MODES3,
+             the REPORT must be 3 characters (i.e. 599)
+        If the above conditions are met, return True,
+             otherwise return False
+        """
+        rm_match = False
+        if ( self.is_number(report)):
+           reportlen = len(report)
+           if ( \
+                ( (reportlen == 2) and (mode in MODES2) ) or \
+                ( (reportlen == 2) and (mode in MODES3) ) ):
+                    rm_match = True
+        return rm_match
+
+    def modeSet(self, mode):
+       """
+       Evaluate MODE string.
+       If MODE is in the list MODES2:
+           Set MODE to PH
+       If MODE is in the list DIGIMODES:
+           Set MODE to RY
+       otherwise return the mode passed in
+       """
+       ret_mode = mode
+       if (mode in MODES2):
+            mode = 'PH'
+       elif (mode in DIGIMODES):
+            mode = 'RY'
+
     def getBand(self, freq):
+       """
+       Return BAND for the string freq (in KHz)
+       If out of band, return None
+       """
        band = None
        try:
            nfreq = float(freq)
@@ -172,12 +237,12 @@ class QSOUtils(CabrilloUtils):
         return qsoLine
 
     def compareCalls(self, call1, call2):
-        callvalid=False
+        callsmatch=False
         """ Strip off any extra stuff after a / or \ at the
             end of the callsigns """
         call1_s = self.stripCallsign(call1)
         call2_s = self.stripCallsign(call2)
         if (call1_s == call2_s):
-            callvalid=True
-        return callvalid
+            callsmatch=True
+        return callsmatch
 

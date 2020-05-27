@@ -4,6 +4,9 @@ Update History:
 * Tue May 12 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Separated this code from the MOQPDBUtils code.
 - Enhancd QSL checks from 2019 QSO Party.
+* Mon May 25 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.2 - Added call to self.modeSet method to set 
+- all digimodes to RY and all phone modes to PH for QSL checking.
 """
 
 from datetime import timedelta
@@ -64,9 +67,7 @@ class MOQPQSOValidator(QSOUtils):
           qsovalid = False
 
        if ( self.is_number(qso['MYREPORT']) ):
-          if ( \
-               ( (len(qso['MYREPORT']) == 3) and (qso['MODE'] in MODES3) ) or \
-               ( (len(qso['MYREPORT']) == 2) and (qso['MODE'] in MODES2) ) ):
+          if (self.validate_Report_Mode(qso['MYREPORT'], qso['MODE'])):
               pass
           else:
               errorData.append( \
@@ -95,9 +96,7 @@ class MOQPQSOValidator(QSOUtils):
           qsovalid = False
 
        if ( self.is_number(qso['URREPORT']) ):
-          if ( \
-               ( (len(qso['URREPORT']) == 3) and (qso['MODE'] in MODES3) ) or \
-               ( (len(qso['URREPORT']) == 2) and (qso['MODE'] in MODES2) ) ):
+          if (self.validate_Report_Mode(qso['URREPORT'], qso['MODE'])):
               pass
           else:
               errorData.append( \
@@ -134,15 +133,21 @@ class MOQPQSOValidator(QSOUtils):
             urqtime = self.qsotimeOBJ(urqso['DATE'], urqso['TIME'])
             urqsoband = self.getBand(urqso['FREQ'])
             urqsomycall = self.stripCallsign(urqso['MYCALL'])
+            mymode = self.modeSet(qso['MODE'])
+            urmode = self.modeSet(urqso['MODE'])
             if (myqtime > urqtime):
                 timediff = myqtime - urqtime
             else:
                 timediff = urqtime - myqtime
             if ( timediff < timedelta(minutes=30) ):
                 if ( myqsoband == urqsoband):
-                    if (qso['MODE'] == urqso['MODE']):
+                    if (mymode == urmode):
                         if (qso['URQTH'] == urqso['MYQTH']):
-                            if (qso['URREPORT'] == urqso['MYREPORT']):
+                            if ( (qso['URREPORT'] == \
+                                  urqso['MYREPORT']) or \
+                                  (self.validate_Report_Mode(\
+                                        urqso['MYREPORT'],
+                                        urqso['MODE']) == False) ):
                                 """ QSL match! """
                                 result = 0
                         else:
