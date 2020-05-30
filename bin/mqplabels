@@ -5,7 +5,7 @@ moqplabels  - Utility to help with publishing and distribution
               
               Lots more documentation needed!
                 
-               Based on 2019 MOQP Rules
+              Based on 2019 MOQP Rules
 
 Update History:
 * Fri Feb 28 2020 Mike Heitmann, N0SO <n0so@arrl.net>
@@ -14,12 +14,15 @@ Update History:
 * Thu Jan 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 - Working version - adding option to launch club reports.
 - Added logic to lauch MOQPDBCatReport or MOQPDBClubReport.
+* Fri May 29 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+-V0.1.1 - Fixed bug that required adding a dummy paramemer after
+-         -c, -s,-m, etc.
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 ARGS = None
 
 DEVMODPATH = ['moqputils', 'cabrilloutils']
@@ -35,7 +38,7 @@ DESCRIPTION = \
 """moqpreports  - Generate reports for MOQP
                   from database.
                 
-                   Based on 2019 MOQP Rules
+                  Based on 2019 MOQP Rules
 """
 
 EPILOG = \
@@ -53,14 +56,21 @@ class get_args():
                                description = DESCRIPTION,
                                            epilog = EPILOG)
         parser.add_argument('-v', '--version', action='version', version = VERSION)
-        parser.add_argument('-c', '--category', default=None,
+        parser.add_argument('-c', '--category', 
+                                  action='store_true',
+                                  default=False,
             help="Create a list of the 1st and 2nd place "+ \
                   "winners in each MOQPCATEGORY.")
-        parser.add_argument('-s', '--showme', default=None,
+        parser.add_argument('-s', '--showme', 
+                                  action='store_true',
+                                  default=False,
             help="Create a list of the SHOWME certificate winners.")
-        parser.add_argument('-m', '--missouri', default=None,
+        parser.add_argument('-m', '--missouri', 
+                                  action='store_true',
+                                  default=False,
             help="Create a list of the MISSOURI certificate winners.")
-        parser.add_argument('-p', '--provstate', default=None,
+        parser.add_argument('-p', '--provstate', action='store_true',
+                                                 default=False,
             help="Create a list of the STATE/PROV certificate winners.")
         args = parser.parse_args()
         #print(args)

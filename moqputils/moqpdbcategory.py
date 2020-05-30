@@ -190,8 +190,8 @@ class MOQPDBCategory(MOQPCategory):
             log=dict()
             dbheader = mydb.read_query( \
                 "SELECT * FROM `LOGHEADER` WHERE ID=%d"%(logID))
+            #print(dbheader)
             header = self.getLogHeader(dbheader)
-            #print(header)
             qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=%s) )"%(logID, 1))
             for qso in qsos:
                 mults.setMult(qso['URQTH'])

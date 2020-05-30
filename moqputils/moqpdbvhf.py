@@ -16,13 +16,15 @@ moqpdbcategory  - Same features as moqpdbcategory, except read only
 Update History:
 * Thu Feb 13 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
+* Wed May 27 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.2 - Updated logheader to LOGHEADER.
 """
 
 from moqpdbcategory import *
 from moqpdbutils import *
 from bonusaward import BonusAward
 
-VERSION = '0.0.1' 
+VERSION = '0.0.2' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\t' + \
@@ -149,7 +151,7 @@ class MOQPDBVhf(MOQPDBCategory):
         if (logID):
             log=dict()
             dbheader = mydb.read_query( \
-                "SELECT * FROM `logheader` WHERE ID=%d"%(logID))
+                "SELECT * FROM `LOGHEADER` WHERE ID=%d"%(logID))
             header = self.getLogHeader(dbheader)
             #print(header)
             #get digital QSOS only!
@@ -177,7 +179,7 @@ class MOQPDBVhf(MOQPDBCategory):
            mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
            mydb.setCursorDict()
            loglist = mydb.read_query( \
-              "SELECT ID, CALLSIGN FROM logheader WHERE 1")
+              "SELECT ID, CALLSIGN FROM LOGHEADER WHERE 1")
            HEADER = True
            for nextlog in loglist:
                #print('callsign = %s'%(nextlog['CALLSIGN']))

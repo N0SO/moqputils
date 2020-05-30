@@ -253,7 +253,6 @@ class MOQPDBUtils():
             all_logs = self.read_query(query)
         if(all_logs):
             for nextlog in all_logs:
-               #print(call, nextlog['CALLSIGN'])
                if (nextlog['CALLSIGN'] == call):
                   logID = nextlog['ID']
                   break

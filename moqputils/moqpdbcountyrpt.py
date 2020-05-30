@@ -11,6 +11,7 @@ Update History:
 
 from contestmults import *
 from moqpdbutils import *
+from moqpdbconfig import *
 
 VERSION = '0.0.1'
 
