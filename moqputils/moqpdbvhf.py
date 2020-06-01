@@ -18,13 +18,17 @@ Update History:
 - V0.0.1 - Start tracking revs.
 * Wed May 27 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.2 - Updated logheader to LOGHEADER.
+* Sat May 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Added method updateDB to add VHF/UHF scores to
+- the database table VHF (or update entries if an
+- entry for the station exists already.
 """
 
 from moqpdbcategory import *
 from moqpdbutils import *
 from bonusaward import BonusAward
 
-VERSION = '0.0.2' 
+VERSION = '0.1.0' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\t' + \
@@ -118,7 +122,10 @@ class MOQPDBVhf(MOQPDBCategory):
               k0gqbonus = 100
           else:
               k0gqbonus = 0
-          cabBonus = logsummary['HEADER']['CABBONUS']
+          if (logsummary['HEADER']['CABBONUS']):
+              cabBonus = 100
+          else:
+              cabBonus = 0
           qsoScore = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
           bonuspoints = { 'W0MA':w0mabonus,
                           'K0GQ':k0gqbonus,
@@ -134,12 +141,41 @@ class MOQPDBVhf(MOQPDBCategory):
           fullSummary['MOQPCAT'] = moqpcat
           fullSummary['QSOLIST'] = logsummary['QSOLIST']
           fullSummary['ERRORS'] = logsummary['ERRORS']
-          #mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-          #mydb.setCursorDict()
-          #mydb.writeSummary(fullSummary)
-       #else:
-       #   print('No log in database for call %s.'%(filename))
+
+          self.updateDB(logsummary['HEADER']['CALLSIGN'],
+                        logsummary['QSOSUM']['VHF'],
+                        logsummary['MULTS'],
+                        bonuspoints['W0MA'],
+                        bonuspoints['K0GQ'],
+                        bonuspoints['TOTAL'])
+
        return fullSummary
+
+    def updateDB(self, call, qsos, mults, bonus1, bonus2, score):
+        did = None
+        db = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+        #logid = db.CallinLogDB(call)
+        logid = db.read_pquery(\
+            "SELECT ID FROM LOGHEADER WHERE CALLSIGN=%s",[call])
+        if (logid): logid=logid[0]
+        #print('Adding call %s, log ID %s, dig. qso count %d, mults %d'%(call, logid, qsos, mults))
+        # Does record exist already?
+        did = db.read_pquery("SELECT ID FROM VHF WHERE LOGID=%s",[logid])
+        if (did):
+            #update existing
+            did = did[0]
+            db.write_pquery(\
+                "UPDATE VHF SET LOGID=%s,QSOS=%s,MULTS=%s, "+\
+                "W0MABONUS=%s,K0GQBONUS=%s,SCORE=%s WHERE ID=%s",
+                [logid,qsos,mults,bonus1,bonus2,score,did])
+        else:
+            #insert new
+            did=db.write_pquery(\
+                "INSERT INTO VHF "+\
+                "(LOGID,QSOS,MULTS,W0MABONUS,K0GQBONUS,SCORE) "+\
+                "VALUES (%s,%s,%s,%s,%s,%s)", 
+                [logid,qsos,mults,bonus1,bonus2,score])
+        return did
 
     def getLogFile(self, callsign):
         log = None

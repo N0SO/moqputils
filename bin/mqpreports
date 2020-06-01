@@ -11,12 +11,16 @@ Update History:
 * Thu Jan 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 - Working version - adding option to launch club reports.
 - Added logic to lauch MOQPDBCatReport or MOQPDBClubReport.
+* Sat May 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 -Added reports for VHF, DIGITAL and MOST COUNTIES.
+* San May 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.2 -Added CLUBS and CLUB_MEMBERS DB Tables
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.1.0'
+VERSION = '0.1.2'
 ARGS = None
 
 DEVMODPATH = ['moqputils', 'cabrilloutils']
@@ -52,17 +56,37 @@ class get_args():
         parser.add_argument('-v', '--version', action='version', version = VERSION)
         parser.add_argument('-c', '--callsign', default=None,
             help="CALLSIGN in MOQP database to summarize. "+ \
-                 "Entering 'ALLCALLS' will run the report "+ \
+                 "Entering 'allcalls' will run the report "+ \
                  "on all calls in the database. Entering "+ \
-                 "'CLUB' will run the report on calls that"+ \
+                 "'club' will run the report on calls that"+ \
                  " put a club name in the CABRILLO CLUB field.")
+        parser.add_argument('-d', '--digireport', default=None,
+            help="CALLSIGN in MOQP database to summarize. "+ \
+                 "Entering 'allcalls' will run the report "+ \
+                 "on all calls in the database.")
         parser.add_argument('-l', '--logreport', default=None,
             help="CALLSIGN in MOQP database to summarize. "+ \
-                 "Entering 'ALLCALLS' will run the report "+ \
-                 "on all calls in the database. Entering ")
-        parser.add_argument('-C', '--countiesworked', default=None,
+                 "Entering 'allcalls' will run the report "+ \
+                 "on all calls in the database.")
+        parser.add_argument('-V', '--vhfreport', default=None,
+            help="CALLSIGN in MOQP database to summarize. "+ \
+                 "Entering 'allcalls' will run the report "+ \
+                 "on all calls in the database.")
+        parser.add_argument('-C', '--countiesworked', 
+                                   action='store_true',
+                                   default=None,
             help="Summarize all valid QSOS for a total "+ \
                  "Counties Worked report. ")
+        parser.add_argument('-m', '--mostcounties', 
+                                   default=None,
+            help="Reads and displays the database COUNTY  "+ \
+                 "summary table and displays the number of "+ \
+                 "counties worked along with a list of the  "+ \
+                 "county abbreviations. Entering a callsign "+ \
+                 "displays the summary for that station. "+ \
+                 "Entering \'allcalls\' will display the "+ \
+                 "summary for all stations in the database "+\
+                 "for a Most Counties Worked report. ")
         parser.add_argument('-D', '--deletelog', default=None,
             help="Delete log for callsign specified.")
 
@@ -76,7 +100,8 @@ if __name__ == '__main__':
    #print (args.args)
    
    if (args.args.callsign):
-       if (args.args.callsign == 'club'):
+       if ((args.args.callsign == 'club') or \
+           (args.args.callsign == 'club-update') ):
            from moqpdbclubreport import MOQPDBClubReport
            app = MOQPDBClubReport(args.args.callsign)
        else:
@@ -88,6 +113,15 @@ if __name__ == '__main__':
    elif (args.args.countiesworked):
        from moqpdbcountycount import *
        app = MOQPDBCountyCountRpt(args.args.logreport)
+   elif (args.args.digireport):
+       from moqpdbdigitalreport import MOQPDBDigitalReport
+       app = MOQPDBDigitalReport(args.args.digireport)
+   elif (args.args.vhfreport):
+       from moqpdbvhfreport import MOQPDBVhfReport
+       app = MOQPDBVhfReport(args.args.vhfreport)
+   elif (args.args.mostcounties):
+       from moqpdbcountyrpt import MostCounties
+       app = MostCounties(args.args.mostcounties)
    elif (args.args.deletelog):
        from deletelog import deleteLog
        app = deleteLog(args.args.deletelog)

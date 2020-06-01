@@ -18,13 +18,17 @@ Update History:
 - V0.0.1 - Start tracking revs.
 * Wed May 27 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.2 - Updated logheader to LOGHEADER.
+* Sat May 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Added method updateDB to add digital scores to
+- the database table DIGITAL (or update entries if an
+- entry for the station exists already.
 """
 
 from moqpdbcategory import *
 from moqpdbutils import *
 from bonusaward import BonusAward
 
-VERSION = '0.0.2' 
+VERSION = '0.1.0' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\t' + \
@@ -138,14 +142,15 @@ class MOQPDBDigital(MOQPDBCategory):
           fullSummary['QSOLIST'] = logsummary['QSOLIST']
           fullSummary['ERRORS'] = logsummary['ERRORS']
           self.updateDB(logsummary['HEADER']['CALLSIGN'],
-                        logsummary['HEADER']['LOCATION'],
                         logsummary['QSOSUM']['DG'],
                         logsummary['MULTS'],
+                        bonuspoints['W0MA'],
+                        bonuspoints['K0GQ'],
                         bonuspoints['TOTAL'])
                         
        return fullSummary
        
-    def updateDB(self, call, loc, qsos, mults, score):
+    def updateDB(self, call, qsos, mults, bonus1, bonus2, score):
         did = None
         db = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
         #logid = db.CallinLogDB(call)
@@ -157,17 +162,18 @@ class MOQPDBDigital(MOQPDBCategory):
         did = db.read_pquery("SELECT ID FROM DIGITAL WHERE LOGID=%s",[logid])
         if (did):
             #update existing
+            did = did[0]
             db.write_pquery(\
                 "UPDATE DIGITAL SET LOGID=%s,QSOS=%s,MULTS=%s, "+\
-                "SCORE=%s, LOCATION=%s WHERE ID=%s",
-                [logid,qsos,mults,score,loc,did[0]])
+                "W0MABONUS=%s,K0GQBONUS=%s,SCORE=%s WHERE ID=%s",
+                [logid,qsos,mults,bonus1,bonus2,score,did])
         else:
             #insert new
             did=db.write_pquery(\
                 "INSERT INTO DIGITAL "+\
-                "(LOGID,QSOS,MULTS,SCORE,LOCATION) "+\
-                "VALUES (%s,%s,%s,%s,%s)", 
-                [logid,qsos,mults,score,loc])
+                "(LOGID,QSOS,MULTS,SCORE) "+\
+                "VALUES (%s,%s,%s,%s,%s,%s", 
+                [logid,qsos,mults,bonus1,bonus2,score])
         return did
 
     def getLogFile(self, callsign):

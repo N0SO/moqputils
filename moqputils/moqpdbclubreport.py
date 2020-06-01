@@ -17,21 +17,17 @@ moqpdbclubreport - Fetches a list of logs that have something
 Update History:
 * Fri Jan 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
+* San May 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.2 -Added CLUBS and CLUB_MEMBERS DB Tables
+- and reworked code to let SQL do the sorting work.
 """
 
 from moqpdbcatreport import *
 from moqpdbconfig import *
 
 
-VERSION = '0.0.1' 
-"""
-COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
-                'POWER\tMODE\tLOCATION\tOVERLAY\tCLUB\t' + \
-                'CW QSO\tPH QSO\tRY QSO\tQSO COUNT\tVHF QSO\t' + \
-                'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
-                'CABFILE BONUS\tSCORE\tMOQP CATEGORY\t' +\
-                'DIGITAL\tVHF\tROOKIE\n'
-"""
+VERSION = '0.0.2' 
+
 COLUMNHEADERS = 'CALLSIGN\tOPS\tCLUB\tSCORE\n'
 
 class MOQPDBClubReport(MOQPDBCatReport):
@@ -58,73 +54,107 @@ class MOQPDBClubReport(MOQPDBCatReport):
        return csvdata
 
     def processOne(self, db, club):
-        thisclub=None
-        #print(club)
         loglist = db.read_pquery(\
-              "SELECT ID, CALLSIGN, OPERATORS, LOCATION "+\
-              " FROM LOGHEADER WHERE CLUB=%s", [club])
-        if (loglist):
+              "SELECT LOGHEADER.ID, SUMMARY.SCORE "+\
+              "FROM LOGHEADER INNER JOIN SUMMARY ON "+\
+              "LOGHEADER.ID=SUMMARY.LOGID WHERE CLUB=%s "+\
+              "ORDER BY SUMMARY.SCORE", [club])
+
+        logcount = len(loglist)
+        if (logcount >= 3):
             #print('\nClub: %s, log count = %d, data=%s'%(club, len(loglist),loglist))
-            thisclub = dict()
-            clubLogs = []
             thisScore = 0
             for station in loglist:
-                thisStation = dict()
-                score = db.read_pquery(\
-                      "SELECT SCORE FROM SUMMARY WHERE LOGID=%s",
-                      [station['ID']])
-                thisScore += score[0]['SCORE']
-                thisStation['CLUB']=club
-                thisStation['SCORE']=score[0]['SCORE']   
-                thisStation['CALL'] = station['CALLSIGN']
-                thisStation['OPS'] = station['OPERATORS']
-                thisStation['LOCATION'] = station['LOCATION']
-                clubLogs.append(thisStation)
-                #print(thisStation)
-        thisclub['CLUB']=club
-        thisclub['COUNT']=len(clubLogs)
-        thisclub['SCORE']=thisScore
-        thisclub['LOGS']=clubLogs
-        return thisclub         
+                thisScore += station['SCORE'] # Sum club member scores
+            # Create club entry
+            clubid = db.write_pquery(\
+               'INSERT INTO CLUBS '+\
+               '(NAME, LOGCOUNT, SCORE) '+\
+               'VALUES (%s, %s, %s)',
+               [club, logcount, thisScore])
+            # Create club member entries
+            for station in loglist:
+                memberid = db.write_pquery(\
+                   'INSERT INTO CLUB_MEMBERS '+\
+                   '(CLUBID, LOGID) '+\
+                   'VALUES(%s, %s)',
+                   [clubid, station['ID']])
 
     def processAll(self, mydb):
-        retlist = None
+        dquery ='DROP TABLE IF EXISTS CLUB_MEMBERS, CLUBS;'
+        query1 = 'CREATE TABLE CLUBS ('+\
+          'CLUBID int NOT NULL AUTO_INCREMENT, '+\
+          'NAME varchar(255) NOT NULL, '+\
+          'LOGCOUNT int NULL, '+\
+          'SCORE int NULL, '+\
+          'PRIMARY KEY (CLUBID));'
+        query2 = 'CREATE TABLE CLUB_MEMBERS ('+\
+          'ID int NOT NULL AUTO_INCREMENT, '+\
+          'CLUBID int NULL, '+\
+          'LOGID int NULL, '+\
+          'PRIMARY KEY (ID));'
+
         clublist = mydb.read_query("SELECT DISTINCT CLUB FROM "+\
-                                                     "LOGHEADER")
-        #loglist = mydb.fetchLogList()
-        #print(loglist)
-        #print(len(loglist), loglist)
+                                   "LOGHEADER ORDER BY CLUB")
         if (clublist):
+            result = mydb.read_query("SHOW TABLES LIKE 'CLUBS'")
+            if (len(result) > 0):
+                mydb.write_query(dquery) # Delete old club tables
+            mydb.write_query(query1) #and create new, empty tables
+            mydb.write_query(query2)
             retlist = []
             Headers = True
             for nextclub in clublist:
                 if (nextclub['CLUB'] != ''):
-                    thisclub=self.processOne(mydb, 
+                    self.processOne(mydb, 
                                nextclub['CLUB'])
-                    retlist.append(thisclub)
         else:
             print('No logs.')
-        return retlist
 
-    def printClubs(self, clubs):
-        HEADERLINE = 'CLUB NAME\tSTATION CALL\tOPERATOR(S)\t'+\
-                     'LOCATION\tSCORE'
-        print(HEADERLINE)
-        for club in clubs:
-            if (club['COUNT'] >=3):
-                print('%s Total:\t\t\t\t%d'%(club['CLUB'], 
-                                            club['SCORE']))
-            for station in club['LOGS']:
-               stationcsv = self.exportcsvdata(station)
-               print(stationcsv)
-
-
-
+    
+    def printClubsDB(self, db):
+        queryL = 'SELECT * FROM CLUBS WHERE 1 ORDER BY SCORE DESC'
+        query = 'SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, '+\
+                'LOGHEADER.LOCATION, LOGHEADER.OPERATORS, '+\
+                'CLUB_MEMBERS.* '+\
+                'FROM CLUB_MEMBERS INNER JOIN LOGHEADER ON '+\
+                'LOGHEADER.ID=CLUB_MEMBERS.LOGID '
+        clubList = db.read_query(queryL)
+        printText = []
+        print('CLUB\tCALL\tOPERATORS\tLOCATION\t'+\
+              'OP SCORE\tLOG COUNT\tSCORE')
+        for club in clubList:
+            #print(club)
+            stationList = db.read_query(\
+               'SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, '+\
+               'LOGHEADER.LOCATION, LOGHEADER.OPERATORS, '+\
+               'CLUB_MEMBERS.*, SUMMARY.SCORE '+\
+               'FROM CLUB_MEMBERS INNER JOIN LOGHEADER ON '+\
+               'LOGHEADER.ID=CLUB_MEMBERS.LOGID '+\
+               'INNER JOIN SUMMARY ON SUMMARY.LOGID=LOGHEADER.ID'+\
+               ' WHERE '+\
+               'CLUB_MEMBERS.CLUBID='+('%s'%(club['CLUBID']))+\
+               ' ORDER BY SCORE DESC')
+            #print(stationList)
+            print('%s\t\t\t\t\t%s\t%s'%(club['NAME'], 
+                                    club['LOGCOUNT'],
+                                    club['SCORE']))
+            for station in stationList:
+                print('\t%s\t%s\t%s\t%s'%\
+                                 (station['CALLSIGN'],
+                                  station['OPERATORS'],
+                                  station['LOCATION'],
+                                  station['SCORE']))
+                    
     def appMain(self, callsign):
-       csvdata = ['No Data.']
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
-       clublist = self.processAll(mydb)
-       if (clublist):
-           self.printClubs(clublist)
+       result = mydb.read_query("SHOW TABLES LIKE 'CLUBS'")
+       if (len(result) == 0):
+           callsign = 'club-update'
+       if (callsign == 'club-update'):
+           print(\
+            'Updating club database before generating report...')
+           self.processAll(mydb)
+       self.printClubsDB(mydb)
 

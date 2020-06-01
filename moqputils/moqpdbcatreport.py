@@ -149,7 +149,6 @@ class MOQPDBCatReport():
         sumdata = mydb.read_query('SELECT * FROM SUMMARY '+\
               'ORDER BY MOQPCAT ASC, SCORE DESC, LOCATION ASC')
         if (sumdata):
-            print('sumdata = %s'%(sumdata))
             csvList.append(COLUMNHEADERS)
             for thisStation in sumdata:
                 #print('ID=%s'%(thisStation['ID']))
