@@ -53,7 +53,14 @@ class get_args():
         parser = argparse.ArgumentParser(\
                                description = DESCRIPTION,
                                            epilog = EPILOG)
-        parser.add_argument('-v', '--version', action='version', version = VERSION)
+        parser.add_argument('-v', '--version', 
+                                  action='version', 
+                                  version = VERSION)
+        parser.add_argument('-a', '--cntyline', default=None,
+            help="Check CALLSIGN in MOQP database to summarize "+\
+                 "potential county line operations. Entering "+\
+                 "'allcalls' will run the report "+ \
+                 "on all calls in the database.")
         parser.add_argument('-c', '--callsign', default=None,
             help="CALLSIGN in MOQP database to summarize. "+ \
                  "Entering 'allcalls' will run the report "+ \
@@ -87,6 +94,11 @@ class get_args():
                  "Entering \'allcalls\' will display the "+ \
                  "summary for all stations in the database "+\
                  "for a Most Counties Worked report. ")
+        parser.add_argument('-s', '--states', 
+                                   default='all',
+            help="Summarize all valid QSOS for a total "+ \
+                 "Counties Worked report. ")
+
         parser.add_argument('-D', '--deletelog', default=None,
             help="Delete log for callsign specified.")
 
@@ -107,6 +119,9 @@ if __name__ == '__main__':
        else:
            from moqpdbcatreport import MOQPDBCatReport
            app = MOQPDBCatReport(args.args.callsign)
+   elif (args.args.cntyline):
+       from countylineops import CountyLineOps
+       app = CountyLineOps(args.args.cntyline)
    elif (args.args.logreport):
        from logreport import LogReport
        app = LogReport(args.args.logreport)
@@ -122,6 +137,9 @@ if __name__ == '__main__':
    elif (args.args.mostcounties):
        from moqpdbcountyrpt import MostCounties
        app = MostCounties(args.args.mostcounties)
+   elif (args.args.states):
+       from stateAwards import STATEAwards
+       app = STATEAwards(args.args.states)
    elif (args.args.deletelog):
        from deletelog import deleteLog
        app = deleteLog(args.args.deletelog)

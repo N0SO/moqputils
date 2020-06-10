@@ -82,8 +82,8 @@ if __name__ == '__main__':
    #print (args.args)
    
    if (args.args.category):
-       from moqplabels import CATEGORYLabels
-       app = CATEGORYLabels()
+       from stateAwards import CATEGORYLabels
+       app = CATEGORYLabels(args.args.category)
    elif (args.args.showme):
        from moqplabels import SHOWMELabels
        app = SHOWMELabels('SHOWME')
@@ -91,9 +91,8 @@ if __name__ == '__main__':
        from moqplabels import SHOWMELabels
        app = SHOWMELabels('MISSOURI')
    elif (args.args.provstate):
-       print("Running STATELabels...")
-       from moqplabels import STATELabels
-       app = STATELabels()
+       from stateAwards import STATELabels
+       app = STATELabels(args.args.provstate)
    else:
        from gui_reports import labels_ui
        app=gui_reports()
