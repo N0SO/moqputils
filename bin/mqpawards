@@ -69,9 +69,11 @@ class get_args():
                                    default=False,
             help="Create a list of the MISSOURI certificate winners.")
         parser.add_argument('-p', '--provstate', 
-                                   action='store_true',
                                    default=False,
-            help="Create a list of the STATE/PROV certificate winners.")
+            help="Create a list of the 1st or 2nd place "+\
+                  "STATE/PROV certificate winners. "+\
+                  "mqoawards -p 1 = FIRST PLACE List, "+\
+                  "mqoawards -p 2 = SECOND PLACE List.")
         args = parser.parse_args()
         #print(args)
         return args
@@ -82,21 +84,20 @@ if __name__ == '__main__':
    #print (args.args)
    
    if (args.args.award):
-       from stateAwards import CATEGORYPlaques
+       from moqpAwards.CATEGORYPlaques import CATEGORYPlaques
        app = CATEGORYPlaques()
    elif (args.args.category):
-       from stateAwards import CATEGORYAwards
+       from moqpAwards.CATEGORYAwards import CATEGORYAwards
        app = CATEGORYAwards(args.args.category)
    elif (args.args.showme):
-       from moqplabels import SHOWMELabels
-       app = SHOWMELabels('SHOWME')
+       from moqpAwards.SHOWMEAwards import SHOWMEAwards
+       app = SHOWMEAwards('SHOWME')
    elif (args.args.missouri):
-       from moqplabels import SHOWMELabels
-       app = SHOWMELabels('MISSOURI')
+       from moqpAwards.SHOWMEAwards import MOAwards
+       app = MOAwards('MISSOURI')
    elif (args.args.provstate):
-       print("Running STATELabels...")
-       from moqplabels import STATELabels
-       app = STATELabels()
+       from moqpAwards.stateAwards import STATEAwards
+       app = STATEAwards(args.args.provstate)
    else:
        from gui_reports import labels_ui
        app=gui_reports()
