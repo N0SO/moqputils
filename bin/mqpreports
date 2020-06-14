@@ -57,10 +57,14 @@ class get_args():
                                   action='version', 
                                   version = VERSION)
         parser.add_argument('-a', '--cntyline', default=None,
-            help="Check CALLSIGN in MOQP database to summarize "+\
-                 "potential county line operations. Entering "+\
-                 "'allcalls' will run the report "+ \
-                 "on all calls in the database.")
+            help="""Check CALLSIGN in MOQP database to summarize             
+                    potential county line operations. Entering
+                    'allcalls' will run the report on all calls
+                    in the database.""")
+        parser.add_argument('-n', '--linecount', default=2,
+            help="""Valid with -a option. The number entered will
+                    determine how many county lines to check for.
+                    May be 2,3 or 4.""")
         parser.add_argument('-c', '--callsign', default=None,
             help="CALLSIGN in MOQP database to summarize. "+ \
                  "Entering 'allcalls' will run the report "+ \
@@ -95,12 +99,18 @@ class get_args():
                  "summary for all stations in the database "+\
                  "for a Most Counties Worked report. ")
         parser.add_argument('-s', '--states', 
-                                   default='all',
+                                   default=None,
             help="Summarize all valid QSOS for a total "+ \
                  "Counties Worked report. ")
 
         parser.add_argument('-D', '--deletelog', default=None,
             help="Delete log for callsign specified.")
+
+        parser.add_argument('-e', '--qsoerrors', 
+                                   default=None,
+            help="""Compute QSO error statistics for the callsign
+                    specified.""")
+
 
         args = parser.parse_args()
         #print(args)
@@ -121,7 +131,8 @@ if __name__ == '__main__':
            app = MOQPDBCatReport(args.args.callsign)
    elif (args.args.cntyline):
        from countylineops import CountyLineOps
-       app = CountyLineOps(args.args.cntyline)
+       app = CountyLineOps(args.args.cntyline,
+                                args.args.linecount)
    elif (args.args.logreport):
        from logreport import LogReport
        app = LogReport(args.args.logreport)
@@ -138,11 +149,14 @@ if __name__ == '__main__':
        from moqpdbcountyrpt import MostCounties
        app = MostCounties(args.args.mostcounties)
    elif (args.args.states):
-       from stateAwards import STATEAwards
+       from moqpAwards.stateAwards import STATEAwards
        app = STATEAwards(args.args.states)
    elif (args.args.deletelog):
        from deletelog import deleteLog
        app = deleteLog(args.args.deletelog)
+   elif (args.args.qsoerrors):
+       from moqpqsoerrorstats import MOQPQSOErrorStats
+       app = MOQPQSOErrorStats(args.args.qsoerrors)
    else:
        from gui_reports import reports_ui
        app=gui_reports()
