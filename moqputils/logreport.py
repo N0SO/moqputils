@@ -10,6 +10,8 @@ Update History:
 -          Read config data here instead of in moqpdbutils
 -          Added DUPES field to QSO report.
 -          Improved error handling.
+* Sat Jun 20 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Adding HTML display options to support web apps.
 """
 
 VERSION = '0.1.0' 
@@ -24,16 +26,34 @@ class LogReport():
         if (callsign):
             self.appMain(callsign)
 
-    def processHeader(self, header):
+    def processHeader(self, header, endhtml=False):
         cab = CabrilloUtils()
-        csvdata = ''
+        if (endhtml):
+            csvdata ='<p>'
+            endstg ='<br>'
+        else:
+            csvdata = ''
+            endstg = '\n'
         for tag in cab.CABRILLOTAGS:
-            csvdata += ('%s: %s\n'%(tag, header[tag]))
+            csvdata += ('%s: %s%s'%(tag, header[tag], endstg))
+        if (endhtml):
+            csvdata +='</p>'
         return csvdata
 
-    def showQSO(self, qso):
-        fmt = '%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n'
-        qsoLine = (fmt %( qso['ID'],
+    def showQSO(self, qso, html=False):
+        if (html):
+            fmt ="""<tr>
+                    <td><a href='./qslcheck.php?qsoid=%d'>%d</a></td>
+                    <td>%d</td><td>%s</td><td>%s</td>
+                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+                    <td>%s</td><td>%s</td>
+                    </tr>"""
+        else:
+            fmt = '%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t'+\
+                  '%s\t%s\t%s\t%s\t%s\t%s\n'
+        qsoLine = (fmt %( qso['ID'], qso['ID'],
                           qso['LOGID'],
                           qso['FREQ'],                             
                           qso['MODE'],
