@@ -13,6 +13,8 @@ MOQPQSOErrorStats - Count valid and invalid QSOs in the MOQP
 Update History:
 * Sat Jun 13 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
+* Mon Jun 22 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.2 -Added HTML output support to exportcsv methob
 """
 
 from moqpdbutils import *
@@ -30,8 +32,12 @@ class MOQPQSOErrorStats():
         if (callsign):
             self.appMain(callsign)
 
-    def exportcsv(self, gq, bq, qp, call):
-        csvdata='%s\t%d\t%d\t%.1f'%(call, gq, bq, qp*100)
+    def exportcsv(self, gq, bq, qp, call, html=False):
+        if (html):
+            fmt = '<tr><td>%s</td><td>%d</td><td>%d</td><td>%.1f</td></tr>'
+        else:
+            fmt = '%s\t%d\t%d\t%.1f'
+        csvdata=fmt%(call, gq, bq, qp*100)
         return csvdata
 
     def computeOne(self, mydb, call):

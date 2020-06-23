@@ -13,7 +13,7 @@ Update History:
 - Added logic to lauch MOQPDBCatReport or MOQPDBClubReport.
 * Sat May 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.1 -Added reports for VHF, DIGITAL and MOST COUNTIES.
-* San May 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+* Sun May 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.2 -Added CLUBS and CLUB_MEMBERS DB Tables
 """
 
