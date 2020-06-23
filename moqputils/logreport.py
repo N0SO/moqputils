@@ -43,7 +43,7 @@ class LogReport():
     def showQSO(self, qso, html=False):
         if (html):
             fmt ="""<tr>
-                    <td><a href='./qslcheck.php?qsoid=%d'>%d</a></td>
+                    <td><a href='./qslcheck.php?qsoid=%d' target='_blank'>%d</a></td>
                     <td>%d</td><td>%s</td><td>%s</td>
                     <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
                     <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
