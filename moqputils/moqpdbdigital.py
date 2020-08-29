@@ -22,18 +22,21 @@ Update History:
 - V0.1.0 - Added method updateDB to add digital scores to
 - the database table DIGITAL (or update entries if an
 - entry for the station exists already.
+* Fri Aug 28 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Fixed bug causing an error and failure to
+- to insert new table data found during updates.
 """
 
 from moqpdbcategory import *
 from moqpdbutils import *
 from bonusaward import BonusAward
 
-VERSION = '0.1.0' 
+VERSION = '0.1.1' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\t' + \
                 'RY QSO\t' + \
-                'MULTS\tQSO SCORE\tW0MA BONUS\tK0RGQ BONUS\t' + \
+                'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
                 'CABFILE BONUS\tSCORE\tMOQP CATEGORY\n'
 
 class MOQPDBDigital(MOQPDBCategory):
@@ -160,19 +163,20 @@ class MOQPDBDigital(MOQPDBCategory):
         #print('Adding call %s, log ID %s, dig. qso count %d, mults %d'%(call, logid, qsos, mults))
         # Does record exist already?
         did = db.read_pquery("SELECT ID FROM DIGITAL WHERE LOGID=%s",[logid])
-        if (did):
-            #update existing
+        #print ('did = ',did, len(did))
+        if (len(did) > 0):
+            #print('update existing data for %s'%(call))
             did = did[0]
             db.write_pquery(\
                 "UPDATE DIGITAL SET LOGID=%s,QSOS=%s,MULTS=%s, "+\
                 "W0MABONUS=%s,K0GQBONUS=%s,SCORE=%s WHERE ID=%s",
                 [logid,qsos,mults,bonus1,bonus2,score,did])
         else:
-            #insert new
+            #print('insert new data for %s'%(call))
             did=db.write_pquery(\
                 "INSERT INTO DIGITAL "+\
-                "(LOGID,QSOS,MULTS,SCORE) "+\
-                "VALUES (%s,%s,%s,%s,%s,%s", 
+                "(LOGID,QSOS,MULTS,W0MABONUS,K0GQBONUS,SCORE) "+\
+                "VALUES (%s,%s,%s,%s,%s,%s)", 
                 [logid,qsos,mults,bonus1,bonus2,score])
         return did
 
