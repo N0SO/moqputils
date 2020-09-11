@@ -15,13 +15,16 @@ Update History:
 * Thu Feb 13 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.1 
 - Added mqpdbxxx to the menus
-
+* Fri Sep 11 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.2 
+- Updated -C --county options to -m --mostcounties for
+- consistancy with mqpreports. 
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 ARGS = None
 
 DEVMODPATH = ['moqputils', 'cabrilloutils']
@@ -61,7 +64,7 @@ class get_args():
             help='Summarize digital QSOs only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
         parser.add_argument('-U', '--vhf', default=None,
             help='Summarize VHF QSOs only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
-        parser.add_argument('-C', '--county', default=None,
+        parser.add_argument('-m', '--mostcounties', default=None,
             help='Summarize MISSOURI COUNTIES only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
         parser.add_argument('-i', '--inputpath', default=None,
             help='Specifies the path to the folder that contains the log files to summarize.')
@@ -73,7 +76,7 @@ if __name__ == '__main__':
    
    if (args.args.inputpath):
        #print(args.args.inputpath)
-       from moqpcategory import MOQPCategory
+       from moqpcategory import MOQPCategorJ
        app = MOQPCategory(args.args.inputpath)
    elif (args.args.callsign):
        from moqpdbcategory import MOQPDBCategory
@@ -84,9 +87,9 @@ if __name__ == '__main__':
    elif (args.args.vhf):
        from moqpdbvhf import MOQPDBVhf
        app = MOQPDBVhf(args.args.vhf)
-   elif (args.args.county):
+   elif (args.args.mostcounties):
        from moqpdbcountyrpt import MOQPDBCountyRpt
-       app = MOQPDBCountyRpt(args.args.county)
+       app = MOQPDBCountyRpt(args.args.mostcounties)
    else:
        from gui_moqpcategory import gui_MOQPCategory
        app=gui_MOQPCategory()

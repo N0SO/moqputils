@@ -17,6 +17,12 @@ Update History:
 - V0.1.2 -Added CLUBS and CLUB_MEMBERS DB Tables
 * Sat Sep 05 2020 Mike Heitmann, N0SO <n0so@arrl.net> 
 - V0.1.3 -Added HTML report for web display.
+* Fri Sep 11 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.4 
+- Added code to track the last new county worked,
+- saveing the county abbreviation and date/time. This was
+- added to resolve a tie situation in the Most Counties Worked
+- Award.
 """
 
 import os.path
