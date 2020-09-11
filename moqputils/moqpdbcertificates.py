@@ -268,7 +268,7 @@ class MOQPDBCertificates(MOQPCertificates):
               "SELECT ID, CALLSIGN FROM LOGHEADER WHERE 1")
            HEADER = True
            for nextlog in loglist:
-               print('callsign = %s'%(nextlog['CALLSIGN']))
+               #print('callsign = %s'%(nextlog['CALLSIGN']))
                csvdata = self.scoreLog(nextlog['CALLSIGN'], HEADER)
                HEADER=False     
                print(csvdata)

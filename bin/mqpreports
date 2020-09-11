@@ -15,12 +15,14 @@ Update History:
 - V0.1.1 -Added reports for VHF, DIGITAL and MOST COUNTIES.
 * Sun May 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.2 -Added CLUBS and CLUB_MEMBERS DB Tables
+* Sat Sep 05 2020 Mike Heitmann, N0SO <n0so@arrl.net> 
+- V0.1.3 -Added HTML report for web display.
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 ARGS = None
 
 DEVMODPATH = ['moqputils', 'cabrilloutils']
@@ -126,6 +128,9 @@ if __name__ == '__main__':
            (args.args.callsign == 'club-update') ):
            from moqpdbclubreport import MOQPDBClubReport
            app = MOQPDBClubReport(args.args.callsign)
+       elif (args.args.callsign == 'HTML'):
+           from moqphtmlreport import MOQPHtmlReport
+           app = MOQPHtmlReport(args.args.callsign)       
        else:
            from moqpdbcatreport import MOQPDBCatReport
            app = MOQPDBCatReport(args.args.callsign)
