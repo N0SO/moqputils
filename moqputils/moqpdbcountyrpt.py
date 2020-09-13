@@ -245,18 +245,110 @@ class MostCounties():
        ReportList = None
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
-       data = self.fetchSummary(mydb, call)
+       if (call == 'html'):
+           tcall='allcalls'
+       else:
+           tcall=call
+       data = self.fetchSummary(mydb, tcall)
        if (data):
-           ReportList = []
-           for ent in data:
-               ReportList.append(self.exportcsvsumdata(ent))
+           if (call == 'html'):
+               #print('html export')
+               Report = self.htmlExport(data)
+               ReportList = [Report]
+           else:
+               ReportList = []
+               for ent in data:
+                   ReportList.append(self.exportcsvsumdata(ent))
        return ReportList
+
+    def htmlExport(self, data):
+        from htmlreports import HTMLReports
+        html=HTMLReports('Most Counties Worked')
+        html.doc += """
+           <style>
+              table {
+                font-family: arial, sans-serif;
+                border-collapse: collapse;
+                width: 100%;
+               }
+
+              th {
+                font-family: consolas, helvetica, sans-serif;
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+                background-color: #99ccff;
+              }
+
+              td {
+                font-family: consolas, helvetica, sans-serif;
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+              }
+
+
+              tr:nth-child(even) {
+                background-color: #dddddd;
+              }
+           </style>
+           """
+        html.headerend()
+        html.bodystart()
+        html.doc += """
+        <h1>2020 Missouri QSO Party Most Counties Worked</h1>
+        <p> 
+        <table>
+        <caption>MOST COUNTIES</caption>
+        <tbody>
+        <tr>
+        <th><strong>RANK</strong></th>
+        <th><strong>CALLSIGN</strong></th>
+        <th><strong>OPERATORS</strong></th>
+        <th><strong>LOCATION</strong></th>
+        <th><strong>COUNTY <br /></strong><strong>COUNT</strong></th>
+        <th><strong>COUNTY NAMES</strong></th>
+        <th><strong>LAST COUNTY WORKED /TIME</strong></th>
+        </tr>
+        """       
+        if (data):
+           rank = 0
+           for ent in data:
+               rank += 1
+               rankstg = ' '
+               if (rank < 3):
+                   rankstg = '%d'%(rank)
+               lwcText=' '
+               if(ent['LASTWORKED']):         
+                   lwcText = '%s/%s UTC'%(ent['LASTWORKED'],
+                                          ent['LWTIME'])
+
+               html.tablerow([ [rankstg, ''],
+                               [ent['CALLSIGN'],''],
+                               [ent['OPERATORS'],''],
+                               [ent['LOCATION'],''],
+                               [ent['COUNT'],''],
+                               [ent['NAMES'],''],
+                               [lwcText,'']
+                             
+                             ], '')                               
+           
+        html.doc += """
+        </tbody>
+        </table>
+        </p>
+        """
+        html.bodyend()
+        html.docEnd()
+        #html.showDoc
+        return html.doc
 
     def appMain(self, callsign):
        csvdata = 'No Data.'
        csvList = self.ProcessData(callsign)
        if (csvList):
-           print(COLUMNHEADERS)
+           if(callsign != 'html'):
+               print(COLUMNHEADERS)
            for line in csvList:
                print(line)
 
