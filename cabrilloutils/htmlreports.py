@@ -96,10 +96,10 @@ class HTMLReports():
           else:
               f.write(self.doc) 
  
- """
- Main - for unit testing new methods
- """   
 if __name__ == '__main__':
+   """
+   Main - for unit testing new methods
+   """   
    app = HTMLReports('This is a test page')
    print ('Classname: %s Version: %s'%(app.__class__.__name__,
                                        app.__version__()))
