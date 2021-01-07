@@ -31,9 +31,9 @@ class STATEAwards(commonAwards):
         tsvdata = "%s\t%s\t"%(place,state)
         if (sdata):
             tsvdata += '%s\t%s\t%s\t'%(\
+                                       sdata['NAME'],
                                        sdata['CALLSIGN'],
-                                       sdata['OPERATORS'],
-                                       sdata['SCORE'])
+                                       sdata['OPERATORS'])
         else:
             tsvdata += 'NO ENTRY'
         return tsvdata

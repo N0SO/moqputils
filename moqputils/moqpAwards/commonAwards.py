@@ -30,7 +30,8 @@ class commonAwards():
            if 'CLUB' in cat:
                tsvdata += '%s'%(sumitem['NAME'])
            else:
-               tsvdata += ("%s\t%s"%( \
+               tsvdata += ("%s\t%s\t%s"%( \
+                               sumitem['NAME'],
                                sumitem['CALLSIGN'],
                                sumitem['OPERATORS']))
        else:

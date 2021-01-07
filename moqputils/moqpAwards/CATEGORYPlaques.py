@@ -40,7 +40,7 @@ class CATEGORYPlaques(commonAwards):
               "CLUBS.CLUBID=CLUB_MEMBERS.CLUBID "+\
               "INNER JOIN LOGHEADER ON "+\
               "CLUB_MEMBERS.LOGID=LOGHEADER.ID \n"+\
-              "WHERE SCHOOL > 0 AND LOGHEADER.LOCATION='MO' "+\
+              "WHERE LOGHEADER.NAME LIKE '%SCHOOL%' AND LOGHEADER.LOCATION='MO' "+\
               "ORDER BY (SCORE) DESC\n"+\
               "LIMIT 25")
            schoolclub = True

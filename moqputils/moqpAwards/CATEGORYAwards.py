@@ -39,7 +39,7 @@ class CATEGORYAwards(commonAwards):
                  CLUBS.CLUBID=CLUB_MEMBERS.CLUBID
                  INNER JOIN LOGHEADER ON
                  CLUB_MEMBERS.LOGID=LOGHEADER.ID
-                 WHERE SCHOOL>0 AND LOGHEADER.LOCATION='MO'
+                 WHERE LOGHEADER.NAME LIKE '%SCHOOL%' AND LOGHEADER.LOCATION='MO'
                  ORDER BY (SCORE) DESC
                  LIMIT 10""")
        elif cat in 'MISSOURI CLUB':
@@ -144,6 +144,7 @@ class CATEGORYAwards(commonAwards):
        #print(cat, catlist)
        sumlist = self.get_awardquery(mydb, catlist)
        placestg, catdata = self.setPlacement(placement, sumlist)
+       #print(catdata)
        tsvdata = self.processHeader(mydb, 
                                     placestg, 
                                     cat, 
