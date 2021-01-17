@@ -1,0 +1,174 @@
+#!/usr/bin/env python3
+"""
+moqpreports  - Utility to generate MOQP reports
+               for eval and publishing
+                
+               Based on 2019 MOQP Rules
+
+Update History:
+* Thu Jan 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.1 -First interation
+* Thu Jan 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Working version - adding option to launch club reports.
+- Added logic to lauch MOQPDBCatReport or MOQPDBClubReport.
+* Sat May 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 -Added reports for VHF, DIGITAL and MOST COUNTIES.
+* Sun May 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.2 -Added CLUBS and CLUB_MEMBERS DB Tables
+* Sat Sep 05 2020 Mike Heitmann, N0SO <n0so@arrl.net> 
+- V0.1.3 -Added HTML report for web display.
+* Fri Sep 11 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.4 
+- Added code to track the last new county worked,
+- saveing the county abbreviation and date/time. This was
+- added to resolve a tie situation in the Most Counties Worked
+- Award.
+"""
+
+import os.path
+import sys
+import argparse
+VERSION = '0.1.3'
+ARGS = None
+
+DEVMODPATH = ['moqputils', 'cabrilloutils']
+# If the development module source paths exist, 
+# add them to the python path
+for mypath in DEVMODPATH:
+    if ( os.path.exists(mypath) and \
+                       (os.path.isfile(mypath) == False) ):
+        sys.path.insert(0,mypath)
+#print('Python path = %s'%(sys.path))
+        
+DESCRIPTION = \
+"""moqpreports  - Generate reports for MOQP
+                  from database.
+                
+                   Based on 2019 MOQP Rules
+"""
+
+EPILOG = \
+"""
+Running with no parameters will launch the GUI.
+"""
+
+class get_args():
+    def __init__(self):
+        if __name__ == '__main__':
+            self.args = self.getargs()
+            
+    def getargs(self):
+        parser = argparse.ArgumentParser(\
+                               description = DESCRIPTION,
+                                           epilog = EPILOG)
+        parser.add_argument('-v', '--version', 
+                                  action='version', 
+                                  version = VERSION)
+        parser.add_argument('-a', '--cntyline', default=None,
+            help="""Check CALLSIGN in MOQP database to summarize             
+                    potential county line operations. Entering
+                    'allcalls' will run the report on all calls
+                    in the database.""")
+        parser.add_argument('-n', '--linecount', default=2,
+            help="""Valid with -a option. The number entered will
+                    determine how many county lines to check for.
+                    May be 2,3 or 4.""")
+        parser.add_argument('-c', '--callsign', default=None,
+            help="CALLSIGN in MOQP database to summarize. "+ \
+                 "Entering 'allcalls' will run the report "+ \
+                 "on all calls in the database. Entering "+ \
+                 "'club' will run the report on calls that"+ \
+                 " put a club name in the CABRILLO CLUB field.")
+        parser.add_argument('-d', '--digireport', default=None,
+            help="CALLSIGN in MOQP database to summarize. "+ \
+                 "Entering 'allcalls' will run the report "+ \
+                 "on all calls in the database.")
+        parser.add_argument('-l', '--logreport', default=None,
+            help="CALLSIGN in MOQP database to summarize. "+ \
+                 "Entering 'allcalls' will run the report "+ \
+                 "on all calls in the database.")
+        parser.add_argument('-V', '--vhfreport', default=None,
+            help="CALLSIGN in MOQP database to summarize. "+ \
+                 "Entering 'allcalls' will run the report "+ \
+                 "on all calls in the database.")
+        parser.add_argument('-C', '--countiesworked', 
+                                   action='store_true',
+                                   default=None,
+            help="Summarize all valid QSOS for a total "+ \
+                 "Counties Worked report. ")
+        parser.add_argument('-m', '--mostcounties', 
+                                   default=None,
+            help="Reads and displays the database COUNTY  "+ \
+                 "summary table and displays the number of "+ \
+                 "counties worked along with a list of the  "+ \
+                 "county abbreviations. Entering a callsign "+ \
+                 "displays the summary for that station. "+ \
+                 "Entering \'allcalls\' will display the "+ \
+                 "summary for all stations in the database "+\
+                 "for a Most Counties Worked report. ")
+        parser.add_argument('-s', '--states', 
+                                   default=None,
+            help="Summarize all valid QSOS for a total "+ \
+                 "Counties Worked report. ")
+
+        parser.add_argument('-D', '--deletelog', default=None,
+            help="Delete log for callsign specified.")
+
+        parser.add_argument('-e', '--qsoerrors', 
+                                   default=None,
+            help="""Compute QSO error statistics for the callsign
+                    specified.""")
+
+
+        args = parser.parse_args()
+        #print(args)
+        return args
+
+if __name__ == '__main__':
+   args = get_args()
+
+   #print (args.args)
+   
+   if (args.args.callsign):
+       if ((args.args.callsign == 'club') or \
+           (args.args.callsign == 'club-update') ):
+           from moqpdbclubreport import MOQPDBClubReport
+           app = MOQPDBClubReport(args.args.callsign)
+       elif (args.args.callsign == 'HTML'):
+           from moqphtmlreport import MOQPHtmlReport
+           app = MOQPHtmlReport(args.args.callsign)       
+       else:
+           from moqpdbcatreport import MOQPDBCatReport
+           app = MOQPDBCatReport(args.args.callsign)
+   elif (args.args.cntyline):
+       from countylineops import CountyLineOps
+       app = CountyLineOps(args.args.cntyline,
+                                args.args.linecount)
+   elif (args.args.logreport):
+       from logreport import LogReport
+       app = LogReport(args.args.logreport)
+   elif (args.args.countiesworked):
+       from moqpdbcountycount import *
+       app = MOQPDBCountyCountRpt(args.args.logreport)
+   elif (args.args.digireport):
+       from moqpdbdigitalreport import MOQPDBDigitalReport
+       app = MOQPDBDigitalReport(args.args.digireport)
+   elif (args.args.vhfreport):
+       from moqpdbvhfreport import MOQPDBVhfReport
+       app = MOQPDBVhfReport(args.args.vhfreport)
+   elif (args.args.mostcounties):
+       from moqpdbcountyrpt import MostCounties
+       app = MostCounties(args.args.mostcounties)
+   elif (args.args.states):
+       from moqpAwards.stateAwards import STATEAwards
+       app = STATEAwards(args.args.states)
+   elif (args.args.deletelog):
+       from deletelog import deleteLog
+       app = deleteLog(args.args.deletelog)
+   elif (args.args.qsoerrors):
+       from moqpqsoerrorstats import MOQPQSOErrorStats
+       app = MOQPQSOErrorStats(args.args.qsoerrors)
+   else:
+       from gui_reports import reports_ui
+       app=gui_reports()
+        

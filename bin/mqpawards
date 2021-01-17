@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+DESCRIPTION = \
+"""mqpawards  -  Generate the following award lists:
+                 First Place Plaques
+                 First Place Certificates that don't get a plaque
+                 First Place US STATE certiciates/ CANADIAN PROVANCE 1st and 2nd 
+                 place winner reports for the MOQP from the
+                 MOQP database SUMMARY Table.
+                
+                 Added for the 2020 MOQP.
+"""
+
+"""
+Update History:
+* Fri May 29 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.1 -First interation for 2020 MOQP
+"""
+
+import os.path
+import sys
+import argparse
+VERSION = '0.0.1'
+ARGS = None
+
+DEVMODPATH = ['moqputils', 'cabrilloutils']
+# If the development module source paths exist, 
+# add them to the python path
+for mypath in DEVMODPATH:
+    if ( os.path.exists(mypath) and \
+                       (os.path.isfile(mypath) == False) ):
+        sys.path.insert(0,mypath)
+#print('Python path = %s'%(sys.path))
+        
+
+EPILOG = \
+"""
+Running with no parameters will launch the GUI.
+"""
+
+class get_args():
+    def __init__(self):
+        if __name__ == '__main__':
+            self.args = self.getargs()
+            
+    def getargs(self):
+        parser = argparse.ArgumentParser(\
+                               description = DESCRIPTION,
+                                           epilog = EPILOG)
+        parser.add_argument('-v', '--version', 
+                                  action='version', 
+                                  version = VERSION)
+        parser.add_argument('-a', '--award',
+                                   action='store_true',
+                                   default=False,
+            help="Create a list of the 1st place award (plaque) "+\
+                  "winners in each MOQPCATEGORY. ")
+        parser.add_argument('-c', '--category',
+                                   default=False,
+            help="Create a list of the 1st or 2nd place "+\
+                  "winners in each MOQPCATEGORY. "+\
+                  "mqoawards -c 1 = FIRST PLACE List, "+\
+                  "mqoawards -c 2 = SECOND PLACE List.")
+        parser.add_argument('-s', '--showme', 
+                                   action='store_true',
+                                   default=False,
+            help="Create a list of the SHOWME certificate winners.")
+        parser.add_argument('-m', '--missouri', 
+                                   action='store_true',
+                                   default=False,
+            help="Create a list of the MISSOURI certificate winners.")
+        parser.add_argument('-p', '--provstate', 
+                                   default=False,
+            help="Create a list of the 1st or 2nd place "+\
+                  "STATE/PROV certificate winners. "+\
+                  "mqoawards -p 1 = FIRST PLACE List, "+\
+                  "mqoawards -p 2 = SECOND PLACE List.")
+        args = parser.parse_args()
+        #print(args)
+        return args
+
+if __name__ == '__main__':
+   args = get_args()
+
+   #print (args.args)
+   
+   if (args.args.award):
+       from moqpAwards.CATEGORYPlaques import CATEGORYPlaques
+       app = CATEGORYPlaques()
+   elif (args.args.category):
+       from moqpAwards.CATEGORYAwards import CATEGORYAwards
+       app = CATEGORYAwards(args.args.category)
+   elif (args.args.showme):
+       from moqpAwards.SHOWMEAwards import SHOWMEAwards
+       app = SHOWMEAwards('SHOWME')
+   elif (args.args.missouri):
+       from moqpAwards.SHOWMEAwards import MOAwards
+       app = MOAwards('MISSOURI')
+   elif (args.args.provstate):
+       from moqpAwards.stateAwards import STATEAwards
+       app = STATEAwards(args.args.provstate)
+   else:
+       from gui_reports import labels_ui
+       app=gui_reports()
+        

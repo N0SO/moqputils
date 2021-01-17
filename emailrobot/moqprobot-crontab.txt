@@ -1,0 +1,2 @@
+SHELL="/usr/local/cpanel/bin/jailshell"
+*/15 * * * * /usr/local/bin/php /home/w0ma/email-robot/emailrobot.php

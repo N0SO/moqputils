@@ -1,26 +1,29 @@
 #!/usr/bin/env python3
+"""
+Update History:
+* Thu Apr 29 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Retired code from 2019 QSO Party
+- and added enhanced log header/QSO checking
+- by inheriting from MOQPLogCheck
+* Thu May 07 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Added method delete_log
+* Sat May 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.2 - Updates for 2020 MOQP changes
+
+"""
+
 import MySQLdb
 import os.path
-import sys
+import sys, traceback
 from datetime import datetime
 from datetime import date
 from datetime import time
 from datetime import timedelta
 
-VERSION = '0.0.4' 
+VERSION = '0.1.1' 
 
-DEVMODPATH = ['moqputils', 'cabrilloutils']
-# If the development module source paths exist, 
-# add them to the python path
-for mypath in DEVMODPATH:
-    if ( os.path.exists(mypath) and \
-                       (os.path.isfile(mypath) == False) ):
-        sys.path.insert(0,mypath)
-#print('Python path = %s'%(sys.path))
-
-from moqpdbconfig import *
-from generalaward import GenAward
 from CabrilloUtils import CabrilloUtils
+from qsoutils import QSOUtils
 
 
 class MOQPDBUtils():
@@ -29,22 +32,17 @@ class MOQPDBUtils():
                        user = None, 
                        passwd = None, 
                        database = None):
-       if (host==None):
-           host = HOSTNAME
-           user = USER
-           passwd = PW
-           database = DBNAME
-
-       #print('Attempting connection to: %s as:%s pw:%s db:%s'%(host, user, passwd, database))
-       self.mydb = self.connectDB(host, 
+       if (host):
+           #print('Attempting connection to: %s as:%s pw:%s db:%s'%(host, user, passwd, database))
+           self.mydb = self.connectDB(host, 
                                   user, 
                                   passwd, 
                                   database)
-       if (self.mydb):
-           self.setCursor()
-           #self.cursor = None
-       else:
-          print("Error connecting to %s database %s:\n%s"%(host, database, e))
+           if (self.mydb):
+               self.setCursor()
+               #self.cursor = None
+           else:
+               print("Error connecting to %s database %s:\n%s"%(host, database, e))
           
     def connectDB(self, host, 
                         user, 
@@ -81,8 +79,9 @@ class MOQPDBUtils():
                 #qresult = self.cursor.fetchall()
                 #print(qresult)
         except Exception as e:
-            print ("write_query Error %s executing query: %sn"%\
-                                           (e.args,query))  
+            print ("write_query Error %s executing query:\n %s"%\
+                                           (e.args,query)) 
+            traceback.print_exc(file=sys.stdout) 
         return qstat
         
     def read_query(self, query):
@@ -96,13 +95,39 @@ class MOQPDBUtils():
                                               (e.args,query))
         return qresult
         
+    def write_pquery(self, query, params, commit = True):
+        qstat = None
+        try:
+            self.cursor.execute(query, params)
+            if (commit):
+                self.mydb.commit()
+                qstat = self.cursor.lastrowid
+        except Exception as e:
+            print ("write_pquery Error %s executing query:\n %s %s'"%\
+                                           (e.args,
+                                            query,
+                                            params))  
+            traceback.print_exc(file=sys.stdout) 
+        return qstat
+        
+    def read_pquery(self, query, params):
+        qresult = None
+        qstat = self.write_pquery(query, params)
+        try:
+            qresult = self.cursor.fetchall()
+        except Exception as e:
+            print( \
+            "read_pquery Error %s reading results from query:\n %s"%\
+                                              (e.args,query))
+        return qresult
+        
     def fetchLogList(self):
         """
         Return a list o all calls in database with LOGID.
         """
         loglist = None
         loglist = self.read_query( \
-               "SELECT ID, CALLSIGN FROM logheader WHERE 1")
+               "SELECT ID, CALLSIGN FROM LOGHEADER WHERE 1")
         return loglist
 
     def fetchlogQSOS(self, callID):
@@ -126,7 +151,7 @@ class MOQPDBUtils():
         if (loglist):
             all_logs = loglist
         else:
-            query =  "SELECT `ID`, `CALLSIGN` FROM `logheader` WHERE 1"
+            query =  "SELECT `ID`, `CALLSIGN` FROM `LOGHEADER` WHERE 1"
             all_logs = self.read_query(query)
         
         myID = self.CallinLogDB(mycall, loglist)
@@ -146,8 +171,8 @@ class MOQPDBUtils():
         header = None
         logID = self.CallinLogDB(call)
         if (logID):
-            header = self.read_query( \
-                "SELECT * FROM `logheader` WHERE ID=%d"%(logID))
+            header = self.read_pquery( \
+                "SELECT * FROM `LOGHEADER` WHERE ID=%s", [logID])
         return header
 
     def fetchCABHeader(self, call):
@@ -212,253 +237,25 @@ class MOQPDBUtils():
     def fetchLogSummary(self, call):
         logsum = None
         logID = self.CallinLogDB(call)
-        query = "SELECT * FROM SUMMARY WHERE LOGID=%s"%(logID)
-        logsum = self.read_query(query)
-        return logsum[0]
+        #query = "SELECT * FROM SUMMARY WHERE LOGID=%s"%(logID)
+        logsum = self.read_pquery(\
+            "SELECT * FROM SUMMARY WHERE LOGID=%s", [logID])
+        if (logsum): logsum = logsum[0]
+        return logsum
  
-    def padtime(self, timestg):
-        count = len(timestg)
-        if (count < 4):
-            pads = 4 - count
-            padtime =''
-            for i in range(pads):
-                padtime += '0'
-            padtime += timestg
-        elif (count > 4):
-            padtime = timestg[:3]
-        else:
-            padtime = timestg
-        return padtime
-
-        
-    def qsoqslCheck(self, myqso, urqso):
-        qslstat = False
-        logerrors = []
-        gutil = GenAward()
-        cabutil = CabrilloUtils()
-        """
-        TBD - compare date/time, BAND, MODE, REPORT, QTH
-        """
-
-        count = len(myqso['TIME'])
-        if (count != 4):
-            newtime = self.padtime(myqso['TIME'])
-            print('QSO %d: Time string wrong length - changing %s to %s...'%(myqso['ID'], myqso['TIME'], newtime))
-            myqso['TIME'] = newtime
-            
-        count = len(urqso['TIME'])
-        if (count != 4):
-            newtime = self.padtime(urqso['TIME'])
-            print('QSO %d: Time string wrong length - changing %s to %s...'%(urqso['ID'], urqso['TIME'], newtime))
-            urqso['TIME'] = newtime
-            
-        myqtime = self.logtimes(myqso['DATE'], myqso['TIME'])
-        urqtime = self.logtimes(urqso['DATE'], urqso['TIME'])
-        myqband = gutil.getBand(myqso['FREQ'])
-        urqband = gutil.getBand(urqso['FREQ'])
-        urqsomycall = cabutil.stripCallsign(urqso['MYCALL'])
-        myqsourcall = cabutil.stripCallsign(myqso['URCALL'])
-
-        if (myqtime > urqtime):
-            timediff = myqtime - urqtime
-        else:
-            timediff = urqtime - myqtime
-        
-        #print('MYQSO: %s\nURQSO: %s'%(myqso, urqso))
-        #print('Time difference: %s, MYCALL: %s, URCALL:%s'%(timediff, myqsourcall, urqsomycall))
-        
-        if ( (timediff < timedelta(minutes=30) ) and \
-             (myqband == urqband) and \
-             (myqso['MODE'] == urqso['MODE']) and \
-             (myqsourcall == urqsomycall) and \
-             (myqso['URQTH'] == urqso['MYQTH']) and \
-             (myqso['URREPORT'] != '') ):
-            qslstat = True
-            #print('QSL!\n')
-        else:
-            logerrors.append('%s...'%(self.showQSO(urqso)))
-            #logerrors.append('for MYQSO %d, tried URQSO: %d...'%(myqso['ID'], urqso['ID']))
-            if (timediff > timedelta(minutes=30)):
-                logerrors.append('Log time diff: %s > than 30 min.'%(timediff))
-            if (myqband != urqband):
-                logerrors.append('BAND does not match')
-            if (myqsourcall != urqsomycall):
-                logerrors.append('CALLSIGN %s in URREPORT does not match CALLSIGN %s in MYREPORT.'%(myqsourcall, urqsomycall))
-            if (myqso['URQTH'] != urqso['MYQTH']):
-                logerrors.append('QTH %s in URREPORT does not match QTH %s in MYREPORT'%(myqso['URQTH'], urqso['MYQTH']))
-            if (myqso['URREPORT'] == ''):
-                logerrors.append('REPORT %s looks bogus'%(myqso['URREPORT']))
-        if (logerrors == []):
-            logerrors = None
-        return { 'QSLSTAT':qslstat,
-                 'QSLERR':logerrors }
-        
-    def logqslCheck(self, call, loglist = None):
-        statList = None
-
-        if (loglist):
-            all_logs = loglist
-        else:
-            query =  "SELECT `ID`, `CALLSIGN` FROM `logheader` WHERE 1"
-            all_logs = self.read_query(query)
-        
-        callID = self.CallinLogDB(call, all_logs)
-        
-        if (callID):
-            myqsos = self.fetchlogQSOS(callID)
-            if (myqsos):
-                statList = []
-                for qso in myqsos:
-                    qsostat = dict()
-                    nextCall = qso['URCALL']
-                    nextID = self.CallinLogDB(nextCall, all_logs)
-                    if (nextID):
-                        #print('Fetching QSOs for %s, LOGID %d'%(qso['URCALL'], nextID))
-                        #query= ("SELECT * FROM `QSOS` WHERE ( (`LOGID` = %d) AND (`URCALL` IN ('%s')) )"%(nextID, call) )
-                        #print(query)
-                        #urqsos = mydb.read_query(query)
-                        urqsos = self.fetchIDQSOSwithCall(nextID, call)
-                        if (urqsos):
-                            
-                            print('Source QSO from %s:\n%s'%(call, 
-                                               self.showQSO(qso)))
-                            print('Possible QSLs from %s:\n'%(qso['URCALL']))
-                            for nq in urqsos:
-                                print(self.showQSO(nq))
-                            
-                            qslstatus = False
-                            qslIndex = 0
-                            urqsoCount = len(urqsos)
-                            urqsoerrors = []
-                            while ( (qslstatus == False) and \
-                                    (qslIndex < urqsoCount) ):
-                                #print('Checking:\n%s\n%s\n\n'%(qso, urqsos[qslIndex]))
-                                qsostatus = self.qsoqslCheck(qso,
-                                                urqsos[qslIndex])
-                                qslstatus = qsostatus['QSLSTAT']
-                                if (qslstatus):
-                                    qsostat['STATUS']='QSL'
-                                    qsostat['MYQSO'] = qso
-                                    qsostat['URQSO'] = urqsos[qslIndex]
-                                    statList.append(qsostat)
-                                else: # Save reason for no match this QSO
-                                    for ln in qsostatus['QSLERR']:
-                                        urqsoerrors.append(ln)
-                                qslIndex += 1
-                                #print(qslIndex, qslstatus)
-
-                            if (qslstatus == False):
-                                """
-                                QSOs with URCALL found, but none 
-                                match this QSO - Busted?
-                                """
-                                qsostat['STATUS']='BUSTED'
-                                qsostat['MYQSO'] = qso
-                                qsostat['URQSO'] = urqsoerrors
-                                statList.append(qsostat)
-                                    
-                        else: #(if urqsos)
-                            """
-                            No qsos for nextCall in database.log for QSO with station qso['URCALL']
-                            """
-                            #print('For %s QSO %d, No matching QSOS for station %s in database.'%(call, qso['ID'], nextCall))
-                            qsostat['STATUS']='NO URCALL QSOS'
-                            qsostat['MYQSO'] = qso
-                            qsostat['URQSO'] = None
-                            statList.append(qsostat)
-                        
-                        
-                    else: #(if nextID)
-                        """
-                        No log for QSO with station qso['URCALL']
-                        """
-                        #print('For %s QSO %d, No log for station %s in database.'%(call, qso['ID'], nextCall))
-                        qsostat['STATUS']='NO URCALL LOG'
-                        qsostat['MYQSO'] = qso
-                        qsostat['URQSO'] = None
-                        statList.append(qsostat)
-
-                    self.recordQSOStatus(qsostat)            
-
-            else: #(if myqsos)
-                """
-                The call for supplier parameter call is in
-                the database, but no QSOs are recorded.
-                Return None for status
-                """
-                print('No QSOS for %s in database.'%(call))
-        
-        else: #(if callID)   
-            """
-            No log for supplied parameter call in the database.
-            Return None status
-            """
-            print('%s not in database.'%(call))
-            
-        return statList
-        
-    def recordQSOStatus(self, qsostat):
-        success = None
-        qsorec = { 'QSOID': qsostat['MYQSO']['ID'],
-                   'QSL': 0,
-                   'NOLOG': False,
-                   'NOQSOS': False,
-                   'VALID': False,
-                   'NOTE': ' '}
-               
-        if qsostat['STATUS'] == 'QSL':
-            """
-            QSL - Save matching QSO ID and set VALID flag
-            """
-            qsorec['QSL'] = qsostat['URQSO']['ID']
-            qsorec['VALID'] = True
-        elif qsostat['STATUS'] == 'BUSTED':
-            """
-            QSOS with URCALL found, but no match
-            to this QSO
-            """
-            qsorec['VALID'] = False
-        elif qsostat['STATUS'] == 'NO URCALL QSOS':
-            """
-            Log for other station exists, but no QSO matching
-            this one was found - CLEAR VALID flag
-            """
-            qsorec['VALID'] = False
-            qsorec['NOQSOS'] = True
-        elif qsostat['STATUS'] == 'NO URCALL LOG':
-            """
-            No Log for other station exists. Give beneit of doubt
-            and SET VALID flag
-            """
-            qsorec['VALID'] = True
-            qsorec['NOLOG'] = True
-            
-        """
-        keys = str(qsorec.keys())[9:].replace('[', '').replace(']','')
-        vals = str(qsorec.values())[11:].replace('[','').replace(']','')
-        query = 'INSERT INTO QSOSTATUS %s VALUES %s' % (keys, vals)
-        """
-        
-        query="UPDATE QSOS SET QSL=%d, VALID=%s, NOLOG=%s, NOQSOS=%s WHERE ID=%s" % \
-                 (qsorec['QSL'], qsorec['VALID'], qsorec['NOLOG'],
-                                 qsorec['NOQSOS'], qsorec['QSOID'])
-
-        #print('Writing QSO status:\n%s'%(query))
-        success = self.write_query(query)
-            
-        return success
         
     def CallinLogDB(self, call, loglist=None):
         logID = None
         if (loglist):
             all_logs = loglist
         else:
-            query =  "SELECT `ID`, `CALLSIGN` FROM `logheader` WHERE 1"
+            query =  "SELECT `ID`, `CALLSIGN` FROM `LOGHEADER` WHERE 1"
             all_logs = self.read_query(query)
-        for nextlog in all_logs:
-          if (nextlog['CALLSIGN'] == call):
-            logID = nextlog['ID']
-            break
+        if(all_logs):
+            for nextlog in all_logs:
+               if (nextlog['CALLSIGN'] == call):
+                  logID = nextlog['ID']
+                  break
         return logID
 
     def showQSO(self, qso):
@@ -571,43 +368,302 @@ class MOQPDBUtils():
             query = 'UPDATE SUMMARY SET W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, SCORE=%s WHERE ID=%s'% \
                     (log['SCORE']['W0MA'], log['SCORE']['K0GQ'], log['SCORE']['CABFILE'], log['SCORE']['TOTAL'], sumID)
             ures = self.write_query(query)
-            query = "UPDATE SUMMARY SET MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s WHERE ID=%s"% \
-                    (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, sumID)
+            query = "UPDATE SUMMARY SET MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s, LOCATION='%s' WHERE ID=%s"% \
+                    (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, log['HEADER']['LOCATION'], sumID)
             ures = self.write_query(query)
         else:
-            query = "INSERT INTO SUMMARY LOGID=%s, \
-                                        CWQSO=%s, \
-                                        PHQSO=%s, \
-                                        RYQSO=%s, \
-                                        VHFQSO=%s, \
-                                        MULTS=%s, \
-                                        QSOSCORE=%s, \
-                                        W0MABONUS=%s, \
-                                        K0GQBONUS=%s, \
-                                        CABBONUS=%s, \
-                                        MOQPCAT=%s, \
-                                        DIGITAL=%s, \
-                                        VHF=%s, \
-                                        ROOKIE=%s" % \
-                         (logID,
+            query = "INSERT INTO SUMMARY ("+\
+                    "LOGID, "+\
+                    "CWQSO, "+\
+                    "PHQSO, "+\
+                    "RYQSO, "+\
+                    "VHFQSO, "+\
+                    "MULTS, "+\
+                    "QSOSCORE, "+\
+                    "W0MABONUS, "+\
+                    "K0GQBONUS, "+\
+                    "CABBONUS, "+\
+                    "SCORE, "+\
+                    "MOQPCAT, "+\
+                    "DIGITAL, "+\
+                    "VHF, "+\
+                    "ROOKIE, "+\
+                    "LOCATION) "+\
+                    "VALUES "+\
+                    "(%s, %s, %s, %s, %s, %s, %s, %s, "+\
+                    "%s, %s, %s, %s, %s, %s, %s, %s)"
+            params = (   logID,
                          log['QSOSUM']['CW'],
                          log['QSOSUM']['PH'],
                          log['QSOSUM']['DG'],
                          log['QSOSUM']['VHF'],
                          log['MULTS'],
-                         log['SCORE'],
-                         w0mabonus,
-                         k0gqbonus,
-                         cabbonus,
+                         log['SCORE']['SCORE'],
+                         log['SCORE']['W0MA'],
+                         log['SCORE']['K0GQ'],
+                         log['SCORE']['CABFILE'],
+                         log['SCORE']['TOTAL'],
                          log['MOQPCAT']['MOQPCAT'],
                          digital_log,
                          vhf_log,
-                         rookie_log)
-        #print('\n\n\n\nUpdating SUMMARY - query = %s'%(query))
-        ures = self.write_query(query)
+                         rookie_log,
+                         log['HEADER']['LOCATION'] )
+            #print('\n\n\n\nUpdating SUMMARY - query = %s\n%s\n%s,%s,%s'%(query, params,log['SCORE']['W0MA'],log['SCORE']['K0GQ'],log['SCORE']['CABFILE']))
+            ures = self.write_pquery(query, params)
         return sumID
+    """
+    def trimAndEscape(self, unsafeString, maxLen):
+        badchars = '\"\''
+        if (len(unsafeString) > maxLen):
+            workString = unsafeString[:maxLen-1]
+        else:
+            workString = unsafeString
+        for bad in badchars:
+            workString = workString.replace(bad, ' ')
+        return workString
+    """    
        
-       
+    def write_header(self, header, cabBonus):
+        qutil = QSOUtils()
+        logID = None
+        header['CREATED-BY'] = \
+                  qutil.trimAndEscape(header['CREATED-BY'], 50)
+        header['CLUB'] = qutil.trimAndEscape(header['CLUB'], 50)
+        header['SOAPBOX'] = \
+                  qutil.trimAndEscape(header['SOAPBOX'], 120)
+        header['NAME'] = qutil.trimAndEscape(header['NAME'], 40)
+        header['ADDRESS'] = \
+                  qutil.trimAndEscape(header['ADDRESS'], 120)
+        header['ADDRESS-CITY'] = \
+                  qutil.trimAndEscape(header['ADDRESS-CITY'], 40)
+        header['ADDRESS-STATE-PROVINCE'] = \
+          qutil.trimAndEscape(header['ADDRESS-STATE-PROVINCE'], 40)
+        header['ADDRESS-POSTALCODE'] = \
+          qutil.trimAndEscape(header['ADDRESS-POSTALCODE'], 12)
+        header['ADDRESS-COUNTRY'] = \
+          qutil.trimAndEscape(header['ADDRESS-COUNTRY'], 25)
+        
+        if(type(header['NOTES']) is list):
+            qu = QSOUtils()
+            header['NOTES'] = qu.packNote(header['NOTES'])
+
+        query = """INSERT INTO LOGHEADER(START,
+                      CALLSIGN,
+                      CREATEDBY,
+                      LOCATION, 
+                      CONTEST,
+                      NAME,
+                      ADDRESS,
+                      CITY,
+                      STATEPROV,
+                      ZIPCODE,
+                      COUNTRY,
+                      EMAIL,
+                      CATASSISTED,
+                      CATBAND,
+                      CATMODE,
+                      CATOPERATOR,
+                      CATOVERLAY,
+                      CATPOWER,
+                      CATSTATION,
+                      CATXMITTER,
+                      CERTIFICATE,
+                      OPERATORS,
+                      CLAIMEDSCORE,
+                      CLUB,
+                      IOTAISLANDNAME,
+                      OFFTIME,
+                      SOAPBOX,
+                      ENDOFLOG,
+                      CABBONUS,
+                      STATUS)
+                   VALUES(%s,%s,%s,%s,%s,%s,%s,%s,
+                          %s,%s,%s,%s,%s,%s,%s,%s,
+                          %s,%s,%s,%s,%s,%s,%s,%s,
+                          %s,%s,%s,%s,%s,%s)"""
+
+        values = [header['START-OF-LOG'],
+                  header['CALLSIGN'],
+                  header['CREATED-BY'],
+                  header['LOCATION'],
+                  header['CONTEST'],
+                  header['NAME'],
+                  header['ADDRESS'],
+                  header['ADDRESS-CITY'],
+                  header['ADDRESS-STATE-PROVINCE'],
+                  header['ADDRESS-POSTALCODE'],
+                  header['ADDRESS-COUNTRY'],
+                  header['EMAIL'],
+                  header['CATEGORY-ASSISTED'],
+                  header['CATEGORY-BAND'],
+                  header['CATEGORY-MODE'],
+                  header['CATEGORY-OPERATOR'],
+                  header['CATEGORY-OVERLAY'],
+                  header['CATEGORY-POWER'],
+                  header['CATEGORY-STATION'],
+                  header['CATEGORY-TRANSMITTER'],
+                  header['CERTIFICATE'],
+                  header['OPERATORS'],
+                  header['CLAIMED-SCORE'],
+                  header['CLUB'],
+                  header['IOTA-ISLAND-NAME'],
+                  header['OFFTIME'],
+                  header['SOAPBOX'],
+                  header['END-OF-LOG'],
+                  cabBonus,
+                  header['NOTES'] ]     
+        logID = self.write_pquery(query, values)
+        return logID
+    
+    def write_qsodata(self, logID, qsodata):
+        qsoID = None
+        if (type(qsodata['NOTES']) is list):
+            qu = QSOUtils()
+            qsodata['NOTES'] = qu.packNote(qsodata['NOTES'])
+        query = """INSERT INTO QSOS(LOGID,
+                                    FREQ,
+                                    MODE,
+                                    DATE,
+                                    TIME,
+                                    MYCALL,
+                                    MYREPORT,
+                                    MYQTH,
+                                    URCALL,
+                                    URREPORT,
+                                    URQTH,
+                                    DUPE,
+                                    NOTE)
+                      VALUES(""" + \
+                         ('"%d",'%(logID)) +\
+                         ('"%s",'%(qsodata['FREQ'])) +\
+                         ('"%s",'%(qsodata['MODE'])) +\
+                         ('"%s",'%(qsodata['DATE'])) +\
+                         ('"%s",'%(qsodata['TIME'])) +\
+                         ('"%s",'%(qsodata['MYCALL'])) +\
+                         ('"%s",'%(qsodata['MYREPORT'])) +\
+                         ('"%s",'%(qsodata['MYQTH'])) +\
+                         ('"%s",'%(qsodata['URCALL'])) +\
+                         ('"%s",'%(qsodata['URREPORT'])) +\
+                         ('"%s",'%(qsodata['URQTH'])) +\
+                         ('"%s",'%(qsodata['DUPE'])) +\
+                         ('"%s")'%(qsodata['NOTES']))
+
+        qsoID = self.write_query(query)
+        return qsoID
+
+    def write_qsolist(self, logID, qsolist):
+        success = False
+        #qcount = 0
+        qidlist = []
+        #oqidlist = []
+
+        for qso in qsolist:
+            if (qso['DUPE'] > 0):
+                di = qso['DUPE']
+                if (di >= 1):
+                    qso['DUPE'] = qidlist[di-1]
+            qID = self.write_qsodata(logID, qso)
+            if (qID):
+                qidlist.append(qID)
+                success = True
+                #oqidlist.append(qso['DUPE'])
+                #qcount += 1
+            else:
+                print('Error writing QSO data!')
+                success = False
+                break
+        #print(oqidlist, qidlist)
+        return success
+        
+    def get_log_parts(self, call):
+        log=None
+        headerID = self.CallinLogDB(call)
+        if (headerID):
+            query = "SELECT ID FROM `QSOS` WHERE LOGID=%s" 
+            params = [headerID]
+            qsos = self.read_pquery(query, params)
+            if (qsos):
+                log = {'CALL': call,
+                       'HEADERID' : headerID,
+                       'QSOIDS' : qsos }
+        return log
+        
+
+    def delete_log(self, call, confirm = False):
+        success = False
+        headerID = None
+        log = self.get_log_parts(call)
+        #print(log)
+        if (log):
+            headerID = log['HEADERID']
+            theseqsos = log['QSOIDS']
+        if (headerID):
+            print('Deleting log %s, LOGID = %d...'%(\
+                                                 call,
+                                                 headerID))
+            if (theseqsos):
+                # Delete QSO records
+                qcount = len(theseqsos)
+                print('Number of QSOS in log %s to delete: %d'\
+                                         %(call, qcount))
+                thisQ = 0
+                for qid in theseqsos:
+                    thisQ+=1
+                    print('Deleting QSO#%d ID: %d...'%(thisQ, qid['ID']))
+                    query = "DELETE FROM `QSOS` WHERE `ID`=%s"
+                    params = [qid['ID']]
+                    if (self.write_pquery(query, params) \
+                                                     == None):
+                        print('Error - QSO %d not deleted!'%\
+                                                     (QSO['ID']))
+                        print('Header and remaining QSOS not deleted.')
+                        break                
+                if (thisQ == qcount): 
+                    """All qsos deleted, delete log SUMMARY, 
+                       SHOWE, MISSOURI table entries and then 
+                       delete log header.
+                       NOTE: Add any future results tables to
+                             this list!"""
+                    summary = self.read_pquery(\
+                      'SELECT ID FROM SUMMARY WHERE LOGID=%s',
+                                                   [headerID])
+                    if(summary):
+                       print('Deleting SUMMARY entry %d for %s, LOGID %d'\
+                                %(summary[0]['ID'], call, headerID))
+                       self.write_pquery(\
+                          'DELETE FROM SHOWME WHERE ID=%s',
+                                                  [summary[0]['ID']])
+                     
+                    showme = self.read_pquery(\
+                      'SELECT ID FROM SHOWME WHERE LOGID=%s',
+                                                   [headerID])
+                    if(showme):
+                       print('Deleting SHOWME entry %d for %s, LOGID %d'\
+                                %(showme[0]['ID'], call, headerID))
+                       self.write_pquery(\
+                          'DELETE FROM SHOWME WHERE ID=%s',
+                                                  [showme[0]['ID']])
+                    mo = self.read_pquery(\
+                      'SELECT ID FROM MISSOURI WHERE LOGID=%s',
+                                                   [headerID])
+                    if(mo):
+                       print('Deleting MISSOURI entry %d for %s, LOGID %d'\
+                                %(mo[0]['ID'], call, headerID))
+                       self.write_pquery(\
+                          'DELETE FROM MISSOURI WHERE ID=%s',
+                                                  [mo[0]['ID']])
+                    params = [headerID]     
+                    query = "DELETE FROM LOGHEADER WHERE ID=%s"
+                    if (self.write_pquery(query, params)==None):
+                         print(\
+                           'Log Header %d for call %s not deleted.'%\
+                                                     (headerID, call))
+                    else:
+                         print('Log for call %s deleted!'%(call))
+                         success=True                          
+            else: 
+                print('No QSOS to delete!')        
+            return success
 
 if __name__ == '__main__':
     

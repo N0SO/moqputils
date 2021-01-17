@@ -16,41 +16,21 @@ Update History:
 - V0.3.0 - Copied method processQSOList from logsummay.py.
 - This ended dependancy on logsummary in preparation for
 - making a child class to read all QSO data from SQL database.
+* Sat May 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.3.1 - Updates for 2020 MOQP changes
+* Sat May 23 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.3.2 - Updated to use moqpdefs.py for state, county, country
+- designations.
 """
 from CabrilloUtils import *
 from moqpmults import *
 from generalaward import GenAward
+from moqpdefs import *
 import os
 
-VERSION = '0.3.0' 
+VERSION = '0.3.2' 
 FILELIST = './'
 ARGS = None
-
-#INSTATE = 'MO MISSOURI'
-INSTATE = ['MO', 'MISSOURI']
-
-CANADA = 'MAR NL QC ONE ONN ONS GTA MB SK AB BC NT'
-
-#STATIONS = 'FIXED MOBILE PORTABLE ROVER EXPEDITION HQ SCHOOL'
-STATIONS = ['FIXED', 'MOBILE','PORTABLE', 'ROVER','EXPEDITION',
-            'HQ','SCHOOL']
-
-MODES = 'SSB USB LSB FM PH CW RY RTTY DIG DIGI MIXED'
-
-OVERLAY = 'ROOKIE'
-
-US = 'CT EMA ME NH RI VT WMA ENY NLI NNJ NNY SNJ WNY DE EPA MDC WPA '
-US += 'AL GA KY NC NFL SC SFL WCF TN VA PR VI AR LA MS NM NTX OK STX '
-US+= 'WTX EB LAX ORG SB SCV SDG SF SJV SV PAC AZ EWA ID MT NV OR UT '
-US+= 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD CA '
-
-DX = 'DX DK2 DL8 HA8 ON4'
-
-COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
-                'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
-                'CW QSO\tPH QSO\tRY QSO\tTOTAL\tVHF QSO\t' + \
-                'MULTS\tSCORE\tMOQP CATEGORY\tDIGITAL\tVHF\tROOKIE\n'
-
 
 class MOQPCategory(CabrilloUtils):
 
@@ -187,7 +167,7 @@ class MOQPCategory(CabrilloUtils):
          else:
              badmodeline = ('QSO:')
              for tag in self.QSOTAGS:
-                 badmodeline += (' %s'%(data[tag]))
+                 badmodeline += (' %s'%(thisqso[tag]))
              print('UNDEFINED MODE: %s -- QSO data = %s'%(mode, badmodeline))
 
       return  summary

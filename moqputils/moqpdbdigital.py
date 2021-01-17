@@ -16,18 +16,27 @@ moqpdbcategory  - Same features as moqpdbcategory, except read only
 Update History:
 * Thu Feb 13 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
+* Wed May 27 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.2 - Updated logheader to LOGHEADER.
+* Sat May 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Added method updateDB to add digital scores to
+- the database table DIGITAL (or update entries if an
+- entry for the station exists already.
+* Fri Aug 28 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Fixed bug causing an error and failure to
+- to insert new table data found during updates.
 """
 
 from moqpdbcategory import *
 from moqpdbutils import *
 from bonusaward import BonusAward
 
-VERSION = '0.0.1' 
+VERSION = '0.1.1' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\t' + \
                 'RY QSO\t' + \
-                'MULTS\tQSO SCORE\tW0MA BONUS\tK0RGQ BONUS\t' + \
+                'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
                 'CABFILE BONUS\tSCORE\tMOQP CATEGORY\n'
 
 class MOQPDBDigital(MOQPDBCategory):
@@ -116,7 +125,10 @@ class MOQPDBDigital(MOQPDBCategory):
               k0gqbonus = 100
           else:
               k0gqbonus = 0
-          cabBonus = logsummary['HEADER']['CABBONUS']
+          if (logsummary['HEADER']['CABBONUS']):
+              cabBonus = 100
+          else:
+              cabBonus = 0
           qsoScore = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
           bonuspoints = { 'W0MA':w0mabonus,
                           'K0GQ':k0gqbonus,
@@ -132,12 +144,41 @@ class MOQPDBDigital(MOQPDBCategory):
           fullSummary['MOQPCAT'] = moqpcat
           fullSummary['QSOLIST'] = logsummary['QSOLIST']
           fullSummary['ERRORS'] = logsummary['ERRORS']
-          #mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-          #mydb.setCursorDict()
-          #mydb.writeSummary(fullSummary)
-       #else:
-       #   print('No log in database for call %s.'%(filename))
+          self.updateDB(logsummary['HEADER']['CALLSIGN'],
+                        logsummary['QSOSUM']['DG'],
+                        logsummary['MULTS'],
+                        bonuspoints['W0MA'],
+                        bonuspoints['K0GQ'],
+                        bonuspoints['TOTAL'])
+                        
        return fullSummary
+       
+    def updateDB(self, call, qsos, mults, bonus1, bonus2, score):
+        did = None
+        db = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+        #logid = db.CallinLogDB(call)
+        logid = db.read_pquery(\
+            "SELECT ID FROM LOGHEADER WHERE CALLSIGN=%s",[call])
+        if (logid): logid=logid[0]
+        #print('Adding call %s, log ID %s, dig. qso count %d, mults %d'%(call, logid, qsos, mults))
+        # Does record exist already?
+        did = db.read_pquery("SELECT ID FROM DIGITAL WHERE LOGID=%s",[logid])
+        #print ('did = ',did, len(did))
+        if (len(did) > 0):
+            #print('update existing data for %s'%(call))
+            did = did[0]
+            db.write_pquery(\
+                "UPDATE DIGITAL SET LOGID=%s,QSOS=%s,MULTS=%s, "+\
+                "W0MABONUS=%s,K0GQBONUS=%s,SCORE=%s WHERE ID=%s",
+                [logid,qsos,mults,bonus1,bonus2,score,did])
+        else:
+            #print('insert new data for %s'%(call))
+            did=db.write_pquery(\
+                "INSERT INTO DIGITAL "+\
+                "(LOGID,QSOS,MULTS,W0MABONUS,K0GQBONUS,SCORE) "+\
+                "VALUES (%s,%s,%s,%s,%s,%s)", 
+                [logid,qsos,mults,bonus1,bonus2,score])
+        return did
 
     def getLogFile(self, callsign):
         log = None
@@ -148,7 +189,7 @@ class MOQPDBDigital(MOQPDBCategory):
         logID = mydb.CallinLogDB(callsign)
         if (logID):
             dbheader = mydb.read_query( \
-                "SELECT * FROM `logheader` WHERE ID=%d"%(logID))
+                "SELECT * FROM `LOGHEADER` WHERE ID=%d"%(logID))
             header = self.getLogHeader(dbheader)
             #print(header)
             #get digital QSOS only!
@@ -173,7 +214,7 @@ class MOQPDBDigital(MOQPDBCategory):
            mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
            mydb.setCursorDict()
            loglist = mydb.read_query( \
-              "SELECT ID, CALLSIGN FROM logheader WHERE 1")
+              "SELECT ID, CALLSIGN FROM LOGHEADER WHERE 1")
            HEADER = True
            for nextlog in loglist:
                #print('callsign = %s'%(nextlog['CALLSIGN']))

@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""
+mqplogcheck  - Check logs submitted for the ARRL Missouri
+QSO Party and determine if the file will load correctly into
+the MOQP SQL database. Look for the following:
+    1. Verify the file is a CABRILLO file.
+    2. Look for the following CABRILLO header tags:
+        A) CALLSIGN: is populated.
+        B) EMAIL: is populated.
+        C) LOCATION: is populated and valid.
+        D) The CATEGORY- fields have enough info
+           to determine the MOQP category:
+                i) - STATION:
+               ii) - OPERATOR:
+              iii) - POWER:
+               iv) - MODE:
+    3. Review QSO: lines and verify:
+         A) QSO Date / time fall within contest times.
+         B) FREQUENCY / BAND is in-band.
+         C) MYCALL matches CALLSIGN:
+         D) MYREPORT is valid
+         E) MYQTH matches LOCATION:
+                i) - 3 char county code for MO stations
+               ii) - State, Provinance or DX for non-MO
+         F) URCALL is populated.
+         G) URREPORT is valid
+         H) URQTH is a 3 char county code, state, prov or DX.
+    4. DUPE checks.
+    5. Determine contacts with BONUS stations.
+    6. Summarize QSOS and compute perliminary score.
+    7. Determine SHOWME and MISSOURI certificate status.
+
+        
+
+
+Update History:
+* Tue Apr 14 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.1 - First interation
+* Tue May 08 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Added loading logs to MOQP database:
+-          Handle CABRILLO Bonus.
+-          Accept logs with errors beyond DUPES.
+-         Allow updating (replacing) an existing log.
+"""
+
+import os.path
+import sys
+import argparse
+VERSION = '0.1.0'
+ARGS = None
+
+DEVMODPATH = ['moqputils', 'cabrilloutils']
+# If the development module source paths exist, 
+# add them to the python path
+for mypath in DEVMODPATH:
+    if ( os.path.exists(mypath) and \
+                       (os.path.isfile(mypath) == False) ):
+        sys.path.insert(0,mypath)
+#print('Python path = %s'%(sys.path))
+        
+DESCRIPTION = \
+"""moqchecklogs  - Initial Check of logfiles submitted for the 
+                   ARRL Missouri QSO Party.
+                
+                   Based on 2020 MOQP Rules
+"""
+
+EPILOG = \
+"""
+Running with no parameters will launch the GUI.
+"""
+"""
+import os.path
+import sys
+import argparse
+VERSION = '0.0.1'
+ARGS = None
+
+DEVMODPATH = ['moqputils', 'cabrilloutils']
+# If the development module source paths exist, 
+# add them to the python path
+for mypath in DEVMODPATH:
+    if ( os.path.exists(mypath) and \
+                       (os.path.isfile(mypath) == False) ):
+        sys.path.insert(0,mypath)
+#print('Python path = %s'%(sys.path))
+"""        
+class get_args():
+    def __init__(self):
+        if __name__ == '__main__':
+            self.args = self.getargs()
+            
+    def getargs(self):
+        parser = argparse.ArgumentParser(\
+                               description = DESCRIPTION,
+                                           epilog = EPILOG)
+        parser.add_argument('-v', '--version', action='version', version = VERSION)
+        parser.add_argument('-i', '--inputpath', default=None,
+            help='Specifies the path to the folder that contains the log files to summarize.')
+        parser.add_argument('-a', '--acceptedpath', default=None,
+            help='Specifies path to the folder where acceptable log files with no errors get moved to. Allows for sorting of log files without errors.')
+        parser.add_argument('-b', '--cabbonus', 
+                                   action='store_true', 
+                                   default=False,
+                                   help='Specifies the the CABRILLO BONUS applies to this log.')
+        parser.add_argument('-l', '--loadlog', 
+                                  action='store_true',
+                                  default=False,
+            help='Load error free logs into the MOQP '+ \
+                 'database. The -a option will move the '+\
+                 'file to a different folder if the file '+\
+                 'loads into the database successfully.')
+        parser.add_argument('-u', '--updatelog', 
+                                  action='store_true',
+                                  default=False,
+            help='Replace the log in the database with '+ \
+                 'the log read from INPUTPATH if it '+\
+                 'exists in the database already.')
+        parser.add_argument('-e', '--errorsaccepted', 
+                                  action='store_true',
+                                  default=False,
+            help='Accept any errors in log this log '+ \
+                 'and load the log into the database. '+\
+                 'Norman behavior is to NOT load the '+\
+                 'log if errors exist other than DUPES.')
+        return parser.parse_args()
+
+
+if __name__ == '__main__':
+   args = get_args()
+   if (args.args.inputpath):
+       if (args.args.loadlog):
+          from moqploadlogs import MOQPLoadLogs
+          app = MOQPLoadLogs(args.args.inputpath,
+                                  args.args.acceptedpath,
+                                  args.args.cabbonus,
+                                  args.args.errorsaccepted,
+                                  args.args.updatelog)
+       else:
+          from moqplogcheck import MOQPLogcheck
+          app = MOQPLogcheck(args.args.inputpath,
+                             args.args.acceptedpath,
+                             args.args.cabbonus)
+   else:
+       from gui_moqpcategory import gui_MOQPChecklog
+       app=gui_MOQPChecklog()

@@ -10,6 +10,7 @@ Update History:
 """
 
 from moqpdbutils import *
+from moqpdbconfig import *
 
 VERSION = '0.0.1'
 
@@ -113,8 +114,15 @@ STATELIST = [  ["ALABAMA","'AL','ALABAMA'"],
                ["NUNAVUT","'NU','NUNAVUT'"],
                ["YUKON","'YT','YUKON'"] ]
 
+class GENLabels():
+    def __init__(self):
+        self.AwardList = []
+        self.appMain()
+        
+    def appMain(self, AWARD):
+        pass
 
-class SHOWMELabels():
+class SHOWMELabels(GENLabels):
     def __init__(self, AWARD):
         #if __name__ == '__main__':
            self.AwardList =[]
@@ -122,7 +130,7 @@ class SHOWMELabels():
 
     def processOne(self, mydb, logid, AWARD):
 
-        logheader = mydb.read_query("SELECT * from logheader WHERE ID=%s"%(logid))
+        logheader = mydb.read_pquery("SELECT * from LOGHEADER WHERE ID=%s",[logid])
         tsvdata = ("%s AWARD\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t"%( \
                                AWARD,
                                logheader[0]['CALLSIGN'],
@@ -154,14 +162,11 @@ class SHOWMELabels():
                self.processOne(mydb, logID['LOGID'],AWARD))
        self.showmeDisplay(self.AwardList)  
            
-class CATEGORYLabels():
-    def __init__(self):
-        #if __name__ == '__main__':
-           self.AwardList =[]
-           self.appMain()
+class CATEGORYLabels(GENLabels):
            
     def processHeader(self, mydb, place, cat, logid):
-       logheader = mydb.read_query("SELECT * from logheader WHERE ID=%s"%(logid))
+       logheader = mydb.read_pquery(\
+                   "SELECT * from LOGHEADER WHERE ID=%s",[logid])
        tsvdata = ("%s\t%s AWARD\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t"%( \
                                place,cat,
                                logheader[0]['CALLSIGN'],
@@ -177,22 +182,29 @@ class CATEGORYLabels():
     
            
     def processOne(self, mydb, cati):
+       tsvdata = None
     
        cat = cati.upper()
-       sumlist = mydb.read_query("SELECT * FROM SUMMARY WHERE MOQPCAT='%s' ORDER BY (SCORE) DESC"%(cat))
-       tsvdata = []
-       if (len(sumlist)>0):
-           tsvdata.append(self.processHeader(mydb, 
+       #print(cat)
+       sumlist = mydb.read_pquery(\
+           "SELECT * FROM SUMMARY WHERE MOQPCAT=%s "+\
+           "ORDER BY (SCORE) DESC",[cat])
+       if (sumlist):
+           #sumlist = sumlist[0]
+           tsvdata = []
+           #print(sumlist)
+           if (len(sumlist)>0):
+               tsvdata.append(self.processHeader(mydb, 
                                          "FIRST PLACE", 
                                          cat, 
                                          sumlist[0]['LOGID']) )
-       if (len(sumlist) >1):
-           tsvdata.append(self.processHeader(mydb, 
+           if (len(sumlist) >1):
+               tsvdata.append(self.processHeader(mydb, 
                                          "SECOND PLACE", 
                                          cat, 
                                          sumlist[1]['LOGID']) )
-       if (len(sumlist) == 0):
-           tsvdata =['\t%s\tNO ENTRY'%(cat)]
+       if ((sumlist ==None) or (len(sumlist) == 0)):
+               tsvdata =['\t%s\tNO ENTRY'%(cat)]
        return tsvdata
        
     def AwardDisplay(self, AwardList):
@@ -213,17 +225,13 @@ class CATEGORYLabels():
                self.AwardList.append(line)
        self.AwardDisplay(self.AwardList) 
 
-class STATELabels():
-    def __init__(self):
-        #if __name__ == '__main__':
-           self.AwardList =[]
-           self.appMain()
+class STATELabels(GENLabels):
 
     def getOne(self, mydb, place, state, IDSTG, score):
 
-        logheader = mydb.read_query("SELECT * FROM logheader "+ \
-                                    "WHERE ID = "+ \
-                                    ('%s'%(IDSTG)))
+        logheader = mydb.read_pquery("SELECT * FROM LOGHEADER "+\
+                                    "WHERE ID=%s",
+                                    [IDSTG])
 
 
         tsvdata = ("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d"%( \
@@ -243,7 +251,7 @@ class STATELabels():
 
     def getState(self,mydb, STATE, NAMELIST):
        CATLIST = mydb.read_query("SELECT ID "+ \
-                                 "FROM logheader "+ \
+                                 "FROM LOGHEADER "+ \
                                  "WHERE LOCATION IN "+ \
                                  "(" + NAMELIST+ ")")
        if (len(CATLIST)>0):
