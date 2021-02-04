@@ -56,15 +56,15 @@ Update History:
 - methods with that name).
 """
 
-from CabrilloUtils import *
-from moqpmults import *
-from qsoutils import QSOUtils
-from dupecheck import DUPECheck
-from bonusaward import BonusAward
+from cabrilloutils.CabrilloUtils import *
+from moqputils.moqpmults import *
+from cabrilloutils.qsoutils import QSOUtils
+from moqputils.dupecheck import DUPECheck
+from moqputils.bonusaward import BonusAward
 
 import os, shutil
 
-from moqpdefs import *
+from moqputils.moqpdefs import *
 
 VERSION = '0.0.6'
 

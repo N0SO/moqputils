@@ -3,7 +3,7 @@
 #import os
 #from moqpcategory import *
 
-from generalaward import *
+from cabrilloutils.generalaward import *
 BONUSCALLS = ['W0MA', 'K0GQ']
 BONUSKEYS =  ['M', 'G']
 

@@ -49,14 +49,17 @@ import argparse
 VERSION = '0.1.0'
 ARGS = None
 
-DEVMODPATH = ['moqputils', 'cabrilloutils']
+wd = os.getcwd()
+
+DEVMODPATH = [wd]
+#DEVMODPATH = [wd, 'moqputils', 'cabrilloutils']
 # If the development module source paths exist, 
 # add them to the python path
 for mypath in DEVMODPATH:
     if ( os.path.exists(mypath) and \
                        (os.path.isfile(mypath) == False) ):
         sys.path.insert(0,mypath)
-#print('Python path = %s'%(sys.path))
+#print('Working dir = %s\nPython path = %s'%(os.getcwd(), sys.path))
         
 DESCRIPTION = \
 """moqchecklogs  - Initial Check of logfiles submitted for the 
@@ -142,5 +145,5 @@ if __name__ == '__main__':
                              args.args.acceptedpath,
                              args.args.cabbonus)
    else:
-       from gui_moqplogcheck import gui_MOQPLogCheck
+       from logchecker.ui import gui_MOQPLogCheck
        app=gui_MOQPLogCheck()

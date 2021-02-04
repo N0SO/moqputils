@@ -9,7 +9,7 @@ Update History:
 - V.0.0.1 - Just starting out
 """
 
-from contestmults import *
+from cabrilloutils.contestmults import *
 
 VERSION = '0.0.1'
 
