@@ -102,8 +102,8 @@ class my_file_open(Gtk.Window):
 class runLogCheck():
 
     def __init__(self, filename = None, 
-                       acceptedpath = None,
                        cabbonus = None,
+                       acceptedpath = None,
                        loadlog = False):
         self.logName = filename
         self.acceptedPath = acceptedpath
@@ -149,6 +149,8 @@ class Handler():
 	
     def on_cabBonus_state_set(self, widget, state):
         print('on_cabBonus_state_set called...')
+        print('widget = %s\nstate=%s\n'%(widget, state))
+        self.sw_cabBonus = state
 	
     def on_AboutMenuItem_activate(self, args=None):
         about = About1()
@@ -173,7 +175,7 @@ class Handler():
                 end_iter = textbuffer.get_end_iter()
                 textbuffer.insert(end_iter, line)
                 
-            check = runLogCheck(file1.fileName)
+            check = runLogCheck(file1.fileName, self.sw_cabBonus)
             check_result = check.processData(file1.fileName)
             check.showData(check_result)
             
