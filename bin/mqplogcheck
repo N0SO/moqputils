@@ -40,7 +40,7 @@ Update History:
 - V0.1.0 - Added loading logs to MOQP database:
 -          Handle CABRILLO Bonus.
 -          Accept logs with errors beyond DUPES.
--         Allow updating (replacing) an existing log.
+-          Allow updating (replacing) an existing log.
 """
 
 import os.path
@@ -133,14 +133,14 @@ if __name__ == '__main__':
    args = get_args()
    if (args.args.inputpath):
        if (args.args.loadlog):
-          from moqploadlogs import MOQPLoadLogs
+          from moqputils.moqploadlogs import MOQPLoadLogs
           app = MOQPLoadLogs(args.args.inputpath,
                                   args.args.acceptedpath,
                                   args.args.cabbonus,
                                   args.args.errorsaccepted,
                                   args.args.updatelog)
        else:
-          from moqplogcheck import MOQPLogcheck
+          from moqputils.moqplogcheck import MOQPLogcheck
           app = MOQPLogcheck(args.args.inputpath,
                              args.args.acceptedpath,
                              args.args.cabbonus)
