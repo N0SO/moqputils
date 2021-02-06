@@ -9,7 +9,10 @@ Update History:
 - V0.1.1 - Added method delete_log
 * Sat May 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.2 - Updates for 2020 MOQP changes
-
+* Fri Feb 05 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.3 - Added:
+-     Updated module path for new structure.
+-     Minor tweaks to support working with GUI
 """
 
 import MySQLdb
@@ -20,10 +23,10 @@ from datetime import date
 from datetime import time
 from datetime import timedelta
 
-VERSION = '0.1.1' 
+VERSION = '0.1.3' 
 
-from CabrilloUtils import CabrilloUtils
-from qsoutils import QSOUtils
+from cabrilloutils.CabrilloUtils import CabrilloUtils
+from cabrilloutils.qsoutils import QSOUtils
 
 
 class MOQPDBUtils():
