@@ -184,12 +184,54 @@ class Handler():
         fileOnly = os.path.basename(self.status1_text)
         status1.set_text(fileOnly)  
         
-    def set_logstatus(self, widget, log=None):
-        if (log == None): log=self.log
-        print(dir(log))
-        widget.append([log['HEADER']['CONTEST'],
-                       log['HEADER']['CALLSIGN'],
-                       log['HEADER']['OPERATORS']])
+    def set_logstatus1(self, widget, log=None):
+        if (log == None): 
+            header=self.log['HEADER']
+        else:
+            header=log['HEADER']
+            
+        #print(dir(header))
+        widget.append([header['CONTEST'],
+                       header['CALLSIGN'],
+                       header['CATEGORY-STATION'],
+                       header['CATEGORY-OPERATOR'],
+                       header['CATEGORY-POWER'],
+                       header['CATEGORY-MODE'],
+                       header['OPERATORS']])
+           
+    def set_logstatus2(self, widget, log=None):
+        if (log == None): 
+            qsosum=self.log['QSOSUM']
+            bonus=self.log['BONUS']
+        else:
+            qsosum=log['QSOSUM']
+            bonus=log['BONUS']
+        #score=self.log['SCORE']   
+        #print('Score = %s'%(score))
+        widget.append(['%s'%(qsosum['QSOS']),
+                       '%s'%(qsosum['CW']),
+                       '%s'%(qsosum['PH']),
+                       '%s'%(qsosum['DG']),
+                       '%s'%(qsosum['VHF']),
+                       '%s'%(qsosum['DUPES']),
+		       '%s'%(self.log['SCORE']),
+		       '%s'%(bonus['CABRILLO']),
+		       '%s'%(bonus['W0MA']),
+		       '%s'%(bonus['K0GQ']),
+		       '%s'%(self.log['MULTS'])])
+           
+    def set_logstatus3(self, widget, log=None):
+        if (log == None): 
+            moqpcat=self.log['MOQPCAT']
+        else:
+            moqpcat=log['MOQPCAT']
+            
+        #print(dir(header))
+        widget.append([moqpcat['MOQPCAT'],
+                       moqpcat['LOCATION'],
+                       moqpcat['VHF'],
+                       moqpcat['DIGITAL'],
+                       moqpcat['ROOKIE']])
            
         
 class gui_MOQPLogCheck():
