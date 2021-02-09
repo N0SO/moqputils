@@ -1,3 +1,4 @@
 #!/usr/bin/python
-#print('This is from logchecker/__init__.py')
+VERSION = '2.0.2'
+print('MOQP Log Checker V%s'%(VERSION))
 

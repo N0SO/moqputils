@@ -8,7 +8,7 @@ from logchecker.treesample import TreeViewFilterWindow
 from logchecker.filedialogs import my_file_open
 from moqputils.moqploadlogs import MOQPLoadLogs
 
-VERSION = '0.0.1'
+
 
 class About1():
     def __init__(self):
@@ -35,7 +35,6 @@ class About1():
         about.destroy()
 
 class runLogCheck(MOQPLoadLogs):
-
     def __init__(self, filename = None, 
                        cabbonus = None,
                        acceptedpath = None,
@@ -48,32 +47,13 @@ class runLogCheck(MOQPLoadLogs):
         self.acceptedPath = acceptedpath
         self.cabBonus = cabbonus  
         self.loadLog = loadlog
-        """
-        if (self.loadLog):
-            from moqputils.moqploadlogs import MOQPLoadLogs
-            self.App = MOQPLoadLogs()
-        else:
-            from moqputils.moqplogcheck import MOQPLogcheck
-            self.App = MOQPLogcheck()
-        """    
-    def processData(self, logName=None):
-        csvData = self.App.processOneFile(self.logName,
-                                          True,
-                                          self.acceptedPath,
-                                          self.cabBonus)
-        return csvData
-         
+    
     def showLog(self, log):
         print (dir(log))
         print(log.keys())
         keys = log.keys()
         for key in keys:
-            print('log[%s] - %s'%(key, log[key]))
-
-        #print(Data_to_Show)
-        #lines = Data_to_Show.splitlines()
-        #llines = lines[1].split('\t')
-        #show = TreeViewFilterWindow([llines])
+            print('log[%s]:\n%s'%(key, log[key]))
 
 class Handler():
 
@@ -174,13 +154,18 @@ class Handler():
             textbuffer=widget.get_buffer()
             end_iter = textbuffer.get_end_iter()
             textbuffer.insert(end_iter, 'LOG HEADER:\n') 
-
+            """
+            Show HEADER
+            """
             k = 0
             while ( data[k].upper().startswith('QSO:') != True ):
                 end_iter = textbuffer.get_end_iter()
                 line = 'H%s - %s'%(k+1, data[k])
                 textbuffer.insert(end_iter, line) 
                 k+=1
+            """
+            Show QSOs
+            """
             j=1
             end_iter = textbuffer.get_end_iter()
             textbuffer.insert(end_iter, '\nLOG QSOs:\n') 
@@ -190,32 +175,25 @@ class Handler():
                 textbuffer.insert(end_iter, line) 
                 k+=1
                 j+=1
-                   
-
+            """
+            Check log for errors
+            """       
             check = runLogCheck(file1.fileName, self.sw_cabBonus)
             log = check.checkLog(file1.fileName, self.sw_cabBonus)
             self.log = log
             """
-            if (log):
-                textbuffer=widget.get_buffer()
-                keys = log['HEADER'].keys()
-                for key in keys:
-                    linestg = ('%s %s\n'%(key, log['HEADER'][key]))
-                    end_iter = textbuffer.get_end_iter()
-                    textbuffer.insert(end_iter, linestg)
-                k=0
-                for qso in log['QSOLIST']:
-                    k += 1
-                    line = ('%s - '%(k))
-                    keys = qso.keys()
-                    for key in keys:
-                        line += ('%s '%(qso[key]))
-                    end_iter = textbuffer.get_end_iter()
-                    textbuffer.insert(end_iter,('%s \n'%(k)) + line)
-                
-            """    
-            #check_result = check.processData(file1.fileName)
-            check.showLog(log)
+            Show errors
+            """
+            print('Header Errors: %s'%(log['HEADER']['ERRORS']))
+            end_iter = textbuffer.get_end_iter()
+            textbuffer.insert(end_iter, '\nLOG ERRORS:\n') 
+            k=1
+            for errs in log["ERRORS"]:
+                line = 'E%s - %s\n'%(k, errs)
+                end_iter = textbuffer.get_end_iter()
+                textbuffer.insert(end_iter, line) 
+                k += 1
+            #check.showLog(log)
             
     def set_Button_label(self, button):
         fileOnly = os.path.basename(self.status1_text)

@@ -25,7 +25,7 @@ class my_file_open(Gtk.Window):
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             print("Open clicked")
-            print("File selected: " + dialog.get_filename())
+            #print("File selected: " + dialog.get_filename())
             self.fileName = dialog.get_filename()
         elif response == Gtk.ResponseType.CANCEL:
             print("Cancel clicked")
