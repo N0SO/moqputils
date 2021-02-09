@@ -106,6 +106,49 @@ class Handler():
         print('widget = %s\nstate=%s\n'%(widget, state))
         self.sw_cabBonus = state
 	
+    def on_loadLog_state_set(self, widget, state):
+        print('on_loadload_state_set called...')
+        print('widget = %s\nstate=%s\n'%(widget, state))
+        self.sw_loadLogs = state
+        
+    def on_loadLog_state_set_accept(self, widget, state):
+        if (self.sw_loadLogs):
+            widget.set_visible(True)
+        else:
+            widget.set_visible(False)
+        print('on_loadLog_enable_accept called - Setting Accept Errors sw %s'%(self.sw_loadLogs))
+
+    def on_loadLog_state_set_acceptlbl(self, widget, state):
+        if (self.sw_loadLogs):
+            widget.set_visible(True)
+        else:
+            widget.set_visible(False)
+        print('on_loadLog_enable_acceptlbl called - Setting Accept Errors sw %s'%(self.sw_loadLogs))
+	
+    def on_loadLog_state_set_replace(self, widget, state):
+        if (self.sw_loadLogs):
+            widget.set_visible(True)
+        else:
+            widget.set_visible(False)
+        print('on_loadLog_enable_replace called - Setting replace log sw %s'%(self.sw_loadLogs))
+
+    def on_loadLog_state_set_replacelbl(self, widget, state):
+        if (self.sw_loadLogs):
+            widget.set_visible(True)
+        else:
+            widget.set_visible(False)
+        print('on_loadLog_enable_replacelbl called - Setting replace log lable %s'%(self.sw_loadLogs))
+        
+    def on_acceptErrs_state_set(self, widget, state):
+        print('on_acceptErrs_state_set called...')
+        print('widget = %s\nstate=%s\n'%(widget, state))
+        self.sw_acceptErrors = state
+                
+    def on_replaceLog_state_set(self, widget, state):
+        print('on_replaceLog_state_set called...')
+        print('widget = %s\nstate=%s\n'%(widget, state))
+        self.sw_replaceExisting = state
+
     def on_AboutMenuItem_activate(self, args=None):
         about = About1()
 	

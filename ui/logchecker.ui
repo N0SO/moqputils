@@ -73,6 +73,7 @@
     </columns>
   </object>
   <object class="GtkWindow" id="win">
+    <property name="visible">True</property>
     <property name="can-focus">False</property>
     <property name="title" translatable="yes">MOQP Log Checker</property>
     <signal name="destroy" handler="on_win_destroy" swapped="no"/>
@@ -158,6 +159,11 @@
                           <object class="GtkSwitch" id="loadLog">
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
+                            <signal name="state-set" handler="on_loadLog_state_set" swapped="no"/>
+                            <signal name="state-set" handler="on_loadLog_state_set_accept" object="acceptErrs" swapped="no"/>
+                            <signal name="state-set" handler="on_loadLog_state_set_acceptlbl" object="acceptlbl" swapped="no"/>
+                            <signal name="state-set" handler="on_loadLog_state_set_replace" object="replaceLog" swapped="no"/>
+                            <signal name="state-set" handler="on_loadLog_state_set_replacelbl" object="replacelbl" swapped="no"/>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -168,8 +174,9 @@
                         <child>
                           <object class="GtkSwitch" id="acceptErrs">
                             <property name="name">accepterrs</property>
-                            <property name="visible">True</property>
                             <property name="can-focus">True</property>
+                            <property name="no-show-all">True</property>
+                            <signal name="state-set" handler="on_acceptErrs_state_set" swapped="no"/>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -179,9 +186,10 @@
                         </child>
                         <child>
                           <object class="GtkSwitch" id="replaceLog">
-                            <property name="visible">True</property>
                             <property name="can-focus">True</property>
+                            <property name="no-show-all">True</property>
                             <property name="tooltip-text" translatable="yes">Replace this log in the database if a log from this station already exists.</property>
+                            <signal name="state-set" handler="on_replaceLog_state_set" swapped="no"/>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -232,9 +240,9 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel">
-                            <property name="visible">True</property>
+                          <object class="GtkLabel" id="acceptlbl">
                             <property name="can-focus">False</property>
+                            <property name="no-show-all">True</property>
                             <property name="label" translatable="yes">Accept Log with Errors</property>
                             <property name="width-chars">25</property>
                             <property name="xalign">0</property>
@@ -246,9 +254,9 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel">
-                            <property name="visible">True</property>
+                          <object class="GtkLabel" id="replacelbl">
                             <property name="can-focus">False</property>
+                            <property name="no-show-all">True</property>
                             <property name="halign">start</property>
                             <property name="label" translatable="yes">Replace Existing Log in Database</property>
                             <property name="width-chars">25</property>
