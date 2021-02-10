@@ -16,9 +16,9 @@ Update History:
 
 VERSION = '0.1.0' 
 
-from moqpdbutils import *
-from CabrilloUtils import CabrilloUtils
-from moqpdbconfig import *
+from moqputils.moqpdbutils import *
+from cabrilloutils.CabrilloUtils import CabrilloUtils
+from moqputils.moqpdbconfig import *
 
 class LogReport():
 
