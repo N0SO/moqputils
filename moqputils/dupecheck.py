@@ -7,7 +7,7 @@ Update History:
 - V0.0.1 - First interation
 """
 
-from qsoutils import QSOUtils
+from cabrilloutils.qsoutils import QSOUtils
 
 class DUPECheck(QSOUtils):
 

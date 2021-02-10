@@ -22,8 +22,8 @@ from datetime import datetime
 from datetime import date
 from datetime import time
 from datetime import timedelta
-from CabrilloUtils import CabrilloUtils
-from moqpdefs import *
+from cabrilloutils.CabrilloUtils import CabrilloUtils
+from moqputils.moqpdefs import *
 
 VERSION = '0.0.6' 
            

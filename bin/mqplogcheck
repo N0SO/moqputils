@@ -40,7 +40,7 @@ Update History:
 - V0.1.0 - Added loading logs to MOQP database:
 -          Handle CABRILLO Bonus.
 -          Accept logs with errors beyond DUPES.
--         Allow updating (replacing) an existing log.
+-          Allow updating (replacing) an existing log.
 """
 
 import os.path
@@ -49,14 +49,17 @@ import argparse
 VERSION = '0.1.0'
 ARGS = None
 
-DEVMODPATH = ['moqputils', 'cabrilloutils']
+wd = os.getcwd()
+
+DEVMODPATH = [wd]
+#DEVMODPATH = [wd, 'moqputils', 'cabrilloutils']
 # If the development module source paths exist, 
 # add them to the python path
 for mypath in DEVMODPATH:
     if ( os.path.exists(mypath) and \
                        (os.path.isfile(mypath) == False) ):
         sys.path.insert(0,mypath)
-#print('Python path = %s'%(sys.path))
+#print('Working dir = %s\nPython path = %s'%(os.getcwd(), sys.path))
         
 DESCRIPTION = \
 """moqchecklogs  - Initial Check of logfiles submitted for the 
@@ -130,17 +133,17 @@ if __name__ == '__main__':
    args = get_args()
    if (args.args.inputpath):
        if (args.args.loadlog):
-          from moqploadlogs import MOQPLoadLogs
+          from moqputils.moqploadlogs import MOQPLoadLogs
           app = MOQPLoadLogs(args.args.inputpath,
                                   args.args.acceptedpath,
                                   args.args.cabbonus,
                                   args.args.errorsaccepted,
                                   args.args.updatelog)
        else:
-          from moqplogcheck import MOQPLogcheck
+          from moqputils.moqplogcheck import MOQPLogcheck
           app = MOQPLogcheck(args.args.inputpath,
                              args.args.acceptedpath,
                              args.args.cabbonus)
    else:
-       from gui_moqpcategory import gui_MOQPChecklog
-       app=gui_MOQPChecklog()
+       from logchecker.ui import gui_MOQPLogCheck
+       app=gui_MOQPLogCheck()

@@ -22,18 +22,22 @@ Update History:
 -     Accept errors processing
 -     Update existing log processing
 -     Improved error handling.
+* Fri Feb 05 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.3 - Added:
+-     Updated module path for new structure.
+-     Minor tweaks to support working with GUI
 
 """
-from moqplogcheck import MOQPLogcheck
+from moqputils.moqplogcheck import MOQPLogcheck
 import os, shutil
-from moqpdbconfig import *
-from moqpdbutils import *
-from qsoutils import QSOUtils
-#from bothawards import BothAwards
+from moqputils.moqpdbconfig import *
+from moqputils.moqpdbutils import *
+from cabrilloutils.qsoutils import QSOUtils
+#from moqputils.bothawards import BothAwards
 #import MySQLdb
 
 
-VERSION = '0.1.2' 
+VERSION = '0.1.3' 
 
 
 class MOQPLoadLogs(MOQPLogcheck):
@@ -50,7 +54,6 @@ class MOQPLoadLogs(MOQPLogcheck):
                            cabbonus,
                            errorsOK,
                            updateOK)
-
 
     def loadToDB(self, log, errorsOK, updateOK):
         sucsess = False

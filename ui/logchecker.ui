@@ -1,0 +1,753 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.38.2 -->
+<interface>
+  <requires lib="gtk+" version="3.24"/>
+  <object class="GtkFileFilter" id="CABFiles">
+    <patterns>
+      <pattern>*.LOG</pattern>
+      <pattern>*.CAB</pattern>
+      <pattern>*.CSV</pattern>
+    </patterns>
+  </object>
+  <object class="GtkImage" id="fileBtnImage">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="stock">gtk-floppy</property>
+  </object>
+  <object class="GtkListStore" id="liststore1">
+    <columns>
+      <!-- column-name contest -->
+      <column type="gchararray"/>
+      <!-- column-name station -->
+      <column type="gchararray"/>
+      <!-- column-name ops -->
+      <column type="gchararray"/>
+      <!-- column-name catstation -->
+      <column type="gchararray"/>
+      <!-- column-name catoperator -->
+      <column type="gchararray"/>
+      <!-- column-name catpower -->
+      <column type="gchararray"/>
+      <!-- column-name catmode -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore2">
+    <columns>
+      <!-- column-name total -->
+      <column type="gchararray"/>
+      <!-- column-name cwqsos -->
+      <column type="gchararray"/>
+      <!-- column-name phqsos -->
+      <column type="gchararray"/>
+      <!-- column-name ryqsos -->
+      <column type="gchararray"/>
+      <!-- column-name vhfqsos -->
+      <column type="gchararray"/>
+      <!-- column-name dupes -->
+      <column type="gchararray"/>
+      <!-- column-name score -->
+      <column type="gchararray"/>
+      <!-- column-name cabbonus -->
+      <column type="gchararray"/>
+      <!-- column-name w0mabonus -->
+      <column type="gchararray"/>
+      <!-- column-name k0gqbonus -->
+      <column type="gchararray"/>
+      <!-- column-name mults -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkListStore" id="liststore3">
+    <columns>
+      <!-- column-name moqpcat -->
+      <column type="gchararray"/>
+      <!-- column-name location -->
+      <column type="gchararray"/>
+      <!-- column-name vhfaward -->
+      <column type="gchararray"/>
+      <!-- column-name digitalaward -->
+      <column type="gchararray"/>
+      <!-- column-name rookieaward -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkWindow" id="win">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="title" translatable="yes">MOQP Log Checker</property>
+    <signal name="destroy" handler="on_win_destroy" swapped="no"/>
+    <signal name="show" handler="on_win_show" swapped="no"/>
+    <child>
+      <object class="GtkFixed" id="Fixed1">
+        <property name="visible">True</property>
+        <property name="can-focus">False</property>
+        <child>
+          <object class="GtkStatusbar" id="statbar1">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="border-width">10</property>
+            <property name="spacing">2</property>
+            <child>
+              <object class="GtkLabel" id="status1">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">Status1</property>
+                <property name="width-chars">20</property>
+                <property name="max-width-chars">40</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="status2">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">Status2</property>
+                <property name="width-chars">20</property>
+                <property name="max-width-chars">40</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="x">-4</property>
+            <property name="y">560</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkFrame" id="optionsframe1">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="label-xalign">0</property>
+            <child>
+              <object class="GtkAlignment">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="bottom-padding">10</property>
+                <property name="left-padding">12</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="orientation">vertical</property>
+                        <child>
+                          <object class="GtkSwitch" id="cabBonus">
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <signal name="activate" handler="on_cabBonus_activate" swapped="no"/>
+                            <signal name="state-set" handler="on_cabBonus_state_set" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkSwitch" id="loadLog">
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <signal name="state-set" handler="on_loadLog_state_set" swapped="no"/>
+                            <signal name="state-set" handler="on_loadLog_state_set_accept" object="acceptErrs" swapped="no"/>
+                            <signal name="state-set" handler="on_loadLog_state_set_acceptlbl" object="acceptlbl" swapped="no"/>
+                            <signal name="state-set" handler="on_loadLog_state_set_replace" object="replaceLog" swapped="no"/>
+                            <signal name="state-set" handler="on_loadLog_state_set_replacelbl" object="replacelbl" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkSwitch" id="acceptErrs">
+                            <property name="name">accepterrs</property>
+                            <property name="can-focus">True</property>
+                            <property name="no-show-all">True</property>
+                            <signal name="state-set" handler="on_acceptErrs_state_set" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkSwitch" id="replaceLog">
+                            <property name="can-focus">True</property>
+                            <property name="no-show-all">True</property>
+                            <property name="tooltip-text" translatable="yes">Replace this log in the database if a log from this station already exists.</property>
+                            <signal name="state-set" handler="on_replaceLog_state_set" swapped="no"/>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">3</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="orientation">vertical</property>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">Add CABRILLO File Bonus</property>
+                            <property name="width-chars">25</property>
+                            <property name="track-visited-links">False</property>
+                            <property name="xalign">0</property>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="halign">start</property>
+                            <property name="label" translatable="yes">Add  Log to MOQP Database</property>
+                            <property name="width-chars">25</property>
+                            <property name="xalign">2.2351741291171123e-10</property>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="acceptlbl">
+                            <property name="can-focus">False</property>
+                            <property name="no-show-all">True</property>
+                            <property name="label" translatable="yes">Accept Log with Errors</property>
+                            <property name="width-chars">25</property>
+                            <property name="xalign">0</property>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="replacelbl">
+                            <property name="can-focus">False</property>
+                            <property name="no-show-all">True</property>
+                            <property name="halign">start</property>
+                            <property name="label" translatable="yes">Replace Existing Log in Database</property>
+                            <property name="width-chars">25</property>
+                            <property name="xalign">0</property>
+                          </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">3</property>
+                          </packing>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">Options:  </property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="x">560</property>
+            <property name="y">468</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="fileButton">
+            <property name="label" translatable="yes">Select Input File (None)                                                </property>
+            <property name="width-request">310</property>
+            <property name="visible">True</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="image">fileBtnImage</property>
+            <property name="image-position">right</property>
+            <property name="always-show-image">True</property>
+            <signal name="clicked" handler="on_fileButton_clicked" object="textWindow" swapped="no"/>
+            <signal name="clicked" handler="set_Button_label" swapped="no"/>
+            <signal name="clicked" handler="set_logstatus1" object="liststore1" swapped="no"/>
+            <signal name="clicked" handler="set_logstatus2" object="liststore2" swapped="no"/>
+            <signal name="clicked" handler="set_logstatus3" object="liststore3" swapped="no"/>
+            <signal name="clicked" handler="set_status1" object="status1" swapped="no"/>
+          </object>
+          <packing>
+            <property name="x">4</property>
+            <property name="y">518</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkFrame" id="logViewfrm">
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="label-xalign">0</property>
+            <child>
+              <object class="GtkAlignment">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="left-padding">12</property>
+                <child>
+                  <object class="GtkFixed">
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <child>
+                      <object class="GtkScrolledWindow" id="Scroll1">
+                        <property name="width-request">818</property>
+                        <property name="height-request">200</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <child>
+                          <object class="GtkTextView" id="textWindow">
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">Contents of Log File:</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="x">4</property>
+            <property name="y">35</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkFrame" id="summaryFrame1">
+            <property name="width-request">100</property>
+            <property name="height-request">180</property>
+            <property name="visible">True</property>
+            <property name="can-focus">False</property>
+            <property name="label-xalign">0</property>
+            <child>
+              <object class="GtkAlignment">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="left-padding">12</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="width-request">100</property>
+                    <property name="height-request">80</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">False</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkScrolledWindow" id="summaryWindow1">
+                        <property name="width-request">820</property>
+                        <property name="height-request">60</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <child>
+                          <object class="GtkViewport" id="SummaryView1">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <child>
+                              <object class="GtkTreeView" id="summaryTree1">
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="model">liststore1</property>
+                                <property name="search-column">0</property>
+                                <child internal-child="selection">
+                                  <object class="GtkTreeSelection"/>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="contestName">
+                                    <property name="title" translatable="yes">CONTEST NAME</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="ctNametxt"/>
+                                      <attributes>
+                                        <attribute name="text">0</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="station">
+                                    <property name="title" translatable="yes">STATION CALL</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="sCalltxt"/>
+                                      <attributes>
+                                        <attribute name="text">1</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="catstation">
+                                    <property name="title" translatable="yes">CAT. STATION</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="catstationtxt"/>
+                                      <attributes>
+                                        <attribute name="text">2</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="catoperator">
+                                    <property name="title" translatable="yes">CAT. OPERATOR</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="catoperatortxt"/>
+                                      <attributes>
+                                        <attribute name="text">3</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="catpower">
+                                    <property name="title" translatable="yes">CAT. POWER</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="catpowertxt"/>
+                                      <attributes>
+                                        <attribute name="text">4</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="catmode">
+                                    <property name="title" translatable="yes">CAT. MODE</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="catmodetxt"/>
+                                      <attributes>
+                                        <attribute name="text">5</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="ops">
+                                    <property name="title" translatable="yes">OPERATORS</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="opListtxt"/>
+                                      <attributes>
+                                        <attribute name="text">6</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkScrolledWindow" id="summaryWindow2">
+                        <property name="width-request">820</property>
+                        <property name="height-request">60</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <child>
+                          <object class="GtkViewport" id="SummaryView2">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <child>
+                              <object class="GtkTreeView" id="summaryTree2">
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="model">liststore2</property>
+                                <property name="search-column">0</property>
+                                <child internal-child="selection">
+                                  <object class="GtkTreeSelection"/>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="totalqsos">
+                                    <property name="title" translatable="yes">QSOs</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="qsostxt"/>
+                                      <attributes>
+                                        <attribute name="text">0</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="cwqsos">
+                                    <property name="title" translatable="yes">CW QSOs</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="cwqsostxt"/>
+                                      <attributes>
+                                        <attribute name="text">1</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="phqsos">
+                                    <property name="title" translatable="yes">PH QSOs</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="phqsostxt"/>
+                                      <attributes>
+                                        <attribute name="text">2</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="ryqsos">
+                                    <property name="title" translatable="yes">RY QSOs</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="ryqsostxt"/>
+                                      <attributes>
+                                        <attribute name="text">3</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="vhfqsos">
+                                    <property name="title" translatable="yes">VHF QSOs</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="vhfqsostxt"/>
+                                      <attributes>
+                                        <attribute name="text">4</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="dupes">
+                                    <property name="title" translatable="yes">DUPES</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="dupestxt"/>
+                                      <attributes>
+                                        <attribute name="text">5</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="score">
+                                    <property name="title" translatable="yes">SCORE</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="scoretxt"/>
+                                      <attributes>
+                                        <attribute name="text">6</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="cabbonus">
+                                    <property name="title" translatable="yes">CAB FILE</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="cabbonustxt"/>
+                                      <attributes>
+                                        <attribute name="text">7</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="w0mabonus">
+                                    <property name="title" translatable="yes">W0MA</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="w0mabonustxt"/>
+                                      <attributes>
+                                        <attribute name="text">8</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="k0gqbonus">
+                                    <property name="title" translatable="yes">K0GQ</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="k0gqbonustxt"/>
+                                      <attributes>
+                                        <attribute name="text">9</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="mults">
+                                    <property name="title" translatable="yes">MULTS</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="multstxt"/>
+                                      <attributes>
+                                        <attribute name="text">10</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkScrolledWindow" id="summaryWindow3">
+                        <property name="width-request">820</property>
+                        <property name="height-request">60</property>
+                        <property name="visible">True</property>
+                        <property name="can-focus">True</property>
+                        <child>
+                          <object class="GtkViewport" id="SummaryView3">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <child>
+                              <object class="GtkTreeView" id="summaryTree3">
+                                <property name="visible">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="model">liststore3</property>
+                                <property name="search-column">0</property>
+                                <child internal-child="selection">
+                                  <object class="GtkTreeSelection"/>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="moqpcategory">
+                                    <property name="title" translatable="yes">MOQP CATEGORY</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="moqpcattxt"/>
+                                      <attributes>
+                                        <attribute name="text">0</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="location">
+                                    <property name="title" translatable="yes">LOCATION</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="locationtxt"/>
+                                      <attributes>
+                                        <attribute name="text">1</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="vhfaward">
+                                    <property name="title" translatable="yes">VHF AWARD</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="vhfawardtxt"/>
+                                      <attributes>
+                                        <attribute name="text">2</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="digitalaward">
+                                    <property name="title" translatable="yes">DIGITAL AWARD</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="digitaltxt"/>
+                                      <attributes>
+                                        <attribute name="text">3</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="rookieaward">
+                                    <property name="title" translatable="yes">ROOKIE AWARD</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="rookietxt"/>
+                                      <attributes>
+                                        <attribute name="text">4</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child type="label">
+              <object class="GtkLabel">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="label" translatable="yes">Log Summary:</property>
+                <attributes>
+                  <attribute name="weight" value="bold"/>
+                </attributes>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="x">4</property>
+            <property name="y">264</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
