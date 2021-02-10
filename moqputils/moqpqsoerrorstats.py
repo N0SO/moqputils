@@ -17,8 +17,8 @@ Update History:
 - V0.1.2 -Added HTML output support to exportcsv methob
 """
 
-from moqpdbutils import *
-from moqpdbconfig import *
+from moqputils.moqpdbutils import *
+from moqputils.moqpdbconfig import *
 
 
 VERSION = '0.0.1' 
