@@ -7,6 +7,7 @@ from gi.repository import Gtk
 from logchecker.treesample import TreeViewFilterWindow
 from logchecker.filedialogs import my_file_open
 from moqputils.moqploadlogs import MOQPLoadLogs
+from logchecker.__init__ import *
 
 
 
@@ -28,7 +29,7 @@ class About1():
         about.set_program_name("Missouri QSO Party Log Checker")
         about.set_version('V%s'%(VERSION))
         about.set_authors(["Mike, N0SO"])
-        about.set_copyright("(c) BEARS-STL")
+        about.set_copyright("(c) BEARS-STL 2021")
         about.set_comments("\n%s"%(verinfo))
         about.set_website("http://n0so.net")
         about.run()
@@ -58,6 +59,8 @@ class runLogCheck(MOQPLoadLogs):
 class Handler():
 
     def __init__(self):
+        #print('Handler starting...')
+        #print("I'm a %s."%(type(self)))
         self.fileButton_text = None
         self.status1_text = None
         self.status2_text = None
@@ -71,11 +74,23 @@ class Handler():
     def set_logstatusCallback(self, callback):
         self. logstatusCallback = callback
      
-    def on_win_show(self, args):
+    def on_win_show(self, args = None):
         print('on_win_show called...')
+        
+    def childview(self, parent):
+        try:
+            childlist = parent.get_children()
+        except:
+            childlist = []
+        print('%s has %d children...'%(parent.get_name(), len(childlist)))
+        for child in childlist:
+            self.childview(child)
 
     def on_win_destroy(self, args):
-        #print('args type = %s\nargs Directory:\n%s'%(args, dir(args)))
+    
+        textWindow = self.get_descendant(args,'textWindow')
+        print(type(textWindow), textWindow.get_state())
+    
         Gtk.main_quit()
         
     def on_cabBonus_activate(self, widget):
@@ -129,9 +144,30 @@ class Handler():
         print('widget = %s\nstate=%s\n'%(widget, state))
         self.sw_replaceExisting = state
 
-    def on_AboutMenuItem_activate(self, args=None):
+    def on_New1_activate(self, args=None):
+        print('on_New1_activate called')
+
+    def on_New1_activate_item(self, args=None):
+        print('on_New1_activate_item called')
+
+    def on_New1_select(self, args=None):
+        print('on_New1_select called')
+        
+    def on_Open1_activate(self, args=None):
+        print('on_Open1_activate called -')  
+        self.on_fileButton_clicked(args)  
+        liststore = self.get_descendant(args,'liststore1',0,True)
+        
+    def on_Open1_activate_item(self, args=None):
+        print('on_Open1_activate_item called')    
+
+    def on_about1_activate(self, args=None):
         about = About1()
-	
+        
+    def on_Quit1_activate(self, widget=None):
+        print('on_Quit1_activate called')    
+        self.on_win_destroy(widget)	
+
     def on_fileButton_clicked(self, widget):
         #print('File Button Clicked!')  
         file1=my_file_open()
@@ -194,6 +230,9 @@ class Handler():
                 textbuffer.insert(end_iter, line) 
                 k += 1
             #check.showLog(log)
+        else:
+            self.status1_text = None
+        print('on_fileButton1_cliscked is complete.')
             
     def set_Button_label(self, button):
         fileOnly = os.path.basename(self.status1_text)
@@ -254,6 +293,37 @@ class Handler():
                        moqpcat['DIGITAL'],
                        moqpcat['ROOKIE']])
            
+ 
+
+    def get_descendant(self, widget, child_name, level=0, doPrint=False):
+      if widget is not None:
+        buildableName = Gtk.Buildable.get_name(widget)
+        if buildableName == None: buildableName = 'None'
+        widgetName = widget.get_name()
+        #print(buildableName, widgetName)
+        if doPrint: print('+'*level + '>' + buildableName + ' :: ' + widgetName)
+        
+        #if doPrint: print("-"*level + Gtk.Buildable.get_name(widget) + " :: " + widget.get_name())
+      else:
+        if doPrint:  print("-"*level + "None")
+        return None
+      #/*** If it is what we are looking for ***/
+      if(Gtk.Buildable.get_name(widget) == child_name): # not widget.get_name() !
+        return widget;
+      #/*** If this widget has one child only search its child ***/
+      if (hasattr(widget, 'get_child') and callable(getattr(widget, 'get_child')) and child_name != ""):
+        child = widget.get_child()
+        if child is not None:
+          return self.get_descendant(child, child_name,level+1,doPrint)
+      # /*** It might have many children, so search them ***/
+      elif (hasattr(widget, 'get_children') and callable(getattr(widget, 'get_children')) and child_name !=""):
+        children = widget.get_children()
+        # /*** For each child ***/
+        found = None
+        for child in children:
+          if child is not None:
+            found = self.get_descendant(child, child_name,level+1,doPrint) # //search the child
+            if found: return found 
         
 class gui_MOQPLogCheck():
     def __init__(self):
