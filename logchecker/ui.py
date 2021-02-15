@@ -4,12 +4,10 @@ import gi, os, sys
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-from logchecker.treesample import TreeViewFilterWindow
+#from logchecker.treesample import TreeViewFilterWindow
 from logchecker.filedialogs import my_file_open
 from moqputils.moqploadlogs import MOQPLoadLogs
-from logchecker.__init__ import *
-
-
+from logchecker.__init__ import VERSION
 
 class About1():
     def __init__(self):
@@ -87,10 +85,6 @@ class Handler():
             self.childview(child)
 
     def on_win_destroy(self, args):
-    
-        textWindow = self.get_descendant(args,'textWindow')
-        print(type(textWindow), textWindow.get_state())
-    
         Gtk.main_quit()
         
     def on_cabBonus_activate(self, widget):
@@ -146,13 +140,33 @@ class Handler():
 
     def on_New1_activate(self, args=None):
         print('on_New1_activate called')
+        self.fileButton_text = None
+        self.status1_text = None
+        self.status2_text = None
+        self.sw_cabBonus = False
+        self.sw_loadLogs = False
+        self.sw_acceptErrors = False
+        self.sw_replaceExisting = False
+        self.log = None
+        self.logstatusCallback = None
+        texwin = self.get_descendant(args,'textWindow')
+        #texwin = Mwindow.get_descendant(args,'textWindow')
+        buffer = texwin.get_buffer()
+        buffer.delete(buffer.get_start_iter(), buffer.get_end_iter())
+        filebutton = self.get_descendant(args,'fileButton')
+        self.set_Button_label(filebutton)
+        stat1 = self.get_descendant(args,'fileButton')
+        self.set_status1(stat1)
+        
 
+    """
     def on_New1_activate_item(self, args=None):
         print('on_New1_activate_item called')
 
     def on_New1_select(self, args=None):
         print('on_New1_select called')
-        
+    """    
+
     def on_Open1_activate(self, args=None):
         print('on_Open1_activate called -')  
         self.on_fileButton_clicked(args)  
@@ -235,14 +249,21 @@ class Handler():
         print('on_fileButton1_cliscked is complete.')
             
     def set_Button_label(self, button):
-        fileOnly = os.path.basename(self.status1_text)
+        if (self.status1_text != None):
+            fileOnly = os.path.basename(self.status1_text)
+        else:
+            fileOnly = 'Select Input File (None)'
         while len(fileOnly) < 70 :
             fileOnly += ' '
-        button.set_label(fileOnly)     
+        button.set_label(fileOnly)
+
         
     def set_status1(self, status1):
-        fileOnly = os.path.basename(self.status1_text)
-        status1.set_text(fileOnly)  
+        if (self.status1_text != None):
+            fileOnly = os.path.basename(self.status1_text)
+            status1.set_text(fileOnly)
+        else:
+            status1.text=''  
         
     def set_logstatus1(self, widget, log=None):
         if (log == None): 
@@ -333,15 +354,14 @@ class gui_MOQPLogCheck():
         self.appMain(builder)
    
     def appMain(self, builder):
-       window = builder.get_object("win")
-       window.show_all()
-       self.logsumTree = builder.get_object("liststore1")
-       #window.Handler.set_logstatusCallback(self.logsumTree)
-       #self.cNametxt = builder.get_object('cNametxt')
-       #print (dir(self.logsumTree), dir(self.cNametxt))
-       #self.logsumTree.append(['test1', 'test2', 'test3'])
-       Gtk.main()    
+        window = builder.get_object("win")
+        MlogsumTree1 = builder.get_object("liststore1")
+        MlogsumTree2 = builder.get_object("liststore2")
+        MlogsumTree3 = builder.get_object("liststore3")       
+        window.show_all()
+        Gtk.main()    
 
 if __name__ == '__main__':
     app = gui_MOQPLogCheck()
+ 
 

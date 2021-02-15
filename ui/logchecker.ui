@@ -774,9 +774,7 @@
                         <property name="use-underline">True</property>
                         <property name="use-stock">True</property>
                         <property name="always-show-image">True</property>
-                        <signal name="activate" handler="on_New1_activate" swapped="no"/>
-                        <signal name="activate-item" handler="on_New1_activate_item" swapped="no"/>
-                        <signal name="select" handler="on_New1_select" swapped="no"/>
+                        <signal name="activate" handler="on_New1_activate" object="win" swapped="no"/>
                       </object>
                     </child>
                     <child>
