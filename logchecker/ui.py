@@ -150,22 +150,16 @@ class Handler():
         self.log = None
         self.logstatusCallback = None
         texwin = self.get_descendant(args,'textWindow')
-        #texwin = Mwindow.get_descendant(args,'textWindow')
         buffer = texwin.get_buffer()
         buffer.delete(buffer.get_start_iter(), buffer.get_end_iter())
         filebutton = self.get_descendant(args,'fileButton')
         self.set_Button_label(filebutton)
-        stat1 = self.get_descendant(args,'fileButton')
+        stat1 = self.get_descendant(args,'status1')
         self.set_status1(stat1)
-        
 
-    """
-    def on_New1_activate_item(self, args=None):
-        print('on_New1_activate_item called')
-
-    def on_New1_select(self, args=None):
-        print('on_New1_select called')
-    """    
+    def clear_list_store(self, liststore):
+        if (type(liststore) is gi.overrides.Gtk.ListStore):
+            liststore.clear()   
 
     def on_Open1_activate(self, args=None):
         print('on_Open1_activate called -')  
@@ -258,12 +252,12 @@ class Handler():
         button.set_label(fileOnly)
 
         
-    def set_status1(self, status1):
+    def set_status1(self, stat1):
         if (self.status1_text != None):
             fileOnly = os.path.basename(self.status1_text)
-            status1.set_text(fileOnly)
+            stat1.set_text(fileOnly)
         else:
-            status1.text=''  
+            stat1.set_text('status1')  
         
     def set_logstatus1(self, widget, log=None):
         if (log == None): 
