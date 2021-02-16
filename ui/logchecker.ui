@@ -88,6 +88,9 @@
             <property name="can-focus">False</property>
             <property name="border-width">10</property>
             <property name="spacing">2</property>
+            <child type="center">
+              <placeholder/>
+            </child>
             <child>
               <object class="GtkLabel" id="status1">
                 <property name="visible">True</property>
@@ -118,7 +121,7 @@
             </child>
           </object>
           <packing>
-            <property name="x">-4</property>
+            <property name="x">2</property>
             <property name="y">560</property>
           </packing>
         </child>
@@ -339,7 +342,7 @@
                     <child>
                       <object class="GtkScrolledWindow" id="Scroll1">
                         <property name="width-request">818</property>
-                        <property name="height-request">200</property>
+                        <property name="height-request">150</property>
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <child>
@@ -373,7 +376,7 @@
         <child>
           <object class="GtkFrame" id="summaryFrame1">
             <property name="width-request">100</property>
-            <property name="height-request">180</property>
+            <property name="height-request">256</property>
             <property name="visible">True</property>
             <property name="can-focus">False</property>
             <property name="label-xalign">0</property>
@@ -389,6 +392,7 @@
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="orientation">vertical</property>
+                    <property name="homogeneous">True</property>
                     <child>
                       <object class="GtkScrolledWindow" id="summaryWindow1">
                         <property name="width-request">820</property>
@@ -749,7 +753,7 @@
           </object>
           <packing>
             <property name="x">4</property>
-            <property name="y">264</property>
+            <property name="y">212</property>
           </packing>
         </child>
         <child>
@@ -774,9 +778,10 @@
                         <property name="use-underline">True</property>
                         <property name="use-stock">True</property>
                         <property name="always-show-image">True</property>
-                        <signal name="activate" handler="on_New1_activate" swapped="no"/>
-                        <signal name="activate-item" handler="on_New1_activate_item" swapped="no"/>
-                        <signal name="select" handler="on_New1_select" swapped="no"/>
+                        <signal name="activate" handler="clear_list_store" object="liststore1" swapped="no"/>
+                        <signal name="activate" handler="clear_list_store" object="liststore2" swapped="no"/>
+                        <signal name="activate" handler="clear_list_store" object="liststore3" swapped="no"/>
+                        <signal name="activate" handler="on_New1_activate" object="win" swapped="no"/>
                       </object>
                     </child>
                     <child>
