@@ -5,6 +5,8 @@ moqpdefs - Some standard MOQP definitions for Missouri counties,
            
 """
 
+CONTEST =['MISSOURI QSO PARTY', 'MOQP', 'MQP']
+
 INSTATE = ['MO', 'MISSOURI']
 
 CANADA = 'MAR NL QC ONE ONN ONS GTA MB SK AB BC NT NB'

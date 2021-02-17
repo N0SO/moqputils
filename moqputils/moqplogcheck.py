@@ -54,6 +54,9 @@ Update History:
 - to moqpdefs.py. 
 - Began consolidation of qso_valid code ( we had three 
 - methods with that name).
+* Tue Feb 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.8 - Made qso date / time a datetime object instead of
+-          separate strings for date and time.
 """
 
 from cabrilloutils.CabrilloUtils import *
@@ -70,7 +73,7 @@ VERSION = '0.0.6'
 
 class MOQPLogcheck(CabrilloUtils):
 
-    QSOTAGS = ['FREQ', 'MODE', 'DATE', 'TIME', 'MYCALL',
+    QSOTAGS = ['FREQ', 'MODE', 'DATETIME', 'MYCALL',
                'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH', 'NOTES']
 
     def __init__(self, filename = None, 
@@ -112,26 +115,17 @@ class MOQPLogcheck(CabrilloUtils):
        else:
           errorData.append(  ('QSO MODE Parameter invalid: %s'%(qso['MODE'])) )
           qsovalid = False
-       if all(char in valid_date_chars for char in qso['DATE']):
-          pass
-       else:
-          errorData.append(  ('QSO DATE Parameter invalid: %s'%(qso['DATE'])) )
-          qsovalid = False
-          qso['DATE'] = None
-       if ( qso['TIME'].isnumeric() ):
-          pass
-       else:
-          errorData.append(  ('QSO TIME Parameter invalid: %s'%(qso['TIME'])) )
-          qsovalid = False
-          qso['TIME'] = None
-       if ( qso['DATE'] and qso['TIME'] ):
-          if (qutils.validateQSOtime(qso['DATE'], qso['TIME'])):
+       if (qso['DATETIME']):
+          if (qutils.validateQSOtime(qso['DATETIME'])):
              pass
           else:
              errorData.append(  (\
-              'QSO DATE/TIME outside contest time period: %s %s'\
-               %(qso['DATE'],
-                 qso['TIME'])) )
+              'QSO DATE/TIME outside contest time period: %s'\
+               %(qso['DATETIME'])))
+       else:
+          errorData.append('QSO DATE/TIME strings invalid!')
+          qsovalid = False
+
        if all(char in valid_call_chars for char in qso['MYCALL']):
           pass
        else:
@@ -197,6 +191,7 @@ class MOQPLogcheck(CabrilloUtils):
        return errorData
 
     def getQSOdict(self, qsodata):
+       qutils = QSOUtils()
        qelements = 10
        qso = None
        qso_errors = []
@@ -209,13 +204,25 @@ class MOQPLogcheck(CabrilloUtils):
        qso = self.makeQSOdict()
        tagi = 0
        while (tagi < qelements):
-           qso[self.QSOTAGS[tagi]] = \
-               self.packLine(qsoparts[qso_elements_parsed])
-           qso_elements_parsed += 1
-           tagi += 1
+           if (tagi == 2): 
+	       """
+	       qso elements 2 and 3 should be date/time
+               """
+	       qsotimeobj = qutils.qsotimeOBJ(\
+	                     self.packLine(qsoparts[2]),
+                             self.packLine(qsoparts[3]))
+               qso[self.QSOTAGS[tagi]] = qsotimeobj
+               qso_elements_parsed += 2
+               tagi += 1
+           else: 
+               qso[self.QSOTAGS[tagi]] = \
+                   self.packLine(qsoparts[qso_elements_parsed])
+               qso_elements_parsed += 1
+               tagi += 1
            if (qso_elements_parsed >= qsolen):
                # No more elements to parse
                break
+           #print(qso, tagi)
        #Validate QSO
        q_errors = self.qso_valid(qso)
        #print(qsodata, qso_elements_parsed, qsolen, qso)
@@ -239,6 +246,8 @@ class MOQPLogcheck(CabrilloUtils):
        headerNotes =[]
        header = self.makeHEADERdict()
        linecount = 0
+       errors = 0
+       dupes = 0
        for line in logtext:
           linecount += 1
           line = line.upper()

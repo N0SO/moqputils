@@ -4,7 +4,6 @@ import gi, os, sys
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-#from logchecker.treesample import TreeViewFilterWindow
 from logchecker.filedialogs import my_file_open
 from moqputils.moqploadlogs import MOQPLoadLogs
 from logchecker.__init__ import VERSION

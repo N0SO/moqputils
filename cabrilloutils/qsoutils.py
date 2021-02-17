@@ -3,20 +3,22 @@
 qsoutils - Utilities for processing and validating QSO: lines
            from CABRILLO files.
 Update History:
-* Thu Apr 16 Mike Heitmann, N0SO <n0so@arrl.net>
+* Thu Apr 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - First interation
-* Sun May 03 Mike Heitmann, N0SO <n0so@arrl.net>
+* Sun May 03 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.2 - Added more date formats to QSO date checks
 - two-digit year formats added.
-* Fri May 15 Mike Heitmann, N0SO <n0so@arrl.net>
+* Fri May 15 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.3 - Added more qso time utils
 - Fixed a bug in getBand causing false DUPES
-* Mon May 25 Mike Heitmann, N0SO <n0so@arrl.net>
+* Mon May 25 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.5 - Added modeSet method to set all digimodes to RY
 - and all phone modes to PH for QSL checking.
-* Yue May 26 Mike Heitmann, N0SO <n0so@arrl.net>
+* Tue May 26 2020  Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.6 - Added qthSet method to set QTH strings that are
 - in the list DX to 'DX' for QSL checking and MULT counting.
+* Tue Feb 16 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Added qthDXSet method as a qthSet alias.
 """
 from datetime import datetime
 from datetime import date
@@ -25,7 +27,7 @@ from datetime import timedelta
 from cabrilloutils.CabrilloUtils import CabrilloUtils
 from moqputils.moqpdefs import *
 
-VERSION = '0.0.6' 
+VERSION = '0.1.0' 
            
 class QSOUtils(CabrilloUtils):
     def __init__(self):
@@ -70,6 +72,9 @@ class QSOUtils(CabrilloUtils):
         if (setqth in DX):
             setqth = 'DX'
         return setqth
+        
+    def qthDXSet(self, qth):
+        return self.qthSet(qth)
 
     def validate_Report_Mode(self, report, mode):
         """
@@ -204,7 +209,7 @@ class QSOUtils(CabrilloUtils):
             padtime = timestg
         return padtime
 
-    def validateQSOtime(self, qsodate, qsotime):
+    def validateQSOtime(self, qsodate, qsotime=None):
         timeValid = False
         """ Defines contest period in UTC. This needs to be 
             read in from a config file. """
@@ -212,7 +217,16 @@ class QSOUtils(CabrilloUtils):
         day1Stop = self.qsotimeOBJ('2020-04-05', '0400')
         day2Start = self.qsotimeOBJ('2020-04-05', '1400')
         day2Stop = self.qsotimeOBJ('2020-04-05', '2000')
-        logtime = self.qsotimeOBJ(qsodate, qsotime)
+        """
+        If qsodate and qsotime are both present, they are
+        ascii strings for date and time. If only qsodate
+        is present, it's already a time object and does not
+        require conversion
+        """
+        if qsotime:
+           logtime = self.qsotimeOBJ(qsodate, qsotime)
+        else:
+           logtime = qsodate
         if (logtime):
            if ( ((logtime >= day1Start) and \
                                        (logtime <= day1Stop)) \
@@ -222,12 +236,12 @@ class QSOUtils(CabrilloUtils):
         return timeValid
 
     def showQSO(self, qso):
-        fmt = '%s %s %s %s %s %s %s %s %s %s %s'
+        fmt = '%s %s %s %s %s %s %s %s %s %s'
         qsoLine = (fmt %( qso['DUPE'],
                           qso['FREQ'],                             
                           qso['MODE'],
-                          qso['DATE'],
-                          qso['TIME'],
+                          qso['DATETIME'],
+                          #qso['TIME'],
                           qso['MYCALL'],
                           qso['MYREPORT'],
                           qso['MYQTH'],

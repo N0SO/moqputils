@@ -304,7 +304,7 @@ class MOQPDBUtils():
             nextQSL = self.showQSLdetails(qsl)
             reportData.append(nextQSL)
         return reportData
-    
+    """
     def logtimes(self, logdate, logtime):
        datefmts = ['%Y-%m-%d', '%Y/%m/%d', '%Y%m%d', '%m-%d-%Y', '%m/%d/%Y']
        timefmts = ['%H%M', '%H:%M', '%H %M']
@@ -336,7 +336,7 @@ class MOQPDBUtils():
 
        logtimeobj = datetime.strptime(logdate+' '+logtime, datefstg+' '+timefstg)
        return logtimeobj
-
+    """
     def writeSummary(self, log):
         sumID = None
 

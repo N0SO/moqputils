@@ -106,7 +106,7 @@ class MOQPLoadLogs(MOQPLogcheck):
                              cabBonus=False,
                              errorsOK=False,
                              updateOK=False):
-       qutil = QSOUtils()   
+       #qutil = QSOUtils()   
        csvdata = ''       
        if (os.path.isfile(filename)):
           log = self.checkLog(filename, cabBonus)

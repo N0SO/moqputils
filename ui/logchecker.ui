@@ -775,6 +775,7 @@
                         <property name="label">gtk-new</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
+                        <property name="tooltip-text" translatable="yes">Clears current data from all windows.</property>
                         <property name="use-underline">True</property>
                         <property name="use-stock">True</property>
                         <property name="always-show-image">True</property>
@@ -789,6 +790,7 @@
                         <property name="label">gtk-open</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
+                        <property name="tooltip-text" translatable="yes">Open and evaluate a log file.</property>
                         <property name="use-underline">True</property>
                         <property name="use-stock">True</property>
                         <property name="always-show-image">True</property>
