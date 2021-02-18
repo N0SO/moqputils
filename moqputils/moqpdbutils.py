@@ -9,10 +9,14 @@ Update History:
 - V0.1.1 - Added method delete_log
 * Sat May 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.2 - Updates for 2020 MOQP changes
-* Fri Feb 05 Mike Heitmann, N0SO <n0so@arrl.net>
-- V0.1.3 - Added:
+* Fri Feb 05 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.3 - removed:
 -     Updated module path for new structure.
 -     Minor tweaks to support working with GUI
+ Fri Feb 05 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.4 - Removed methods doing conversion of  DATE /
+-          TIME strings to TIMEOBJ. These should be
+-          called from the qsoutils
 """
 
 import MySQLdb
@@ -23,7 +27,7 @@ from datetime import date
 from datetime import time
 from datetime import timedelta
 
-VERSION = '0.1.3' 
+VERSION = '0.1.4' 
 
 from cabrilloutils.CabrilloUtils import CabrilloUtils
 from cabrilloutils.qsoutils import QSOUtils
@@ -304,39 +308,7 @@ class MOQPDBUtils():
             nextQSL = self.showQSLdetails(qsl)
             reportData.append(nextQSL)
         return reportData
-    """
-    def logtimes(self, logdate, logtime):
-       datefmts = ['%Y-%m-%d', '%Y/%m/%d', '%Y%m%d', '%m-%d-%Y', '%m/%d/%Y']
-       timefmts = ['%H%M', '%H:%M', '%H %M']
-       logtimeobj = None
 
-       #Date
-       d=0
-       while (d<5):
-           try:
-               datefstg = datefmts[d]
-               dateobj=datetime.strptime(logdate, datefstg)
-               #print(dateobj)
-               d=5
-           except:
-               #print('Format %s did not work for date %s.'%(datefstg, logdate))
-               d += 1
-
-       #time
-       t=0
-       while (t<2):
-           try:
-               timefstg = timefmts[t]
-               timeobj=datetime.strptime(logtime, timefstg)
-               #print(timeobj)
-               t=3
-           except:
-              #print('Format %s did not work for time %s.'%(timefstg, logtime))
-              t += 1
-
-       logtimeobj = datetime.strptime(logdate+' '+logtime, datefstg+' '+timefstg)
-       return logtimeobj
-    """
     def writeSummary(self, log):
         sumID = None
 
@@ -414,17 +386,6 @@ class MOQPDBUtils():
             #print('\n\n\n\nUpdating SUMMARY - query = %s\n%s\n%s,%s,%s'%(query, params,log['SCORE']['W0MA'],log['SCORE']['K0GQ'],log['SCORE']['CABFILE']))
             ures = self.write_pquery(query, params)
         return sumID
-    """
-    def trimAndEscape(self, unsafeString, maxLen):
-        badchars = '\"\''
-        if (len(unsafeString) > maxLen):
-            workString = unsafeString[:maxLen-1]
-        else:
-            workString = unsafeString
-        for bad in badchars:
-            workString = workString.replace(bad, ' ')
-        return workString
-    """    
        
     def write_header(self, header, cabBonus):
         qutil = QSOUtils()

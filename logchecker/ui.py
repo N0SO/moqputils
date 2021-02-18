@@ -348,9 +348,11 @@ class gui_MOQPLogCheck():
    
     def appMain(self, builder):
         window = builder.get_object("win")
+        """
         MlogsumTree1 = builder.get_object("liststore1")
         MlogsumTree2 = builder.get_object("liststore2")
-        MlogsumTree3 = builder.get_object("liststore3")       
+        MlogsumTree3 = builder.get_object("liststore3")
+        """       
         window.show_all()
         Gtk.main()    
 

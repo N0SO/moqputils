@@ -26,6 +26,7 @@ from datetime import time
 from datetime import timedelta
 from cabrilloutils.CabrilloUtils import CabrilloUtils
 from moqputils.moqpdefs import *
+from moqputils.configs.contestdates import *
 
 VERSION = '0.1.0' 
            
@@ -211,12 +212,6 @@ class QSOUtils(CabrilloUtils):
 
     def validateQSOtime(self, qsodate, qsotime=None):
         timeValid = False
-        """ Defines contest period in UTC. This needs to be 
-            read in from a config file. """
-        day1Start = self.qsotimeOBJ('2020-04-04', '1400')
-        day1Stop = self.qsotimeOBJ('2020-04-05', '0400')
-        day2Start = self.qsotimeOBJ('2020-04-05', '1400')
-        day2Stop = self.qsotimeOBJ('2020-04-05', '2000')
         """
         If qsodate and qsotime are both present, they are
         ascii strings for date and time. If only qsodate
@@ -228,10 +223,10 @@ class QSOUtils(CabrilloUtils):
         else:
            logtime = qsodate
         if (logtime):
-           if ( ((logtime >= day1Start) and \
-                                       (logtime <= day1Stop)) \
-              or ((logtime >= day2Start) and \
-                                       (logtime <= day2Stop)) ):
+           if ( ((logtime >= DAY1START) and \
+                                       (logtime <= DAY1STOP)) \
+              or ((logtime >= DAY2START) and \
+                                       (logtime <= DAY2STOP)) ):
               timeValid = True
         return timeValid
 

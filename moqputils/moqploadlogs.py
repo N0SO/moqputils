@@ -32,7 +32,7 @@ from moqputils.moqplogcheck import MOQPLogcheck
 import os, shutil
 from moqputils.moqpdbconfig import *
 from moqputils.moqpdbutils import *
-from cabrilloutils.qsoutils import QSOUtils
+#from cabrilloutils.qsoutils import QSOUtils
 #from moqputils.bothawards import BothAwards
 #import MySQLdb
 
