@@ -59,6 +59,10 @@ Update History:
 -          separate strings for date and time.
 * Wed Feb 17 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.9 - Updated to use MOQPQSOUtils as parent cllass
+* Sat Feb 20 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Updated getMOQPLog to add raw log text to the
+-          dict object log it returns as key RAWTEXT.
+
 """
 
 from cabrilloutils.CabrilloUtils import *
@@ -78,7 +82,7 @@ class MOQPLogcheck(MOQPQSOUtils):
     def __init__(self, filename = None, 
                        acceptedpath = None,
                        cabbonus = None):
-        self.VERSION = '0.0.9'
+        self.VERSION = '0.1.0'
         if (filename):
            if (filename):
               self.appMain(filename, acceptedpath, cabbonus)
@@ -353,6 +357,8 @@ class MOQPLogcheck(MOQPQSOUtils):
         if (self.IsThisACabFile(logtext)):
             if (logtext):
                 log = self.getQSOdata(logtext)
+                if (log):
+                    log['RAWTEXT'] = logtext
         return log
 
 

@@ -149,8 +149,8 @@ class Handler():
         self.log = None
         self.logstatusCallback = None
         texwin = self.get_descendant(args,'textWindow')
-        buffer = texwin.get_buffer()
-        buffer.delete(buffer.get_start_iter(), buffer.get_end_iter())
+        tbuffer = texwin.get_buffer()
+        tbuffer.delete(tbuffer.get_start_iter(), tbuffer.get_end_iter())
         filebutton = self.get_descendant(args,'fileButton')
         self.set_Button_label(filebutton)
         stat1 = self.get_descendant(args,'status1')
@@ -172,25 +172,28 @@ class Handler():
         about = About1()
         
     def on_Quit1_activate(self, widget=None):
-        print('on_Quit1_activate called')    
+        #print('on_Quit1_activate called')    
         self.on_win_destroy(widget)	
 
     def on_fileButton_clicked(self, widget):
         #print('File Button Clicked!')  
         file1=my_file_open()
+        check = runLogCheck(file1.fileName, self.sw_cabBonus)
         file1.on_file_clicked(widget)
 
         #print('My File selected: %s'%(file1.fileName))
-        if file1.fileName != None:
+        if (file1.fileName):# != None:
             self.status1_text = file1.fileName
-            data = None
-            try:
-                with open(file1.fileName, 'r') as thisfile:
-                    data = thisfile.readlines()
-            except:
-                data = 'Error reading file %s'%(file1.fileName)
-            #self.set_label(file1.fileName)
-            
+            """
+            Getlog, summarize and check for errors
+            """       
+            log = check.checkLog(file1.fileName, self.sw_cabBonus)
+            if (log):
+                self.log = log
+                #print (log['RAWTEXT'])
+            else:
+                data = ('File %s is not a valid MOQP log file'\
+                                              %(file1.fileName))
             """ 
             Display raw log file data in main window
             """
@@ -200,6 +203,7 @@ class Handler():
             """
             Show HEADER
             """
+            data = self.log['RAWTEXT']
             k = 0
             while ( data[k].upper().startswith('QSO:') != True ):
                 end_iter = textbuffer.get_end_iter()
@@ -219,12 +223,6 @@ class Handler():
                 k+=1
                 j+=1
             """
-            Check log for errors
-            """       
-            check = runLogCheck(file1.fileName, self.sw_cabBonus)
-            log = check.checkLog(file1.fileName, self.sw_cabBonus)
-            self.log = log
-            """
             Show errors
             """
             print('Header Errors: %s'%(log['HEADER']['ERRORS']))
@@ -239,7 +237,7 @@ class Handler():
             #check.showLog(log)
         else:
             self.status1_text = None
-        print('on_fileButton1_cliscked is complete.')
+        print('on_fileButton1_clicked is complete.')
             
     def set_Button_label(self, button):
         if (self.status1_text != None):
@@ -259,30 +257,30 @@ class Handler():
             stat1.set_text('status1')  
         
     def set_logstatus1(self, widget, log=None):
-        if (log == None): 
-            header=self.log['HEADER']
-        else:
-            header=log['HEADER']
+        if (log or self.log):
+            if (log == None): 
+                header=self.log['HEADER']
+            else:
+                header=log['HEADER']
             
-        #print(dir(header))
-        widget.append([header['CONTEST'],
-                       header['CALLSIGN'],
-                       header['CATEGORY-STATION'],
-                       header['CATEGORY-OPERATOR'],
-                       header['CATEGORY-POWER'],
-                       header['CATEGORY-MODE'],
-                       header['OPERATORS']])
+            #print(dir(header))
+            widget.append([header['CONTEST'],
+                           header['CALLSIGN'],
+                           header['CATEGORY-STATION'],
+                           header['CATEGORY-OPERATOR'],
+                           header['CATEGORY-POWER'],
+                           header['CATEGORY-MODE'],
+                           header['OPERATORS']])
            
     def set_logstatus2(self, widget, log=None):
-        if (log == None): 
-            qsosum=self.log['QSOSUM']
-            bonus=self.log['BONUS']
-        else:
-            qsosum=log['QSOSUM']
-            bonus=log['BONUS']
-        #score=self.log['SCORE']   
-        #print('Score = %s'%(score))
-        widget.append(['%s'%(qsosum['QSOS']),
+        if (log or self.log):
+            if (log == None): 
+                qsosum=self.log['QSOSUM']
+                bonus=self.log['BONUS']
+            else:
+                qsosum=log['QSOSUM']
+                bonus=log['BONUS']
+            widget.append(['%s'%(qsosum['QSOS']),
                        '%s'%(qsosum['CW']),
                        '%s'%(qsosum['PH']),
                        '%s'%(qsosum['DG']),
@@ -295,13 +293,13 @@ class Handler():
 		       '%s'%(self.log['MULTS'])])
            
     def set_logstatus3(self, widget, log=None):
-        if (log == None): 
-            moqpcat=self.log['MOQPCAT']
-        else:
-            moqpcat=log['MOQPCAT']
+        if (log or self.log):
+            if (log == None): 
+                moqpcat=self.log['MOQPCAT']
+            else:
+                moqpcat=log['MOQPCAT']
             
-        #print(dir(header))
-        widget.append([moqpcat['MOQPCAT'],
+            widget.append([moqpcat['MOQPCAT'],
                        moqpcat['LOCATION'],
                        moqpcat['VHF'],
                        moqpcat['DIGITAL'],

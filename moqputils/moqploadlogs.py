@@ -8,28 +8,32 @@ available in moqplogcheck may be printed, but the
 results are NOT save to the database.
 
 Update History:
-* Thu Apr 29 Mike Heitmann, N0SO <n0so@arrl.net>
+* Thu Apr 29 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 - Retired code from 2019 QSO Party
 - and added enhanced log header/QSO checking
 - by inheriting from MOQPLogCheck
-* Tue May 08 Mike Heitmann, N0SO <n0so@arrl.net>
+* Tue May 08 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.1 - Handle CABRILLO Bonus.
 - Accept logs with errors beyond DUPES.
 - Allow updating (replacing) an existing log.
-* Sun May 10 Mike Heitmann, N0SO <n0so@arrl.net>
+* Sun May 10 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.2 - Added:
 -     CABRILLO bonus processing and improved 
 -     Accept errors processing
 -     Update existing log processing
 -     Improved error handling.
-* Fri Feb 05 Mike Heitmann, N0SO <n0so@arrl.net>
+* Fri Feb 05 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.3 - Added:
 -     Updated module path for new structure.
 -     Minor tweaks to support working with GUI
+* Fri Feb 16 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.4 - Added:
+-     Moved common QSO processing methods to module
+-     moqpqsoutils for better sharing between functions.
 
 """
-from moqputils.moqplogcheck import MOQPLogcheck
 import os, shutil
+from moqputils.moqplogcheck import MOQPLogcheck
 from moqputils.moqpdbconfig import *
 from moqputils.moqpdbutils import *
 #from cabrilloutils.qsoutils import QSOUtils
@@ -37,7 +41,6 @@ from moqputils.moqpdbutils import *
 #import MySQLdb
 
 
-VERSION = '0.1.3' 
 
 
 class MOQPLoadLogs(MOQPLogcheck):
@@ -47,6 +50,7 @@ class MOQPLoadLogs(MOQPLogcheck):
                        cabbonus = False,
                        errorsOK = False,
                        updateOK = False):
+        self.VERSION = '0.1.4' 
         if (filename):
            if (filename):
               self.appMain(filename, 
@@ -54,6 +58,9 @@ class MOQPLoadLogs(MOQPLogcheck):
                            cabbonus,
                            errorsOK,
                            updateOK)
+
+    def getVersion(self):
+        return self.VERSION
 
     def loadToDB(self, log, errorsOK, updateOK):
         sucsess = False
@@ -182,5 +189,5 @@ class MOQPLoadLogs(MOQPLogcheck):
 
 if __name__ == '__main__':
     app = MOQPLoadLogs()
-    print('Class MOQPLoadLogs() Version %s'%(app.getVersion))
+    print('Class MOQPLoadLogs() Version %s'%(app.getVersion()))
 
