@@ -187,6 +187,7 @@ class MOQPQSOUtils(QSOUtils):
       return  summary
 
     def qso_valid(self, qso):
+       #print(qso)
        errorData = []
        qsovalid = True
        valid_date_chars = set('0123456789/-')
@@ -304,6 +305,18 @@ class MOQPQSOUtils(QSOUtils):
                            k0gqbonus + \
                            cab_bonus
         return Score
+        
+    def getMOQPLog(self, fileName):
+        logtext = None
+        log = None
+        logtext = self.readFile(fileName)
+        if (self.IsThisACabFile(logtext)):
+            if (logtext):
+                log = self.getQSOdata(logtext)
+                if (log):
+                    log['RAWTEXT'] = logtext
+        return log
+
 
 if __name__ == '__main__':
     app = MOQPLoadLogs()

@@ -21,20 +21,35 @@ Update History:
 * Sat May 23 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.3.2 - Updated to use moqpdefs.py for state, county, country
 - designations.
+* Mon Feb 22 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.3.3
+- Updated to use MOQPQSOUtils as parent cllass.
+- Eliminated code duplicated in MOQPQSOUtils
+* Tue Feb 23 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.3.4
+- Moved the more up-to-date file processing code out of
+- MOQPLogCheck to the parent class MOQPCategory for
+- efficiency and consistancy:
+-        processLogdict (now depricted)
+-        checkLog()
+-        headerReview()
+-        errCopy()
+-        
 """
-from CabrilloUtils import *
-from moqpmults import *
-from generalaward import GenAward
-from moqpdefs import *
+from moqputils.moqpqsoutils import MOQPQSOUtils
+from moqputils.bonusaward import BonusAward
+from moqputils.dupecheck import DUPECheck
+from moqputils.moqpmults import *
+from moqputils.moqpdefs import *
 import os
 
 VERSION = '0.3.2' 
 FILELIST = './'
 ARGS = None
 
-class MOQPCategory(CabrilloUtils):
+class MOQPCategory(MOQPQSOUtils):
 
-    QSOTAGS = ['FREQ', 'MODE', 'DATE', 'TIME', 'MYCALL',
+    QSOTAGS = ['FREQ', 'MODE', 'DATETIME', 'MYCALL',
                'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH']
 
     def __init__(self, filename = None):
@@ -51,87 +66,6 @@ class MOQPCategory(CabrilloUtils):
         if (self.IsThisACabFile(fileText)):
             log = self.getQSOdata(fileText)
         return log
-
-    def makeQSOdict(self):
-       """
-       Return an empty dictionary for Cabrillo QSO Data
-       based on the QSOTAGS list above
-       """
-       qso = self.MakeEmptyDict(self.QSOTAGS, '')
-       return qso
-
-    def getQSOdict(self, qsodata):
-       qso = None
-       qso_errors = []
-       qso_data = dict()
-       temp = qsodata.replace(':','')
-       qsoparts = temp.split(' ')
-       #print(len(qsoparts))
-       if (len(qsoparts) == 10):
-          i=0
-          qso = self.makeQSOdict()
-          for tag in self.QSOTAGS:
-             #print('qso[%s] = %s %d'%(tag, qsoparts[i], i))
-             qso[tag] = qsoparts[i].strip()
-             i += 1
-          #print qso
-          qso_errors = self.qso_valid(qso)
-       else:
-          qso_errors = ['QSO has %d elements, should have 10.'%(len(qsoparts))]
-       qso_data['ERRORS'] = qso_errors
-       qso_data['DATA'] = qso
-       return qso_data       
-       
-    def getQSOdata(self, cabdata):
-       thislog = dict()
-       mults = MOQPMults()
-       qsos = []
-       errorData = []
-       header = self.makeHEADERdict()
-       linecount = 0
-       for line in cabdata:
-          linecount += 1
-          cabline = self.packLine(line)
-          #print('Raw CABDATA = %s'%(line))
-          linesplit = cabline.split(':')
-          lineparts = len(linesplit)
-          #print('%d Split data items: %s'%(lineparts, linesplit))
-          if (lineparts >= 2):
-             cabkey = linesplit[0].strip()
-             recdata = linesplit[1].strip()
-             #print('cabkey =%s\nrecdata =%s\n'%(cabkey, recdata))
-             if (lineparts > 2):
-                tagpos = cabline.find(':')
-                templine = cabline[tagpos:].replace(':','')
-                recdata = templine.strip()
-             if (cabkey == 'QSO'):
-                qso = self.getQSOdict(recdata)
-                #print('qso errors = %s'%(qso['ERRORS']))
-                if (qso['ERRORS'] == []):
-                   qsos.append(qso['DATA'])
-                   #print(qso['DATA'])
-                   mults.setMult(qso['DATA']['URQTH'])
-                else:
-                   errorData.append( \
-                      ('QSO BUSTED, line %d: \"%s\" \n' \
-                        '    %s\n'% \
-                        (linecount, cabline, qso['ERRORS'])) )
-             elif (cabkey in header):
-                header[cabkey] += recdata
-             else:
-                errorData.append( \
-                  ('CAB TAG unknown, line %d: \"%s\"\n'% \
-                            (linecount, cabline)) )
-          else:
-            errorData.append( \
-           ('CAB data bad, line %d: \"%s\" skipping'% \
-                                               (linecount, cabline)) )
-       thislog['HEADER'] = header
-       thislog['QSOLIST'] = qsos
-       thislog['MULTS'] = mults.sumMults()
-       thislog['ERRORS'] = errorData
-       #print(thislog['MULTS'], mults.sumMults())
-       return thislog
 
     def processQSOList(self,  data):
       """
@@ -192,6 +126,7 @@ class MOQPCategory(CabrilloUtils):
              category.append(vhf)
        
        return category      
+
        
     def processLogdict(self, fname):
        """
@@ -209,6 +144,9 @@ class MOQPCategory(CabrilloUtils):
                    DG = number of DIGITAL QSOs
                    VHF = number of VHF (>=144MHz) QSOs
        """
+       print('*** Method MOQPCategory.processLogdict is '+\
+             'depricated and should be replaced with a '+\
+             'call to MOPQCategory.checkLog.')
        logSummary = None
        log = self.getLogFile(fname)
        if ( log ):
@@ -386,7 +324,7 @@ class MOQPCategory(CabrilloUtils):
     """
     def exportcsvfile(self, filename, Headers=True):
        csvdata = None
-       log = self.parseLog(filename)
+       log = self.checkLog(filename)
        if (log):
        
            if (Headers): 
@@ -424,32 +362,6 @@ class MOQPCategory(CabrilloUtils):
        print(csvdata)  
         
     """
-    This method processes a single file passed in filename
-    If the Headers option is false, it will skip printing the
-    csv header info.
-    
-    Using dictionary objects
-    """
-    def parseLog(self, filename, Headers=True):
-       fullSummary = None
-       logsummary = self.processLogdict(filename)
-       #print( logsummary['ERRORS'] )
-       if (logsummary):
-          moqpcat = self.determineMOQPCatdict(logsummary)
-          Score = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
-          fullSummary = dict()
-          fullSummary['HEADER'] = logsummary['HEADER']
-          fullSummary['QSOSUM'] = logsummary['QSOSUM']
-          fullSummary['MULTS'] = logsummary['MULTS']
-          fullSummary['SCORE'] = Score
-          fullSummary['MOQPCAT'] = moqpcat
-          fullSummary['QSOLIST'] = logsummary['QSOLIST']
-          fullSummary['ERRORS'] = logsummary['ERRORS']
-       else:
-          print('File %s does not exist or is not in CABRILLO format.'%filename)
-       return fullSummary
- 
-    """
     This method processes all files in the passed in pathname
     """
     def exportcsvflist(self, pathname):
@@ -465,84 +377,103 @@ class MOQPCategory(CabrilloUtils):
                 Headers = False
        return csvdata
        
-    def qso_valid(self, qso):
-       errorData = []
-       qsovalid = True
-       valid_date_chars = set('0123456789/-')
-       valid_call_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-')
-       genaward = GenAward()
-       #if ( qso['FREQ'].isnumeric() ):
-       if ( self.is_number(qso['FREQ']) ):
-          if (genaward.getBand(qso['FREQ'])):
-              pass
-          else:
-              errorData.append( \
-              ('QSO FREQ Parameter out of band: %s'%(qso['FREQ'])) )
-       else:
-          errorData.append( ('QSO FREQ Parameter invalid: %s'%(qso['FREQ'])) )
-          qsovalid = False
-       
-       if ( qso['MODE'] in self.MODES ):
-          pass
-       else:
-          errorData.append(  ('QSO MODE Parameter invalid: %s'%(qso['MODE'])) )
-          qsovalid = False
+    def errorCopy(self, target, destination):
+        if(len(target)>0):
+            for item in target:
+               destination.append(item)
+        return destination
 
-       if all(char in valid_date_chars for char in qso['DATE']):
-          pass
-       else:
-          errorData.append(  ('QSO DATE Parameter invalid: %s'%(qso['DATE'])) )
-          qsovalid = False
+    def headerReview(self, header):
+        errors =[]
+        goodHeader = True
+        if ('START-OF-LOG' in header):
+            tag = self.packLine(header['LOCATION'])
+            if (\
+                (tag in INSTATE) or
+                (tag in US) or
+                (tag in CANADA) or
+                (tag in DX) ):
+                pass
+            else:
+                errors.append('LOCATION: %s tag INVALID'% \
+                            (header['LOCATION']))
+                goodKey = False
+            if (\
+                (header['CATEGORY-STATION']) and
+                (header['CATEGORY-OPERATOR']) and
+                (header['CATEGORY-POWER']) and
+                (header['CATEGORY-MODE']) ):
+                pass
+            else:
+                #Missing some CATEHORY data
+                errors.append(\
+                    'CATEGORY-xxx: tags may be incomplete')
+                goodKey = False
+            if (header['CALLSIGN'] == ''):
+                 errors.append('CALLSIGN: %s tag INVALID'% \
+                            (header['CALLSIGN']))
+                 goodHeader = False
+            if (header['EMAIL'] == ''):
+                 errors.append('EMAIL: %s tag INVALID'% \
+                            (header['EMAIL']))
+                 goodHeader = False
+        else:
+            #Not a CAB Header object
+            errors.append('No valid CAB Header')
+            goodHeader = False
 
-       if ( qso['TIME'].isnumeric() ):
-          pass
-       else:
-          errorData.append(  ('QSO TIME Parameter invalid: %s'%(qso['TIME'])) )
-          qsovalid = False
+        result = { 'STAT' : goodHeader,
+                   'ERRORS' : errors }
+        return result
 
-       #if ( qso['MYCALL'].isalnum() ):
-       if all(char in valid_call_chars for char in qso['MYCALL']):
-          pass
-       else:
-          errorData.append(  ('QSO MYCALL Parameter invalid: %s'%(qso['MYCALL'])) )
-          qsovalid = False
+    """
+    This method processes a single file passed in filename
+    If the cabbonus parameter is present it will us used to
+    add the CABRILLO FILE bonus to the score
+    
+    Returns a dictionary objct.
+    """
+    def checkLog(self, fileName, cabbonus=False):
+        result = dict()
+        log = self.getMOQPLog(fileName)
+        if ( log ):
+            errors = log['ERRORS']
+            headerResult = self.headerReview(log['HEADER'])
+            errors = self.errorCopy(headerResult['ERRORS'], 
+                                                     errors)
+            result['HEADERSTAT'] = headerResult['STAT']
+            dupes = DUPECheck(log['QSOLIST'])
+            #print(dupes.newlist)
+            if (dupes.newlist):
+                qcount = 1
+                for qso in dupes.newlist:
+                    if (qso['DUPE'] == 0):
+                      pass
+                    else:
+                      errors.append('QSO %d DUPE of QSO %s'% \
+                                  (qcount, dupes.showQSO(qso)))
+                    qcount += 1
+                
+                log['QSOLIST'] = dupes.newlist
+            
+            Bonus = BonusAward(log['QSOLIST'])
+                      
+            qsosummary = self.sumQSOList(log['QSOLIST'])
+            
+            #print(qsosummary)
 
-       #if ( qso['MYREPORT'].isnumeric() ):
-       if ( self.is_number(qso['MYREPORT']) ):
-          pass
-       else:
-          errorData.append(  ('QSO MYREPORT Parameter invalid: %s'%(qso['MYREPORT'])) )
-          qsovalid = False
+            log['QSOSUM'] = qsosummary
 
-       if ( qso['MYQTH'].isalpha() ):
-          pass
-       else:
-          errorData.append(  ('QSO MYQTH Parameter invalid: %s'%(qso['MYQTH'])) )
-          qsovalid = False
+            log['BONUS'] = { 'W0MA': Bonus.Award['W0MA']['INLOG'],
+                               'K0GQ':Bonus.Award['K0GQ']['INLOG'],
+                               'CABRILLO' : cabbonus}
+            log['MOQPCAT'] = self.determineMOQPCatdict(log)
+            log['SCORE'] = self.calculate_score(log['QSOSUM'], 
+                                                log['MULTS'],
+                                                log['BONUS'])
+            log['ERRORS'] = errors
+        return log
 
-       #if ( qso['URCALL'].isalnum() ):
-       if all(char in valid_call_chars for char in qso['URCALL']):
-          pass
-       else:
-          errorData.append(  ('QSO URCALL Parameter invalid: %s'%(qso['URCALL'])) )
-          qsovalid = False
-
-#       if ( qso['URREPORT'].isnumeric() ):
-       if ( self.is_number(qso['URREPORT']) ):
-          pass
-       else:
-          errorData.append(  ('QSO URREPORT Parameter invalid: %s'%(qso['URREPORT'])) )
-          qsovalid = False
-
-       if ( qso['URQTH'].isalpha() ):
-          pass
-       else:
-          errorData.append(  ('QSO URQTH Parameter invalid: %s'%(qso['URQTH'])) )
-          qsovalid = False
-          
-       return errorData
-
-       
     def qsolist_valid(self, qsolist):
        qcount = 0
        errorData = []
@@ -554,14 +485,6 @@ class MOQPCategory(CabrilloUtils):
               errorData.append(r)
        return errorData
 
-    def calculate_score(self, qsosum, mults):
-        Score = 0
-        cwpoints = qsosum['CW'] * 2
-        digipoints = qsosum['DG'] * 2
-        qsopoints = cwpoints + digipoints + qsosum['PH']
-        Score = qsopoints * mults
-        return Score
- 
     def appMain(self, pathname):
        csvdata = 'Nothing.'
        if (os.path.isfile(pathname)):

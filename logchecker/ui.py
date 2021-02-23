@@ -142,10 +142,10 @@ class Handler():
         self.fileButton_text = None
         self.status1_text = None
         self.status2_text = None
-        self.sw_cabBonus = False
-        self.sw_loadLogs = False
-        self.sw_acceptErrors = False
-        self.sw_replaceExisting = False
+        #self.sw_cabBonus = False
+        #self.sw_loadLogs = False
+        #self.sw_acceptErrors = False
+        #self.sw_replaceExisting = False
         self.log = None
         self.logstatusCallback = None
         texwin = self.get_descendant(args,'textWindow')

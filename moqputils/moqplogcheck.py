@@ -62,19 +62,31 @@ Update History:
 * Sat Feb 20 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 - Updated getMOQPLog to add raw log text to the
 -          dict object log it returns as key RAWTEXT.
+* Mon Feb 22 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 
+- Removed code duplicated in MOQPCategory and MOQPQSOUtils
+* Tue Feb 23 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.2
+- Moved the more up-to-date file processing code out of
+- MOQPLogCheck to the parent class MOQPCategory for
+- efficiency and consistancy:
+-        checkLog()
+-        headerReview()
+-        errCopy()
+-        
 
 """
 
-from cabrilloutils.CabrilloUtils import *
-from moqputils.moqpqsoutils import MOQPQSOUtils
-from moqputils.dupecheck import DUPECheck
+#from moqputils.moqpqsoutils import MOQPQSOUtils
+from moqputils.moqpcategory import MOQPCategory
+#from moqputils.dupecheck import DUPECheck
 from moqputils.bonusaward import BonusAward
 
 import os, shutil
 
 from moqputils.moqpdefs import *
 
-class MOQPLogcheck(MOQPQSOUtils):
+class MOQPLogcheck(MOQPCategory):
 
     QSOTAGS = ['FREQ', 'MODE', 'DATETIME', 'MYCALL',
                'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH', 'NOTES']
@@ -82,167 +94,13 @@ class MOQPLogcheck(MOQPQSOUtils):
     def __init__(self, filename = None, 
                        acceptedpath = None,
                        cabbonus = None):
-        self.VERSION = '0.1.0'
+        self.VERSION = '0.1.2'
         if (filename):
            if (filename):
               self.appMain(filename, acceptedpath, cabbonus)
 
     def getVersion(self):
        return self.VERSION
-
-    def _moqpcatloc_(self, log):
-       moqpcatstg = ''
-       compstring = log['HEADER']['LOCATION'].strip()
-       if(compstring in INSTATE):
-          moqpcatstg = 'MISSOURI'
-       elif (compstring in US):
-          moqpcatstg = 'US'
-       elif (compstring in CANADA):
-          moqpcatstg = ('CANADA: (%s)'%(log['HEADER']['LOCATION']))
-       elif (compstring in DX):
-          moqpcatstg = 'DX'          
-       return moqpcatstg
-
-    def _moqpcatsta_(self, log):
-       moqpcatstg = ''
-       compstring = log['HEADER']['CATEGORY-STATION'].strip()
-       if (compstring in STATIONS):
-           if (compstring == 'FIXED'):
-               moqpcatstg = 'FIXED'
-           elif ( (compstring == 'MOBILE') \
-                     or (compstring == 'ROVER') \
-                     or compstring == 'PORTABLE'):
-               moqpcatstg = 'MOBILE'
-           elif (compstring == 'EXPEDITION'):
-               moqpcatstg = 'EXPEDITION'
-           elif (compstring == 'SCHOOL'):
-               moqpcatstg = 'SCHOOL'
-       return moqpcatstg
-
-    def _moqpcatop_(self, log):
-       moqpcatstg = ''
-       compstring = log['HEADER']['CATEGORY-OPERATOR'].strip()
-       if (compstring == 'SINGLE-OP'):
-          moqpcatstg  = 'SINGLE-OP'
-       elif (compstring == 'MULTI-OP'):
-          moqpcatstg   = 'MULTI-OP'
-       elif (compstring == 'CHECKLOG'):
-          moqpcatstg   = 'CHECKLOG'
-       return moqpcatstg
-
-    def _moqpcatpower_(self, log):
-       moqpcatstg = ''
-       compstring = log['HEADER']['CATEGORY-POWER'].strip()
-       if (compstring == 'LOW' \
-                 or compstring == 'HIGH' \
-                 or compstring == 'QRP'):
-           moqpcatstg  = ('%s POWER'%(compstring))
-       return moqpcatstg
-    
-    def _moqpcatmode_(self, log):
-       moqpcatstg = ''
-       compstring = log['HEADER']['CATEGORY-MODE'].strip()
-       if (compstring == 'PH' \
-                     or compstring == 'SSB'):
-          moqpcatstg = 'PHONE'
-       elif (compstring == 'CW'):
-          moqpcatstg = 'CW'
-       elif (compstring == 'MIXED'):
-          moqpcatstg = 'MIXED'
-       elif (compstring == 'RY' or \
-             compstring =='RTTY' or \
-             compstring == 'DIG' or \
-             compstring == 'DIGI'):
-          moqpcatstg = 'DIGITAL'
-       return moqpcatstg
-
-    def determineMOQPCatstg(self, moqpcat):
-       moqpcatstg = 'UNKNOWN'
-       if (moqpcat['OPERATOR'] =='CHECKLOG'):
-           moqpcatstg = 'CHECKLOG'
-           
-       elif (moqpcat['LOCATION'] == 'DX'):
-           moqpcatstg = 'DX'
-       
-       elif (moqpcat['STATION'] == 'SCHOOL'):
-           moqpcatstg = ('%s %s'%(moqpcat['LOCATION'], 
-                                  moqpcat['STATION']))
-
-       elif ('CANADA' in moqpcat['LOCATION']):
-           moqpcatstg = 'CANADA'
-
-       elif (moqpcat['LOCATION'] == 'US'):
-           moqpcatstg = ('%s %s'%(moqpcat['LOCATION'],
-                                   moqpcat['OPERATOR']))
-           if (moqpcat['OPERATOR'] == 'MULTI-OP'):
-               pass
-           elif (moqpcat['OPERATOR'] == 'SINGLE-OP'):
-               moqpcatstg += (' %s'%(moqpcat['POWER']))
- 
-       elif (moqpcat['LOCATION'] == 'MISSOURI'):
-           moqpcatstg = ('%s %s %s'%(moqpcat['LOCATION'],
-                                     moqpcat['STATION'],
-                                     moqpcat['OPERATOR']))
-                                     
-           if (moqpcat['STATION'] == 'FIXED'):
-               if(moqpcat['OPERATOR'] == 'MULTI-OP'):
-                   pass
-               elif (moqpcat['OPERATOR'] == 'SINGLE-OP'):
-                   moqpcatstg += (' %s'%(moqpcat['POWER']))
-                             
-           elif (moqpcat['STATION'] == 'EXPEDITION'):
-               if(moqpcat['OPERATOR'] == 'MULTI-OP'):
-                   pass
-               elif (moqpcat['OPERATOR'] == 'SINGLE-OP'):
-                   moqpcatstg += (' %s'%(moqpcat['POWER']))
-
-           elif (moqpcat['STATION'] == 'MOBILE'):
-               moqpcatstg = ('%s %s'%(moqpcat['LOCATION'],
-                                    moqpcat['STATION']))
-               if (moqpcat['POWER'] == 'HIGH POWER'):
-                   moqpcatstg += ' UNLIMITED'
-               else:
-                   moqpcatstg += (' %s'%(moqpcat['OPERATOR']))
-                   if (moqpcat['OPERATOR'] == 'MULTI-OP'):
-                       pass
-                   elif (moqpcat['OPERATOR'] == 'SINGLE-OP'):
-                       moqpcatstg += (' %s %s'% (moqpcat['POWER'],
-                                                 moqpcat['MODE']))
-                                     
-       return moqpcatstg
-       
-    def determineMOQPCatdict(self, log):
-       moqpcatdict = { 'LOCATION':'',
-                       'STATION':'',
-                       'OPERATOR':'',
-                       'POWER':'',
-                       'MODE':'',
-                       'ROOKIE':'',
-                       'VHF':'',
-                       'DIGITAL':'',
-                       'MOQPCAT':''}
-
-       moqpcatdict['LOCATION'] = self._moqpcatloc_(log)
-          
-       moqpcatdict['STATION']=self._moqpcatsta_(log)
-       
-       moqpcatdict['OPERATOR']=self._moqpcatop_(log)
-
-       moqpcatdict['POWER']=self._moqpcatpower_(log)
-
-       moqpcatdict['MODE']=self._moqpcatmode_(log)
-
-       if (log['QSOSUM']['DG'] > 0):
-           moqpcatdict['DIGITAL'] = 'DIGITAL'
-           
-       if (log['QSOSUM']['VHF'] > 0):
-           moqpcatdict['VHF'] = 'VHF'
-          
-       if (log['HEADER']['CATEGORY-OVERLAY'].upper().strip() == 'ROOKIE'):
-           moqpcatdict['ROOKIE'] = 'ROOKIE'                         
-       moqpcatdict['MOQPCAT'] = self.determineMOQPCatstg(moqpcatdict)
-       #print(moqpcatdict)         
-       return moqpcatdict
 
     def exportcsv(self, log, Headers=True):
        #print(Headers)
@@ -300,110 +158,6 @@ class MOQPLogcheck(MOQPQSOUtils):
           csvdata = None
        return csvdata
        
-
-    def headerReview(self, header):
-        errors =[]
-        goodHeader = True
-        if ('START-OF-LOG' in header):
-            tag = self.packLine(header['LOCATION'])
-            if (\
-                (tag in INSTATE) or
-                (tag in US) or
-                (tag in CANADA) or
-                (tag in DX) ):
-                pass
-            else:
-                errors.append('LOCATION: %s tag INVALID'% \
-                            (header['LOCATION']))
-                goodKey = False
-            if (\
-                (header['CATEGORY-STATION']) and
-                (header['CATEGORY-OPERATOR']) and
-                (header['CATEGORY-POWER']) and
-                (header['CATEGORY-MODE']) ):
-                pass
-            else:
-                #Missing some CATEHORY data
-                errors.append(\
-                    'CATEGORY-xxx: tags may be incomplete')
-                goodKey = False
-            if (header['CALLSIGN'] == ''):
-                 errors.append('CALLSIGN: %s tag INVALID'% \
-                            (header['CALLSIGN']))
-                 goodHeader = False
-            if (header['EMAIL'] == ''):
-                 errors.append('EMAIL: %s tag INVALID'% \
-                            (header['EMAIL']))
-                 goodHeader = False
-        else:
-            #Not a CAB Header object
-            errors.append('No valid CAB Header')
-            goodHeader = False
-
-        result = { 'STAT' : goodHeader,
-                   'ERRORS' : errors }
-        return result
-
-    def errorCopy(self, target, destination):
-        if(len(target)>0):
-            for item in target:
-               destination.append(item)
-        return destination
-
-    def getMOQPLog(self, fileName):
-        logtext = None
-        log = None
-        logtext = self.readFile(fileName)
-        if (self.IsThisACabFile(logtext)):
-            if (logtext):
-                log = self.getQSOdata(logtext)
-                if (log):
-                    log['RAWTEXT'] = logtext
-        return log
-
-
-    def checkLog(self, fileName, cabbonus=False):
-        result = dict()
-        log = self.getMOQPLog(fileName)
-        if ( log ):
-            errors = log['ERRORS']
-            headerResult = self.headerReview(log['HEADER'])
-            errors = self.errorCopy(headerResult['ERRORS'], 
-                                                     errors)
-            result['HEADERSTAT'] = headerResult['STAT']
-            dupes = DUPECheck(log['QSOLIST'])
-            #print(dupes.newlist)
-            if (dupes.newlist):
-                qcount = 1
-                for qso in dupes.newlist:
-                    if (qso['DUPE'] == 0):
-                      pass
-                    else:
-                      errors.append('QSO %d DUPE of QSO %s'% \
-                                  (qcount, dupes.showQSO(qso)))
-                    qcount += 1
-                
-                log['QSOLIST'] = dupes.newlist
-            
-            Bonus = BonusAward(log['QSOLIST'])
-                      
-            qsosummary = self.sumQSOList(log['QSOLIST'])
-            
-            #print(qsosummary)
-
-            log['QSOSUM'] = qsosummary
-
-            log['BONUS'] = { 'W0MA': Bonus.Award['W0MA']['INLOG'],
-                               'K0GQ':Bonus.Award['K0GQ']['INLOG'],
-                               'CABRILLO' : cabbonus}
-            log['MOQPCAT'] = self.determineMOQPCatdict(log)
-            log['SCORE'] = self.calculate_score(log['QSOSUM'], 
-                                                log['MULTS'],
-                                                log['BONUS'])
-            log['ERRORS'] = errors
-        return log
-
-
     def processOneFile(self, filename, 
                              headers=True, 
                              acceptedMovePath=None,
