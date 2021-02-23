@@ -235,6 +235,14 @@ class Handler():
                 textbuffer.insert(end_iter, line) 
                 k += 1
             #check.showLog(log)
+            if (self.sw_loadLogs):
+                local=MOQPLoadLogs()
+                
+                result = local.loadToDB(log,
+                                self.sw_acceptErrors,
+                                self.sw_replaceExisting)
+                print('Load to database = %s'%(result))
+
         else:
             self.status1_text = None
         print('on_fileButton1_clicked is complete.')
