@@ -22,14 +22,17 @@ Update History:
 - V0.0.1 - Start tracking revs.
 * Sat May 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.2 - Updates for 2020 MOQP changes
+* Tue Feb 23 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 
+- Starting Updates for 2021 MOQP changes.
 """
 
-from moqpcategory import *
-from moqpdbutils import *
-from bonusaward import BonusAward
-from moqpdbconfig import *
+from moqputils.moqpcategory import *
+from moqputils.moqpdbutils import *
+from moqputils.bonusaward import BonusAward
+from moqputils.configs.moqpdbconfig import *
 
-VERSION = '0.0.2' 
+VERSION = '0.1.0' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
@@ -97,7 +100,7 @@ class MOQPDBCategory(MOQPCategory):
                    csvdata += err
        
        else:
-          csvdata = ('No log data in databas for .'%callsign)
+          csvdata = 'No log data in databas for %s.'%(callsign)
        return csvdata 
         
     def parseLog(self, callsign, Headers=True):
@@ -147,7 +150,7 @@ class MOQPDBCategory(MOQPCategory):
           mydb.setCursorDict()
           mydb.writeSummary(fullSummary)
        else:
-          print('No log in database for call %s.'%(filename))
+          print('No log in database for call %s.'%(callsign))
        return fullSummary
 
     def processLogdict(self, callsign):

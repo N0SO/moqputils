@@ -17,6 +17,10 @@ Update History:
 - V0.1.4 - Removed methods doing conversion of  DATE /
 -          TIME strings to TIMEOBJ. These should be
 -          called from the qsoutils
+* Teu Feb 23 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.5 - Added:
+- More tweaks to support date / time as a datetime object.
+- More tweaks to support consolidated log processing code
 """
 
 import MySQLdb
@@ -27,7 +31,6 @@ from datetime import date
 from datetime import time
 from datetime import timedelta
 
-VERSION = '0.1.4' 
 
 from cabrilloutils.CabrilloUtils import CabrilloUtils
 from cabrilloutils.qsoutils import QSOUtils
@@ -39,6 +42,7 @@ class MOQPDBUtils():
                        user = None, 
                        passwd = None, 
                        database = None):
+       self.VERSION = '0.1.4' 
        if (host):
            #print('Attempting connection to: %s as:%s pw:%s db:%s'%(host, user, passwd, database))
            self.mydb = self.connectDB(host, 
@@ -50,6 +54,9 @@ class MOQPDBUtils():
                #self.cursor = None
            else:
                print("Error connecting to %s database %s:\n%s"%(host, database, e))
+
+    def getVersion(self):
+        return self.VERSION
           
     def connectDB(self, host, 
                         user, 
@@ -484,7 +491,37 @@ class MOQPDBUtils():
         if (type(qsodata['NOTES']) is list):
             qu = QSOUtils()
             qsodata['NOTES'] = qu.packNote(qsodata['NOTES'])
-        query = """INSERT INTO QSOS(LOGID,
+            
+        if ('DATETIME' in qsodata.keys()):
+            #use new date / time format
+            query = """INSERT INTO QSOS(LOGID,
+                                    FREQ,
+                                    MODE,
+                                    DATETIME,
+                                    MYCALL,
+                                    MYREPORT,
+                                    MYQTH,
+                                    URCALL,
+                                    URREPORT,
+                                    URQTH,
+                                    DUPE,
+                                    NOTE)
+                      VALUES(""" + \
+                         ('"%d",'%(logID)) +\
+                         ('"%s",'%(qsodata['FREQ'])) +\
+                         ('"%s",'%(qsodata['MODE'])) +\
+                         ('"%s",'%(qsodata['DATETIME'])) +\
+                         ('"%s",'%(qsodata['MYCALL'])) +\
+                         ('"%s",'%(qsodata['MYREPORT'])) +\
+                         ('"%s",'%(qsodata['MYQTH'])) +\
+                         ('"%s",'%(qsodata['URCALL'])) +\
+                         ('"%s",'%(qsodata['URREPORT'])) +\
+                         ('"%s",'%(qsodata['URQTH'])) +\
+                         ('"%s",'%(qsodata['DUPE'])) +\
+                         ('"%s")'%(qsodata['NOTES']))
+        
+        else: # Old date and time as strings format
+            query = """INSERT INTO QSOS(LOGID,
                                     FREQ,
                                     MODE,
                                     DATE,

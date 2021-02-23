@@ -29,16 +29,21 @@ Update History:
 * Fri Feb 16 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.4 - Added:
 -     Moved common QSO processing methods to module
+-     moqpcategory for better sharing between functions.
+* Teu Feb 23 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.5 - Added:
+-     Moved common QSO processing methods to module
 -     moqpqsoutils for better sharing between functions.
+
 
 """
 import os, shutil
+import MySQLdb
 from moqputils.moqplogcheck import MOQPLogcheck
-from moqputils.moqpdbconfig import *
+from moqputils.configs.moqpdbconfig import *
 from moqputils.moqpdbutils import *
 #from cabrilloutils.qsoutils import QSOUtils
 #from moqputils.bothawards import BothAwards
-#import MySQLdb
 
 
 
@@ -50,7 +55,7 @@ class MOQPLoadLogs(MOQPLogcheck):
                        cabbonus = False,
                        errorsOK = False,
                        updateOK = False):
-        self.VERSION = '0.1.4' 
+        self.VERSION = '0.1.5' 
         if (filename):
            if (filename):
               self.appMain(filename, 

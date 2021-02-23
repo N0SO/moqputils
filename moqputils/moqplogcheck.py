@@ -77,9 +77,7 @@ Update History:
 
 """
 
-#from moqputils.moqpqsoutils import MOQPQSOUtils
 from moqputils.moqpcategory import MOQPCategory
-#from moqputils.dupecheck import DUPECheck
 from moqputils.bonusaward import BonusAward
 
 import os, shutil
