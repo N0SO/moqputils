@@ -18,7 +18,7 @@ Update History:
 """
 
 from moqputils.moqpdbutils import *
-from moqputils.moqpdbconfig import *
+from moqputils.configs.moqpdbconfig import *
 
 
 VERSION = '0.0.1' 

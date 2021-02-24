@@ -18,7 +18,7 @@ VERSION = '0.1.0'
 
 from moqputils.moqpdbutils import *
 from cabrilloutils.CabrilloUtils import CabrilloUtils
-from moqputils.moqpdbconfig import *
+from moqputils.configs.moqpdbconfig import *
 
 class LogReport():
 
