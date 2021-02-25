@@ -27,7 +27,12 @@ Update History:
 * Wed Apr 15 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.13
 - Added method getLogDisct(filename)
+* Wed Feb 24 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1
+- Added emailCheck() method.
 """
+
+import re
 
 class CabrilloUtils():
     CABRILLOTAGS = ['START-OF-LOG',
@@ -62,7 +67,6 @@ class CabrilloUtils():
              'QSO',
              'END-OF-LOG']
              
-    VERSION = '1.0.12'
     PHONEMODES = 'PH SSB LSB USB FM DV'
     DIGIMODES = 'RY RTY RTTY FSK AFSK PSK PSK31 PSK64 DIGU DIGL DG FT8'
     MODES = 'CW' + PHONEMODES + DIGIMODES
@@ -86,6 +90,7 @@ class CabrilloUtils():
                     'CATEGORY-TRANSMITTER', 'CATEGORY-OVERLAY']
 
     def __init__(self):
+        self.VERSION = '1.0.12'
         pass
 
     def __version__(self):
@@ -397,6 +402,15 @@ class CabrilloUtils():
            
         return returnvals
 
+        
+    def emailCheck(self, emailAddress):
+       emailValid = False
+       regexstg = '^[a-zA-Z0-9]+[\._]?[a-zA-Z0-9]+[@]\w+[.]\w{2,3}$'
+       if (emailAddress):
+           if re.search(regexstg, emailAddress):
+               emailValid = True
+               #print(' address %s is %s'%(emailAddress, emailValid))
+       return emailValid
 
 if __name__ == '__main__':
    app=CabrilloUtils()

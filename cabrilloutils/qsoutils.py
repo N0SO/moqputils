@@ -19,6 +19,9 @@ Update History:
 - in the list DX to 'DX' for QSL checking and MULT counting.
 * Tue Feb 16 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 - Added qthDXSet method as a qthSet alias.
+* Wed Feb 24 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1
+- Put self.VERSION inside class QSOUtils
 """
 from datetime import datetime
 from datetime import date
@@ -28,14 +31,13 @@ from cabrilloutils.CabrilloUtils import CabrilloUtils
 from moqputils.moqpdefs import *
 from moqputils.configs.contestdates import *
 
-VERSION = '0.1.0' 
-           
 class QSOUtils(CabrilloUtils):
     def __init__(self):
+        self.VERSION = '0.1.1' 
         pass
         
     def getVersion(self):
-       return VERSION
+       return self.VERSION
 
     def trimAndEscape(self, unsafeString, maxLen):
         """

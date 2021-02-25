@@ -5,7 +5,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 from logchecker.filedialogs import my_file_open
-from moqputils.moqploadlogs import MOQPLoadLogs
+from logchecker.runlogcheck import runLogCheck
 from logchecker.__init__ import VERSION
 
 class About1():
@@ -31,27 +31,6 @@ class About1():
         about.set_website("http://n0so.net")
         about.run()
         about.destroy()
-
-class runLogCheck(MOQPLoadLogs):
-    def __init__(self, filename = None, 
-                       cabbonus = None,
-                       acceptedpath = None,
-                       loadlog = False):
-        MOQPLoadLogs.__init__(self, None, 
-                       acceptedpath,
-                       cabbonus)
-               
-        self.logName = filename
-        self.acceptedPath = acceptedpath
-        self.cabBonus = cabbonus  
-        self.loadLog = loadlog
-    
-    def showLog(self, log):
-        print (dir(log))
-        print(log.keys())
-        keys = log.keys()
-        for key in keys:
-            print('log[%s]:\n%s'%(key, log[key]))
 
 class Handler():
 
@@ -178,7 +157,6 @@ class Handler():
     def on_fileButton_clicked(self, widget):
         #print('File Button Clicked!')  
         file1=my_file_open()
-        check = runLogCheck(file1.fileName, self.sw_cabBonus)
         file1.on_file_clicked(widget)
 
         #print('My File selected: %s'%(file1.fileName))
@@ -187,62 +165,13 @@ class Handler():
             """
             Getlog, summarize and check for errors
             """       
-            log = check.checkLog(file1.fileName, self.sw_cabBonus)
-            if (log):
-                self.log = log
-                #print (log['RAWTEXT'])
-            else:
-                data = ('File %s is not a valid MOQP log file'\
-                                              %(file1.fileName))
-            """ 
-            Display raw log file data in main window
-            """
-            textbuffer=widget.get_buffer()
-            end_iter = textbuffer.get_end_iter()
-            textbuffer.insert(end_iter, 'LOG HEADER:\n') 
-            """
-            Show HEADER
-            """
-            data = self.log['RAWTEXT']
-            k = 0
-            while ( data[k].upper().startswith('QSO:') != True ):
-                end_iter = textbuffer.get_end_iter()
-                line = 'H%s - %s'%(k+1, data[k])
-                textbuffer.insert(end_iter, line) 
-                k+=1
-            """
-            Show QSOs
-            """
-            j=1
-            end_iter = textbuffer.get_end_iter()
-            textbuffer.insert(end_iter, '\nLOG QSOs:\n') 
-            while (k < len(data)):
-                line = 'Q%s - %s'%(j, data[k])
-                end_iter = textbuffer.get_end_iter()
-                textbuffer.insert(end_iter, line) 
-                k+=1
-                j+=1
-            """
-            Show errors
-            """
-            print('Header Errors: %s'%(log['HEADER']['ERRORS']))
-            end_iter = textbuffer.get_end_iter()
-            textbuffer.insert(end_iter, '\nLOG ERRORS:\n') 
-            k=1
-            for errs in log["ERRORS"]:
-                line = 'E%s - %s\n'%(k, errs)
-                end_iter = textbuffer.get_end_iter()
-                textbuffer.insert(end_iter, line) 
-                k += 1
-            #check.showLog(log)
-            if (self.sw_loadLogs):
-                local=MOQPLoadLogs()
-                
-                result = local.loadToDB(log,
+            check = runLogCheck(file1.fileName,
+                                widget, 
+                                self.sw_cabBonus,
+                                self.sw_loadLogs,
                                 self.sw_acceptErrors,
                                 self.sw_replaceExisting)
-                print('Load to database = %s'%(result))
-
+            self.log = check.processAndDisplay()
         else:
             self.status1_text = None
         print('on_fileButton1_clicked is complete.')

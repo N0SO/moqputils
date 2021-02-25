@@ -42,7 +42,18 @@ class LogReport():
 
     def showQSO(self, qso, html=False):
         if (html):
-            fmt ="""<tr>
+            if ('DATETIME' in qso.keys()):
+                fmt ="""<tr>
+                    <td><a href='./qslcheck.php?qsoid=%d' target='_blank'>%d</a></td>
+                    <td>%d</td><td>%s</td><td>%s</td>
+                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+                    <td>%s</td>
+                    </tr>"""
+            
+            else: #old format
+                fmt ="""<tr>
                     <td><a href='./qslcheck.php?qsoid=%d' target='_blank'>%d</a></td>
                     <td>%d</td><td>%s</td><td>%s</td>
                     <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
@@ -51,9 +62,34 @@ class LogReport():
                     <td>%s</td><td>%s</td>
                     </tr>"""
         else:
-            fmt = '%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t'+\
+            if ('DATETIME' in qso.keys()):
+                fmt = '%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t'+\
+                  '%s\t%s\t%s\t%s\t%s\n'
+            
+            else: # old format
+                fmt = '%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t'+\
                   '%s\t%s\t%s\t%s\t%s\t%s\n'
-        qsoLine = (fmt %( qso['ID'], qso['ID'],
+        if ('DATETIME' in qso.keys()):
+            qsoLine = (fmt %( qso['ID'], qso['ID'],
+                          qso['LOGID'],
+                          qso['FREQ'],                             
+                          qso['MODE'],
+                          qso['DATETIME'],
+                          qso['MYCALL'],
+                          qso['MYREPORT'],
+                          qso['MYQTH'],
+                          qso['URCALL'],
+                          qso['URREPORT'],
+                          qso['URQTH'],
+                          qso['VALID'],
+                          qso['QSL'],
+                          qso['NOLOG'],
+                          qso['DUPE'],
+                          qso['NOQSOS'],
+                          qso['NOTE']))
+        
+        else: #old format
+            qsoLine = (fmt %( qso['ID'], qso['ID'],
                           qso['LOGID'],
                           qso['FREQ'],                             
                           qso['MODE'],

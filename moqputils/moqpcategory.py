@@ -34,14 +34,17 @@ Update History:
 -        checkLog()
 -        headerReview()
 -        errCopy()
--        
+-* Wed Feb 24 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1
+- Added call to checkEmail method.
+        
 """
 from moqputils.moqpqsoutils import MOQPQSOUtils
 from moqputils.bonusaward import BonusAward
 from moqputils.dupecheck import DUPECheck
 from moqputils.moqpmults import *
 from moqputils.moqpdefs import *
-import os
+import os, re
 
 VERSION = '0.3.2' 
 FILELIST = './'
@@ -387,6 +390,13 @@ class MOQPCategory(MOQPQSOUtils):
         errors =[]
         goodHeader = True
         if ('START-OF-LOG' in header):
+            if (self.packLine(header['CONTEST']) in CONTEST):
+                pass
+            else:
+                errors.append('CONTEST: %s tag INVALID'% \
+                            (header['CONTEST']))
+                goodKey = False
+            
             tag = self.packLine(header['LOCATION'])
             if (\
                 (tag in INSTATE) or
@@ -413,10 +423,13 @@ class MOQPCategory(MOQPQSOUtils):
                  errors.append('CALLSIGN: %s tag INVALID'% \
                             (header['CALLSIGN']))
                  goodHeader = False
-            if (header['EMAIL'] == ''):
-                 errors.append('EMAIL: %s tag INVALID'% \
+            #if (if re.search(regexstg, header['EMAIL']):
+            if (self.emailCheck(header['EMAIL'])):
+                pass
+            else:
+                errors.append('EMAIL: %s tag INVALID'% \
                             (header['EMAIL']))
-                 goodHeader = False
+                goodHeader = False
         else:
             #Not a CAB Header object
             errors.append('No valid CAB Header')
