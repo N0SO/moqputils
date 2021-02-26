@@ -5,6 +5,11 @@ Update History:
 - V0.0.1 - Consolidated code from moqplogcheck, moqpcategory
 -          in an attempt to make common routines for log
 -          evaluation.
+* Fri Feb 26 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.2
+- Improved error checking to make sure qsos are checked
+- for errors (within contest period, parameters valid,
+- etc) before performing DUP check.
 """
 
 from cabrilloutils.qsoutils import QSOUtils
@@ -30,7 +35,7 @@ class MOQPQSOUtils(QSOUtils):
        return qso
 
     def getQSOdict(self, qsodata):
-       qutils = QSOUtils()
+       #qutils = QSOUtils()
        qelements = 10
        qso = None
        qso_errors = []
@@ -47,7 +52,7 @@ class MOQPQSOUtils(QSOUtils):
                """
                qso elements 2 and 3 should be date/time
                """
-               qsotimeobj = qutils.qsotimeOBJ(\
+               qsotimeobj = self.qsotimeOBJ(\
 	                     self.packLine(qsoparts[2]),
                              self.packLine(qsoparts[3]))
                qso[self.QSOTAGS[tagi]] = qsotimeobj
@@ -75,6 +80,10 @@ class MOQPQSOUtils(QSOUtils):
               for i in range(len(q_errors)): 
                   qso_errors.append('\t%s'%(q_errors[i]))
        qso['NOTES'] = qso_errors
+       if (len(qso_errors)):
+           qso['ERROR'] = True
+       else:
+           qso['ERROR'] = False
        return qso       
 
     def getQSOdata(self, logtext):
@@ -105,18 +114,16 @@ class MOQPQSOUtils(QSOUtils):
                 recdata = self.packLine(templine)
              if (cabkey == 'QSO'):
                 qso = self.getQSOdict(recdata)
+                #print(qso.keys(),qso['ERROR'], qso['NOTES'])
                 qsos.append(qso)
-                #print(qso)
-                #print('qso errors = %s'%(qso['ERRORS']))
-                if (qso['NOTES'] == []):
-                   #print(qso['DATA'])
-                   mults.setMult(qso['URQTH'])
-                else:
+                if (qso['ERROR']):
                    errorData.append( \
                       ('QSO BUSTED, log file line %d: '% \
                         (linecount)) )
                    for err in qso['NOTES']:
                       errorData.append(" %s"%(err))
+                else:
+                   mults.setMult(qso['URQTH'])
 
              elif (cabkey in header):
                 header[cabkey] += recdata
@@ -156,7 +163,7 @@ class MOQPQSOUtils(QSOUtils):
       summary['DUPES'] = 0
       
       for thisqso in data:
-         if (thisqso['DUPE'] == 0):
+         if (thisqso['ERROR'] == False):
       
            summary['QSOS'] += 1
                         
@@ -192,9 +199,9 @@ class MOQPQSOUtils(QSOUtils):
        qsovalid = True
        valid_date_chars = set('0123456789/-')
        valid_call_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-')
-       qutils = QSOUtils()
+       #qutils = QSOUtils()
        if ( self.is_number(qso['FREQ']) ):
-          if (qutils.getBand(qso['FREQ'])):
+          if (self.getBand(qso['FREQ'])):
               pass
           else:
               errorData.append( \
@@ -209,7 +216,7 @@ class MOQPQSOUtils(QSOUtils):
           errorData.append(  ('QSO MODE Parameter invalid: %s'%(qso['MODE'])) )
           qsovalid = False
        if (qso['DATETIME']):
-          if (qutils.validateQSOtime(qso['DATETIME'])):
+          if (self.validateQSOtime(qso['DATETIME'])):
              pass
           else:
              errorData.append(  (\

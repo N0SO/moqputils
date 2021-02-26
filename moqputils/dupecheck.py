@@ -5,6 +5,10 @@ QSO Party for DUPES
 Update History:
 * Fri Apr 17 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - First interation
+* Fri Feb 26 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0
+- Added 'DUPE of QSO xx' to qso['NOTES'] and set new
+- qso['ERROR'] flag for dupes to mark qso as invalid.
 """
 
 from cabrilloutils.qsoutils import QSOUtils
@@ -45,14 +49,6 @@ class DUPECheck(QSOUtils):
                    if (tqso['MYQTH'] == cqso['MYQTH']):
                       dupe = True
                       #print('tmyqth = %s, cmyqth =%s'%(tqso['MYQTH'], cqso['MYQTH']))
-       """               
-       if (dupe):
-          print('----\ntcall: %s <==> ccall: %s'%(tcall, ccall))
-          print('tband: %s <==> cband: %s'%(tband, cband))
-          print('tmode: %s <==> cmode: %s'%(tqso['MODE'], cqso['MODE']))
-          print('turqth: %s <==> curqth: %s'%(tqso['URQTH'], cqso['URQTH']))
-          print('tmyqth: %s <==> cmyqth: %s'%(tqso['MYQTH'], cqso['MYQTH']))
-       """   
        return dupe
               
     def findDupes(self, qsolist):
@@ -61,9 +57,13 @@ class DUPECheck(QSOUtils):
        if (qcount > 1):
           for q in range(qcount): 
              if (q > 0): #Skip first QSO
-                 for t in range(q-1):
-                     dupe = self.compareqsos(newlist[q], 
+                 if newlist[q]['ERROR'] == False: #Skip invalid QSOs
+                    for t in range(qcount-1):
+                         if (t != q) and (newlist[t]['ERROR'] == False):
+                             dupe = self.compareqsos(newlist[q], 
                                                  newlist[t])
-                     if (dupe):
-                         newlist[q]['DUPE'] = t+1
+                             if (dupe):
+                                 newlist[q]['DUPE'] = t+1
+                                 newlist[q]['NOTES'] = 'DUPE of QSO %d'%(t+1)
+                                 newlist[q]['ERROR'] = True
        return newlist

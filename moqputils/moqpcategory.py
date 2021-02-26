@@ -35,8 +35,11 @@ Update History:
 -        headerReview()
 -        errCopy()
 -* Wed Feb 24 2021 Mike Heitmann, N0SO <n0so@arrl.net>
-- V0.1.1
+- V0.3.5
 - Added call to checkEmail method.
+* Fri Feb 26 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.3.6
+- Added ERROR and NOTES keys to QSOTAGS
         
 """
 from moqputils.moqpqsoutils import MOQPQSOUtils
@@ -46,14 +49,15 @@ from moqputils.moqpmults import *
 from moqputils.moqpdefs import *
 import os, re
 
-VERSION = '0.3.2' 
+VERSION = '0.3.6' 
 FILELIST = './'
 ARGS = None
 
 class MOQPCategory(MOQPQSOUtils):
 
     QSOTAGS = ['FREQ', 'MODE', 'DATETIME', 'MYCALL',
-               'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH']
+               'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 
+               'URQTH', 'ERROR', 'NOTES']
 
     def __init__(self, filename = None):
         if (filename):

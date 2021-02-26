@@ -78,5 +78,5 @@ class runLogCheck(MOQPLoadLogs):
                             self.sw_acceptErrors,
                             self.sw_replaceExisting)
             print('Load to database = %s'%(result))
-        
+        #self.showDebugLog(log)
         return log

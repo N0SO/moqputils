@@ -74,6 +74,9 @@ Update History:
 -        headerReview()
 -        errCopy()
 -        
+* Fri Feb 26 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.3
+- Removed redundant definition of QSOTAGS
 
 """
 
@@ -85,14 +88,14 @@ import os, shutil
 from moqputils.moqpdefs import *
 
 class MOQPLogcheck(MOQPCategory):
-
+    """
     QSOTAGS = ['FREQ', 'MODE', 'DATETIME', 'MYCALL',
                'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH', 'NOTES']
-
+    """
     def __init__(self, filename = None, 
                        acceptedpath = None,
                        cabbonus = None):
-        self.VERSION = '0.1.2'
+        self.VERSION = '0.1.3'
         if (filename):
            if (filename):
               self.appMain(filename, acceptedpath, cabbonus)
