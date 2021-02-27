@@ -9,6 +9,10 @@ Update History:
 - V0.1.0
 - Added 'DUPE of QSO xx' to qso['NOTES'] and set new
 - qso['ERROR'] flag for dupes to mark qso as invalid.
+* Sat Feb 27 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1
+- Added code to make sure oldest QSO is kept and newer
+- qso is marked as DUPE regardless of order in log.
 """
 
 from cabrilloutils.qsoutils import QSOUtils
@@ -63,7 +67,14 @@ class DUPECheck(QSOUtils):
                              dupe = self.compareqsos(newlist[q], 
                                                  newlist[t])
                              if (dupe):
-                                 newlist[q]['DUPE'] = t+1
-                                 newlist[q]['NOTES'] = 'DUPE of QSO %d'%(t+1)
-                                 newlist[q]['ERROR'] = True
+                                 #Determine which QSO is older
+                                 if (newlist[q]['DATETIME'] >= newlist[t]['DATETIME']):
+                                     dupeOf = q
+                                     dupeIs = t
+                                 else:
+                                     dupeOf = t
+                                     dupeIs = q
+                                 newlist[dupeOf]['DUPE'] = dupeIs+1
+                                 newlist[dupeOf]['NOTES'] = 'DUPE of QSO %d'%(dupeIs+1)
+                                 newlist[dupeOf]['ERROR'] = True
        return newlist

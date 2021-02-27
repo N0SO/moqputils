@@ -40,6 +40,10 @@ Update History:
 * Fri Feb 26 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.3.6
 - Added ERROR and NOTES keys to QSOTAGS
+* Sat Feb 27 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.3.7
+- Minor tweak to exportcsv so command line error 
+- report is pretty.
         
 """
 from moqputils.moqpqsoutils import MOQPQSOUtils
@@ -358,11 +362,12 @@ class MOQPCategory(MOQPQSOUtils):
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
-           csvdata += ('%s'%(log['MOQPCAT']['ROOKIE']))
-
-           for err in log['ERRORS']:
-               if ( err != [] ):
-                   csvdata += err
+           csvdata += ('%s\n'%(log['MOQPCAT']['ROOKIE']))
+           
+           if len(log['ERRORS'])> 0 :
+               csvdata += 'LOG ERRORS:\n'
+               for err in log['ERRORS']:
+                   csvdata += '%s\n'%(err)
        
        else:
           csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)

@@ -17,7 +17,7 @@ Update History:
 - V0.1.4 - Removed methods doing conversion of  DATE /
 -          TIME strings to TIMEOBJ. These should be
 -          called from the qsoutils
-* Teu Feb 23 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+* Tue Feb 23 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.5 - Added:
 - More tweaks to support date / time as a datetime object.
 - More tweaks to support consolidated log processing code
@@ -491,7 +491,10 @@ class MOQPDBUtils():
         if (type(qsodata['NOTES']) is list):
             qu = QSOUtils()
             qsodata['NOTES'] = qu.packNote(qsodata['NOTES'])
-            
+        if (qsodata['ERROR']):
+            valid = 0
+        else:
+            valid = 1       
         if ('DATETIME' in qsodata.keys()):
             #use new date / time format
             query = """INSERT INTO QSOS(LOGID,
@@ -504,6 +507,7 @@ class MOQPDBUtils():
                                     URCALL,
                                     URREPORT,
                                     URQTH,
+                                    VALID,
                                     DUPE,
                                     NOTE)
                       VALUES(""" + \
@@ -517,6 +521,7 @@ class MOQPDBUtils():
                          ('"%s",'%(qsodata['URCALL'])) +\
                          ('"%s",'%(qsodata['URREPORT'])) +\
                          ('"%s",'%(qsodata['URQTH'])) +\
+                         ('"%s",'%(valid)) +\
                          ('"%s",'%(qsodata['DUPE'])) +\
                          ('"%s")'%(qsodata['NOTES']))
         

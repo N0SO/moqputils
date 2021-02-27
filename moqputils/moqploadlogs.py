@@ -30,7 +30,7 @@ Update History:
 - V0.1.4 - Added:
 -     Moved common QSO processing methods to module
 -     moqpcategory for better sharing between functions.
-* Teu Feb 23 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+* Tue Feb 23 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.5 - Added:
 -     Moved common QSO processing methods to module
 -     moqpqsoutils for better sharing between functions.
