@@ -88,7 +88,7 @@ class MOQPDBCategory(MOQPCategory):
            csvdata += ('%s\t'%(log['SCORE']['SCORE']))         
            csvdata += ('%s\t'%(log['SCORE']['W0MA']))         
            csvdata += ('%s\t'%(log['SCORE']['K0GQ']))         
-           csvdata += ('%s\t'%(log['SCORE']['CABFILE']))         
+           csvdata += ('%s\t'%(log['SCORE']['CABRILLO']))         
            csvdata += ('%s\t'%(log['SCORE']['TOTAL']))         
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
@@ -118,34 +118,46 @@ class MOQPDBCategory(MOQPCategory):
        if (logsummary):
           moqpcat = self.determineMOQPCatdict(logsummary)
           #print(moqpcat)
-          ba=BonusAward(logsummary['QSOLIST'])
-          if (ba.Award['W0MA']['INLOG']):
+          ba=logsummary['BONUS']
+          if (ba['W0MA']):
               w0mabonus = 100
           else:
               w0mabonus = 0
-          if (ba.Award['K0GQ']['INLOG']):
+          if (ba['K0GQ']):
               k0gqbonus = 100
           else:
               k0gqbonus = 0
-          if(logsummary['HEADER']['CABBONUS'] > 0):
+          if(ba['CABRILLO'] > 0):
               cabBonus = 100
           else:
               cabBonus = 0
-          qsoScore = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
           bonuspoints = { 'W0MA':w0mabonus,
                           'K0GQ':k0gqbonus,
-                          'CABFILE':cabBonus,
-                          'SCORE':qsoScore,
-                          'TOTAL':(qsoScore + w0mabonus + k0gqbonus + cabBonus) }
+                          'CABRILLO':cabBonus}
           
           fullSummary = dict()
           fullSummary['HEADER'] = logsummary['HEADER']
           fullSummary['QSOSUM'] = logsummary['QSOSUM']
           fullSummary['MULTS'] = logsummary['MULTS']
-          fullSummary['SCORE'] = bonuspoints
+          fullSummary['BONUS'] = bonuspoints
           fullSummary['MOQPCAT'] = moqpcat
           fullSummary['QSOLIST'] = logsummary['QSOLIST']
           fullSummary['ERRORS'] = logsummary['ERRORS']
+          fullSummary['SCORE'] = dict()
+          fullSummary['SCORE']['TOTAL'] = self.calculate_score(\
+	                                  logsummary['QSOSUM'], 
+                                          logsummary['MULTS'],
+                                          bonuspoints)
+          fullSummary['SCORE']['W0MA'] = bonuspoints['W0MA']
+          fullSummary['SCORE']['K0GQ'] = bonuspoints['K0GQ']
+          fullSummary['SCORE']['CABRILLO'] = bonuspoints['CABRILLO']
+          fullSummary['SCORE']['SCORE'] = self.calculate_score(\
+	                                  logsummary['QSOSUM'], 
+                                          logsummary['MULTS'],
+                                          {'W0MA': 0,
+					   'K0GQ': 0,
+					   'CABRILLO': 0})
+
           mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
           mydb.setCursorDict()
           mydb.writeSummary(fullSummary)
@@ -168,25 +180,15 @@ class MOQPDBCategory(MOQPCategory):
                    PH = number of PHONE QSOSs
                    DG = number of DIGITAL QSOs
                    VHF = number of VHF (>=144MHz) QSOs
-       """
        logSummary = None
+       """
        log = self.getLogFile(callsign)
-       if ( log ):
-          qsosummary = self.processQSOList(log['QSOLIST'])
-          logSummary = dict()
-          logSummary['HEADER'] = log['HEADER']
-          logSummary['QSOLIST'] = log['QSOLIST']
-          logSummary['ERRORS'] = log['ERRORS']
-          logSummary['QSOSUM'] = qsosummary
-          logSummary['MULTS'] = log['MULTS']
-          
-       return logSummary
+       return log
 
     def getLogFile(self, callsign):
         log = None
         mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
         mydb.setCursorDict()
-        mults = MOQPMults()
         #Fetch log header
         logID = mydb.CallinLogDB(callsign)
         if (logID):
@@ -196,12 +198,20 @@ class MOQPDBCategory(MOQPCategory):
             #print(dbheader)
             header = self.getLogHeader(dbheader)
             qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=%s) )"%(logID, 1))
+            mults = MOQPMults(qsos)
+            Bonus = BonusAward(qsos)
+            """
             for qso in qsos:
                 mults.setMult(qso['URQTH'])
+            """
             #print('mults = %d'%(mults.sumMults()))
             log['HEADER'] = header
             log['QSOLIST'] = qsos
             log['MULTS'] = mults.sumMults()
+            log['BONUS'] = { 'W0MA': Bonus.Award['W0MA']['INLOG'],
+                             'K0GQ':Bonus.Award['K0GQ']['INLOG'],
+                             'CABRILLO' : header['CABBONUS']}
+            log['QSOSUM'] = self.processQSOList(qsos)
             log['ERRORS'] = []
         return log
 

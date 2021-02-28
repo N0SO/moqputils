@@ -6,6 +6,10 @@ ContestMults - A collection of utilities to process contest
 Update History:
 * Fri Jan 10 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V.0.0.1 - Just starting out
+* Sat Feb 27 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0
+- Added call to method sumMultsinQSOList if a QSO list
+- is passed as an input parameter.
 """
 
 VERSION = '0.0.1'
@@ -23,8 +27,10 @@ MULTFILES = ['shared/multlists/arrlw0.csv',
              'shared/multlists/arrlCA.csv']
 
 class ContestMults():
-    def __init__(self):
+    def __init__(self, qsolist=None):
        self.mults = self.readmultlists(MULTFILES)
+       if (qsolist):
+           self.sumMultsinQSOList(qsolist)
 
     def __version__(self):
        return VERSION
@@ -98,7 +104,7 @@ class ContestMults():
 
     def sumMultsinQSOList(self, qsolist):
        for Qso in qsolist:
-           self.setMult(Qso['URCALL'])
+           self.setMult(Qso['URQTH'])
        return self.sumMults()
        
 if __name__ == '__main__':

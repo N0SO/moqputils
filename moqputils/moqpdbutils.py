@@ -348,7 +348,7 @@ class MOQPDBUtils():
             ures = self.write_query(query)
             #update bonus stats
             query = 'UPDATE SUMMARY SET W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, SCORE=%s WHERE ID=%s'% \
-                    (log['SCORE']['W0MA'], log['SCORE']['K0GQ'], log['SCORE']['CABFILE'], log['SCORE']['TOTAL'], sumID)
+                    (log['SCORE']['W0MA'], log['SCORE']['K0GQ'], log['SCORE']['CABRILLO'], log['SCORE']['TOTAL'], sumID)
             ures = self.write_query(query)
             query = "UPDATE SUMMARY SET MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s, LOCATION='%s' WHERE ID=%s"% \
                     (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, log['HEADER']['LOCATION'], sumID)
@@ -383,7 +383,7 @@ class MOQPDBUtils():
                          log['SCORE']['SCORE'],
                          log['SCORE']['W0MA'],
                          log['SCORE']['K0GQ'],
-                         log['SCORE']['CABFILE'],
+                         log['SCORE']['CABRILLO'],
                          log['SCORE']['TOTAL'],
                          log['MOQPCAT']['MOQPCAT'],
                          digital_log,
