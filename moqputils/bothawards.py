@@ -3,9 +3,9 @@
 #import os
 #from moqpcategory import *
 #from generalaward import *
-from showmeaward import ShowMeAward
-from missouriaward import MissouriAward
-from bonusaward import BonusAward
+from moqputils.showmeaward import ShowMeAward
+from moqputils.missouriaward import MissouriAward
+from moqputils.bonusaward import BonusAward
 
 #VERSION = '0.2.0'
 COMMONCALLS = ['K0M', 'N0M','W0M',
@@ -42,6 +42,7 @@ class BothAwards():
         self._showmeAward_ = ShowMeAward()
         self._missouriAward_ = MissouriAward()
         self._bonusAward_ = BonusAward()
+        self.Results = None
 #        self.KEYS = COMKEYS+SHOWMEKEYS+MOKEYS
 #        self.Award = self.init_award(self.KEYS)
 #        self.callset = self.combineListoflists( [SHOWMECALLS, 
@@ -51,7 +52,7 @@ class BothAwards():
 #                                                     self.Award, 
 #                                                     self.callset))
         if (qsolist):
-              self.appMain(callsign, qsolist)
+              self.Results = self.appMain(callsign, qsolist)
               
     def parseAwards(self):
        """

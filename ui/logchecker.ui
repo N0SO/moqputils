@@ -56,6 +56,8 @@
       <column type="gchararray"/>
       <!-- column-name mults -->
       <column type="gchararray"/>
+      <!-- column-name errors -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkListStore" id="liststore3">
@@ -69,6 +71,10 @@
       <!-- column-name digitalaward -->
       <column type="gchararray"/>
       <!-- column-name rookieaward -->
+      <column type="gchararray"/>
+      <!-- column-name showmeaward -->
+      <column type="gchararray"/>
+      <!-- column-name missouriaward -->
       <column type="gchararray"/>
     </columns>
   </object>
@@ -578,23 +584,12 @@
                                   </object>
                                 </child>
                                 <child>
-                                  <object class="GtkTreeViewColumn" id="dupes">
-                                    <property name="title" translatable="yes">DUPES</property>
+                                  <object class="GtkTreeViewColumn" id="mults">
+                                    <property name="title" translatable="yes">MULTS</property>
                                     <child>
-                                      <object class="GtkCellRendererText" id="dupestxt"/>
+                                      <object class="GtkCellRendererText" id="multstxt"/>
                                       <attributes>
-                                        <attribute name="text">5</attribute>
-                                      </attributes>
-                                    </child>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkTreeViewColumn" id="score">
-                                    <property name="title" translatable="yes">SCORE</property>
-                                    <child>
-                                      <object class="GtkCellRendererText" id="scoretxt"/>
-                                      <attributes>
-                                        <attribute name="text">6</attribute>
+                                        <attribute name="text">10</attribute>
                                       </attributes>
                                     </child>
                                   </object>
@@ -633,12 +628,34 @@
                                   </object>
                                 </child>
                                 <child>
-                                  <object class="GtkTreeViewColumn" id="mults">
-                                    <property name="title" translatable="yes">MULTS</property>
+                                  <object class="GtkTreeViewColumn" id="score">
+                                    <property name="title" translatable="yes">SCORE</property>
                                     <child>
-                                      <object class="GtkCellRendererText" id="multstxt"/>
+                                      <object class="GtkCellRendererText" id="scoretxt"/>
                                       <attributes>
-                                        <attribute name="text">10</attribute>
+                                        <attribute name="text">6</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="errors">
+                                    <property name="title" translatable="yes">LOG ERRORS</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="errorText"/>
+                                      <attributes>
+                                        <attribute name="text">11</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="dupes">
+                                    <property name="title" translatable="yes">DUPES</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="dupestxt"/>
+                                      <attributes>
+                                        <attribute name="text">5</attribute>
                                       </attributes>
                                     </child>
                                   </object>
@@ -724,6 +741,28 @@
                                       <object class="GtkCellRendererText" id="rookietxt"/>
                                       <attributes>
                                         <attribute name="text">4</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="showmeAward">
+                                    <property name="title" translatable="yes">SHOWME</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="showmeText"/>
+                                      <attributes>
+                                        <attribute name="text">5</attribute>
+                                      </attributes>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkTreeViewColumn" id="missouriaward">
+                                    <property name="title" translatable="yes">MISSOURI</property>
+                                    <child>
+                                      <object class="GtkCellRendererText" id="missouriText"/>
+                                      <attributes>
+                                        <attribute name="text">6</attribute>
                                       </attributes>
                                     </child>
                                   </object>

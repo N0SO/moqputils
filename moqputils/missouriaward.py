@@ -2,7 +2,7 @@
 
 #import os
 #from moqpcategory import *
-from generalaward import *
+from cabrilloutils.generalaward import *
 
 MOCALLS = ['K0M', 'N0M','W0M',
            'K0I', 'N0I','W0I',

@@ -35,7 +35,10 @@ import argparse
 VERSION = '0.1.1'
 ARGS = None
 
-DEVMODPATH = ['moqputils', 'cabrilloutils']
+#DEVMODPATH = ['moqputils', 'cabrilloutils']
+wd = os.getcwd()
+DEVMODPATH = [wd]
+
 # If the development module source paths exist, 
 # add them to the python path
 for mypath in DEVMODPATH:
@@ -80,11 +83,11 @@ if __name__ == '__main__':
    
    if (args.args.inputpath):
        print(args.args.inputpath)
-       from moqpcertificates import MOQPCertificates
+       from moqputils.moqpcertificates import MOQPCertificates
        app = MOQPCertificates(args.args.inputpath)
    elif (args.args.callsign):
        #print(args.args.callsign)
-       from moqpdbcertificates import MOQPDBCertificates
+       from moqputils.moqpdbcertificates import MOQPDBCertificates
        app = MOQPDBCertificates(args.args.callsign)
    else:
        from showme_ui import ui

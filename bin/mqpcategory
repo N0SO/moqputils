@@ -74,6 +74,10 @@ class get_args():
             help='Summarize MISSOURI COUNTIES only for CALLSIGN in MOQP database. Entering allcalls = all calls in database')
         parser.add_argument('-i', '--inputpath', default=None,
             help='Specifies the path to the folder that contains the log files to summarize.')
+        parser.add_argument('-b', '--cabbonus', 
+                                   action='store_true', 
+                                   default=False,
+                                   help='Specifies the the CABRILLO BONUS applies to this log.')
         return parser.parse_args()
 
 
@@ -83,7 +87,8 @@ if __name__ == '__main__':
    if (args.args.inputpath):
        #print(args.args.inputpath)
        from moqputils.moqpcategory import MOQPCategory
-       app = MOQPCategory(args.args.inputpath)
+       app = MOQPCategory(args.args.inputpath,
+                          args.args.cabbonus)
    elif (args.args.callsign):
        from moqputils.moqpdbcategory import MOQPDBCategory
        app = MOQPDBCategory(args.args.callsign)

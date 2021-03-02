@@ -6,6 +6,7 @@ from gi.repository import Gtk
 
 from logchecker.filedialogs import my_file_open
 from logchecker.runlogcheck import runLogCheck
+from moqputils.bothawards import *
 from logchecker.__init__ import VERSION
 
 class About1():
@@ -45,6 +46,8 @@ class Handler():
         self.sw_acceptErrors = False
         self.sw_replaceExisting = False
         self.log = None
+        self.Showme = False
+        self.Missouri = False
         self.logstatusCallback = None
         
     def set_logstatusCallback(self, callback):
@@ -126,6 +129,8 @@ class Handler():
         #self.sw_acceptErrors = False
         #self.sw_replaceExisting = False
         self.log = None
+        self.Showme = False
+        self.Missouri = False
         self.logstatusCallback = None
         texwin = self.get_descendant(args,'textWindow')
         tbuffer = texwin.get_buffer()
@@ -174,12 +179,19 @@ class Handler():
                                 self.sw_acceptErrors,
                                 self.sw_replaceExisting)
             self.log = check.checkLog(file1.fileName, self.sw_cabBonus)
-            self.status2_text = check.processAndDisplay(self.log)
+            if (self.log is not None):
+                self.status2_text = check.processAndDisplay(self.log)
+                ShowmeMo = BothAwards(self.log['HEADER']['CALLSIGN'],
+                                      self.log['QSOLIST'])
+                #print('ShowmeMo =', ShowmeMo.Results['SHOWME'])
+                self.Showme = ShowmeMo.Results['SHOWME']['QUALIFY']                      
+                self.Missouri = ShowmeMo.Results['MO']['QUALIFY']                      
+            
             print ('status2 = %s'%(self.status2_text))
         else:
             self.status1_text = None
             self.status2_text = None
-        print('on_fileButton1_clicked is complete.')
+        #print('on_fileButton1_clicked is complete.')
             
     def set_Button_label(self, button):
         if (self.status1_text != None):
@@ -240,7 +252,8 @@ class Handler():
 		       '%s'%(bonus['CABRILLO']),
 		       '%s'%(bonus['W0MA']),
 		       '%s'%(bonus['K0GQ']),
-		       '%s'%(self.log['MULTS'])])
+		       '%s'%(self.log['MULTS']),
+		       '%s'%(len(self.log['ERRORS']))])
            
     def set_logstatus3(self, widget, log=None):
         if (log or self.log):
@@ -253,8 +266,10 @@ class Handler():
                        moqpcat['LOCATION'],
                        moqpcat['VHF'],
                        moqpcat['DIGITAL'],
-                       moqpcat['ROOKIE']])
-           
+                       moqpcat['ROOKIE'],
+                       '%s'%(self.Showme), 
+                       '%s'%(self.Missouri)])
+        
  
 
     def get_descendant(self, widget, child_name, level=0, doPrint=False):

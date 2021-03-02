@@ -63,7 +63,9 @@ class MOQPCategory(MOQPQSOUtils):
                'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 
                'URQTH', 'ERROR', 'NOTES']
 
-    def __init__(self, filename = None):
+    def __init__(self, filename = None, cabbonus=None):
+        self.cabbonus=cabbonus
+        self.filename = filename
         if (filename):
            if (filename):
               self.appMain(filename)
@@ -335,15 +337,25 @@ class MOQPCategory(MOQPQSOUtils):
     """
     def exportcsvfile(self, filename, Headers=True):
        csvdata = None
-       log = self.checkLog(filename)
+       log = self.checkLog(filename, self.cabbonus)
        if (log):
-       
+           """
+           print(log['QSOSUM'])
+           print(log['BONUS'])
+           print(log['MULTS'], log['SCORE'])
+           print(log.keys())
+           """
            if (Headers): 
                csvdata = COLUMNHEADERS
                
            else:
                csvdata = ''
-
+           errcount = len(log['ERRORS'])
+           
+           qsoscore = (((log['QSOSUM']['CW'] + log['QSOSUM']['DG']) * 2) +\
+                        log['QSOSUM']['PH']) * log['MULTS']
+                        
+           csvdata += '%d\t'%(errcount)
            csvdata += ('%s\t'%(log['HEADER']['CALLSIGN']))
            csvdata += ('%s\t'%(log['HEADER']['OPERATORS']))
            csvdata += ('%s\t'%(log['HEADER']['CATEGORY-STATION']))
@@ -355,10 +367,16 @@ class MOQPCategory(MOQPQSOUtils):
            csvdata += ('%s\t'%(log['QSOSUM']['CW']))
            csvdata += ('%s\t'%(log['QSOSUM']['PH']))
            csvdata += ('%s\t'%(log['QSOSUM']['DG']))
-           csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
            csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
-           csvdata += ('%s\t'%(log['MULTS']))         
-           csvdata += ('%s\t'%(log['SCORE']))         
+           csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
+           csvdata += ('%s\t'%(log['MULTS']))
+           #csvdata += '%d\t'%(qsoscore)
+           csvdata += '%s\t'%(log['BONUS']['W0MA'])   
+           csvdata += '%s\t'%(log['BONUS']['K0GQ'])   
+           csvdata += '%s\t'%(log['BONUS']['CABRILLO'])   
+           csvdata += ('%s\t'%(log['SCORE']))
+           csvdata += '%d\t'%(errcount)
+           csvdata += '%d\t'%(log['QSOSUM']['DUPES'])        
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))

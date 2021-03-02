@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 import os
-from moqpcategory import *
-from bothawards import *
+from moqputils.moqpcategory import *
+from moqputils.bothawards import *
 
 """
 ShowMe - For command line operations. 
@@ -15,19 +15,29 @@ class MOQPCertificates(MOQPCategory):
             
             
     def scoreFile(self, pathname, HEADER=False):
-        log = self.parseLog(pathname)
-        if log:
+        #log = self.parseLog(pathname)
+        log = self.checkLog(pathname)
+        # We only want valid QSOs
+        if log:      
             if (log['ERRORS'] == []):
-                bawards = BothAwards()
-                result = (bawards.appMain(\
+                qsolist = log['QSOLIST']
+            else:
+                qsolist = []
+                for qso in log['QSOLIST']:
+                    if qso['ERROR'] == False:
+                        qsolist.append(qso)
+                    else:
+                        print (qso)            
+            bawards = BothAwards()
+            result = bawards.appMain(\
                            log['HEADER']['CALLSIGN'],
-                           log['QSOLIST']))
-                #print(result)
-                if (HEADER):
+                           qsolist)
+            #print(result)
+            if (HEADER):
                    print('STATION\tSHOWME AWARD\tS\tH\t O\tW\tM\tE\tWC\t' \
                       'MISSOURI AWARD\tM\tI\tS\tS\t O\tU\tR\tI\tWC\t' \
                       'W0MA BONUS\tK0GQ BONUS')
-                print('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t' \
+            print('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t' \
                       '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t' \
                       '%s\t%s' \
                         %(log['HEADER']['CALLSIGN'],
@@ -52,9 +62,6 @@ class MOQPCertificates(MOQPCategory):
                           result['BONUS']['W0MA'],
                           result['BONUS']['K0GQ']))
                           
-            else:
-                print('log file %s has errors' \
-                %(pathname))
         else:
             print(\
             'File %s does not exist or is not in CABRILLO Format'\
