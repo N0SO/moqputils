@@ -86,8 +86,7 @@
           <object class="GtkStatusbar" id="statbar1">
             <property name="visible">True</property>
             <property name="can-focus">False</property>
-            <property name="border-width">10</property>
-            <property name="spacing">2</property>
+            <property name="spacing">1</property>
             <child type="center">
               <placeholder/>
             </child>
@@ -98,6 +97,9 @@
                 <property name="label" translatable="yes">Status1</property>
                 <property name="width-chars">20</property>
                 <property name="max-width-chars">40</property>
+                <style>
+                  <class name="&lt;border: 1px solid #000000;   margin: 2px;&gt;"/>
+                </style>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -319,6 +321,7 @@
             <signal name="clicked" handler="set_logstatus2" object="liststore2" swapped="no"/>
             <signal name="clicked" handler="set_logstatus3" object="liststore3" swapped="no"/>
             <signal name="clicked" handler="set_status1" object="status1" swapped="no"/>
+            <signal name="clicked" handler="set_status2" object="status2" swapped="no"/>
           </object>
           <packing>
             <property name="x">4</property>
@@ -800,6 +803,7 @@
                         <signal name="activate" handler="set_logstatus2" object="liststore2" swapped="no"/>
                         <signal name="activate" handler="set_logstatus3" object="liststore3" swapped="no"/>
                         <signal name="activate" handler="set_status1" object="status1" swapped="no"/>
+                        <signal name="activate" handler="set_status2" object="status2" swapped="no"/>
                       </object>
                     </child>
                     <child>

@@ -1,3 +1,4 @@
+import os
 from moqputils.moqploadlogs import MOQPLoadLogs
 
 class runLogCheck(MOQPLoadLogs):
@@ -21,15 +22,8 @@ class runLogCheck(MOQPLoadLogs):
         keys = log.keys()
         for key in keys:
             print('log[%s]:\n%s'%(key, log[key]))
-
-    def processAndDisplay(self):
-        log = self.checkLog(self.logName, self.sw_cabBonus)
-        if (log):
-            self.log = log
-            #print (log['RAWTEXT'])
-        else:
-            data = ('File %s is not a valid MOQP log file'\
-                                          %(self.logName))
+            
+    def displayRawLog(self):
         """ 
         Display raw log file data in main window
         """
@@ -65,18 +59,31 @@ class runLogCheck(MOQPLoadLogs):
         end_iter = textbuffer.get_end_iter()
         textbuffer.insert(end_iter, '\nLOG ERRORS:\n') 
         k=1
-        for errs in log["ERRORS"]:
+        for errs in self.log["ERRORS"]:
             line = 'E%s - %s\n'%(k, errs)
             end_iter = textbuffer.get_end_iter()
             textbuffer.insert(end_iter, line) 
             k += 1
-        #check.showLog(log)
-        if (self.sw_loadLogs):
-            #local=MOQPLoadLogs()
+    
+    def processAndDisplay(self, log,):
+        result = None
+        self.log = None
+        #log = self.checkLog(self.logName, self.sw_cabBonus)
+        if (log):
+            self.log = log
+            #print (log['RAWTEXT'])
+            self.displayRawLog()
+            fileOnly = os.path.basename(self.logName)
+            Result = 'File %s summary displayed'%(fileOnly)
+            if (len(log['ERRORS']) >0 ):
+                Result += ' - ERRORS DETECTED'
+            if (self.sw_loadLogs):
             
-            result = self.loadToDB(log,
+                status = self.loadToDB(log,
                             self.sw_acceptErrors,
                             self.sw_replaceExisting)
-            print('Load to database = %s'%(result))
-        #self.showDebugLog(log)
-        return log
+                Result += '\nFile %s loaded to database = %s'%(fileOnly, status)
+        else:
+            Result = 'File %s is not a valid MOQP log file'\
+                                          %(self.logName)
+        return Result

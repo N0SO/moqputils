@@ -134,6 +134,8 @@ class Handler():
         self.set_Button_label(filebutton)
         stat1 = self.get_descendant(args,'status1')
         self.set_status1(stat1)
+        stat2 = self.get_descendant(args,'status2')
+        self.set_status2(stat2)
 
     def clear_list_store(self, liststore):
         if (type(liststore) is gi.overrides.Gtk.ListStore):
@@ -171,9 +173,12 @@ class Handler():
                                 self.sw_loadLogs,
                                 self.sw_acceptErrors,
                                 self.sw_replaceExisting)
-            self.log = check.processAndDisplay()
+            self.log = check.checkLog(file1.fileName, self.sw_cabBonus)
+            self.status2_text = check.processAndDisplay(self.log)
+            print ('status2 = %s'%(self.status2_text))
         else:
             self.status1_text = None
+            self.status2_text = None
         print('on_fileButton1_clicked is complete.')
             
     def set_Button_label(self, button):
@@ -192,15 +197,23 @@ class Handler():
             stat1.set_text(fileOnly)
         else:
             stat1.set_text('status1')  
-        
+                
+    def set_status2(self, stat2):
+        if (self.status2_text != None):
+            print('set_status2 called! %s'%(self.status2_text))
+            #fileOnly = os.path.basename(self.status2_text)
+            stat2.set_text(self.status2_text)
+        else:
+            stat2.set_text('status2')  
+
     def set_logstatus1(self, widget, log=None):
+        #print('set_logstatus1: \n%s'%(self.log['HEADER']))
         if (log or self.log):
             if (log == None): 
                 header=self.log['HEADER']
             else:
                 header=log['HEADER']
             
-            #print(dir(header))
             widget.append([header['CONTEST'],
                            header['CALLSIGN'],
                            header['CATEGORY-STATION'],
