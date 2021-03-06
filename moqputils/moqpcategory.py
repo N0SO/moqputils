@@ -44,10 +44,15 @@ Update History:
 - V0.3.7
 - Minor tweak to exportcsv so command line error 
 - report is pretty.
-        
+ * Wed Mar 03 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.3.8
+- Added SHOWME and MISSOURI status to summary generated
+- Rearranged columns to make the display read more logically
+       
 """
 from moqputils.moqpqsoutils import MOQPQSOUtils
 from moqputils.bonusaward import BonusAward
+from moqputils.bothawards import *
 from moqputils.dupecheck import DUPECheck
 from moqputils.moqpmults import *
 from moqputils.moqpdefs import *
@@ -345,6 +350,7 @@ class MOQPCategory(MOQPQSOUtils):
            print(log['MULTS'], log['SCORE'])
            print(log.keys())
            """
+           print(log.keys())
            if (Headers): 
                csvdata = COLUMNHEADERS
                
@@ -375,8 +381,9 @@ class MOQPCategory(MOQPQSOUtils):
            csvdata += '%s\t'%(log['BONUS']['K0GQ'])   
            csvdata += '%s\t'%(log['BONUS']['CABRILLO'])   
            csvdata += ('%s\t'%(log['SCORE']))
-           csvdata += '%d\t'%(errcount)
            csvdata += '%d\t'%(log['QSOSUM']['DUPES'])        
+           csvdata += '%s\t'%(log['BONUS']['SHOWME'])   
+           csvdata += '%s\t'%(log['BONUS']['MISSOURI'])   
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
@@ -487,16 +494,30 @@ class MOQPCategory(MOQPQSOUtils):
             if (dupes.newlist):
                 qcount = 1
                 for qso in dupes.newlist:
-                    if (qso['DUPE'] == 0):
-                      pass
-                    else:
-                      errors.append('QSO %d DUPE of QSO %s'% \
+                    if (qso['DUPE'] > 0):
+                      errors.append('QSO %d DUPE of QSO %s'%\
                                   (qcount, dupes.showQSO(qso)))
                     qcount += 1
                 
                 log['QSOLIST'] = dupes.newlist
+
+            validqsos = []
+            for qso in log['QSOLIST'] :
+                #print(qso)
+                if qso['ERROR'] == False :
+                    validqsos.append(qso)          
+                
+            #Bonus = BonusAward(log['QSOLIST'])
+            Bonus = BonusAward(validqsos)
             
-            Bonus = BonusAward(log['QSOLIST'])
+            ShowmeMo = BothAwards(log['HEADER']['CALLSIGN'],
+                                                    validqsos)
+            ShowMe = Missouri = False
+            if ShowmeMo.Results:
+                if ShowmeMo.Results['SHOWME']['QUALIFY'] :
+                    ShowMe = True
+                if ShowmeMo.Results['MO']['QUALIFY'] :
+                    Missouri = True
                       
             qsosummary = self.sumQSOList(log['QSOLIST'])
             
@@ -504,9 +525,11 @@ class MOQPCategory(MOQPQSOUtils):
 
             log['QSOSUM'] = qsosummary
 
-            log['BONUS'] = { 'W0MA': Bonus.Award['W0MA']['INLOG'],
+            log['BONUS'] = {   'W0MA': Bonus.Award['W0MA']['INLOG'],
                                'K0GQ':Bonus.Award['K0GQ']['INLOG'],
-                               'CABRILLO' : cabbonus}
+                               'CABRILLO' : cabbonus,
+                               'SHOWME': ShowMe,                    
+                               'MISSOURI': Missouri }
             log['MOQPCAT'] = self.determineMOQPCatdict(log)
             log['SCORE'] = self.calculate_score(log['QSOSUM'], 
                                                 log['MULTS'],

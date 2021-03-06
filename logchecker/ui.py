@@ -4,9 +4,8 @@ import gi, os, sys
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
-from logchecker.filedialogs import my_file_open
+from logchecker.filedialogs import *
 from logchecker.runlogcheck import runLogCheck
-from moqputils.bothawards import *
 from logchecker.__init__ import VERSION
 
 class About1():
@@ -55,7 +54,7 @@ class Handler():
      
     def on_win_show(self, args = None):
         print('on_win_show called...')
-        
+    """    
     def childview(self, parent):
         try:
             childlist = parent.get_children()
@@ -64,7 +63,7 @@ class Handler():
         print('%s has %d children...'%(parent.get_name(), len(childlist)))
         for child in childlist:
             self.childview(child)
-
+    """
     def on_win_destroy(self, args):
         Gtk.main_quit()
         
@@ -181,11 +180,11 @@ class Handler():
             self.log = check.checkLog(file1.fileName, self.sw_cabBonus)
             if (self.log is not None):
                 self.status2_text = check.processAndDisplay(self.log)
-                ShowmeMo = BothAwards(self.log['HEADER']['CALLSIGN'],
-                                      self.log['QSOLIST'])
+                #ShowmeMo = BothAwards(self.log['HEADER']['CALLSIGN'],
+                #                     self.log['QSOLIST'])
                 #print('ShowmeMo =', ShowmeMo.Results['SHOWME'])
-                self.Showme = ShowmeMo.Results['SHOWME']['QUALIFY']                      
-                self.Missouri = ShowmeMo.Results['MO']['QUALIFY']                      
+                self.Showme = self.log['BONUS']['SHOWME']               
+                self.Missouri = self.log['BONUS']['MISSOURI']                  
             
             print ('status2 = %s'%(self.status2_text))
         else:
@@ -301,6 +300,13 @@ class Handler():
           if child is not None:
             found = self.get_descendant(child, child_name,level+1,doPrint) # //search the child
             if found: return found 
+            
+    def on_Save1_activate(self, widget):
+        print ('on_Save1_activate')
+        #print (type(widget))
+        #print (dir(widget))
+        my_report = my_file_save(self.log, self.status1_text)
+        my_report.on_save_clicked(widget)
         
 class gui_MOQPLogCheck():
     def __init__(self):

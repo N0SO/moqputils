@@ -14,6 +14,11 @@
     <property name="can-focus">False</property>
     <property name="stock">gtk-floppy</property>
   </object>
+  <object class="GtkImage" id="image1">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="stock">gtk-clear</property>
+  </object>
   <object class="GtkListStore" id="liststore1">
     <columns>
       <!-- column-name contest -->
@@ -814,12 +819,12 @@
                     <property name="can-focus">False</property>
                     <child>
                       <object class="GtkImageMenuItem" id="New1">
-                        <property name="label">gtk-new</property>
+                        <property name="label">Clear</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="tooltip-text" translatable="yes">Clears current data from all windows.</property>
-                        <property name="use-underline">True</property>
-                        <property name="use-stock">True</property>
+                        <property name="image">image1</property>
+                        <property name="use-stock">False</property>
                         <property name="always-show-image">True</property>
                         <signal name="activate" handler="clear_list_store" object="liststore1" swapped="no"/>
                         <signal name="activate" handler="clear_list_store" object="liststore2" swapped="no"/>
@@ -850,15 +855,17 @@
                         <property name="label">gtk-save</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
+                        <property name="tooltip-text" translatable="yes">Save log summary to file</property>
                         <property name="use-underline">True</property>
                         <property name="use-stock">True</property>
+                        <signal name="activate" handler="on_Save1_activate" object="textWindow" swapped="no"/>
                       </object>
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="SaveAs1">
                         <property name="label">gtk-save-as</property>
-                        <property name="visible">True</property>
                         <property name="can-focus">False</property>
+                        <property name="no-show-all">True</property>
                         <property name="use-underline">True</property>
                         <property name="use-stock">True</property>
                       </object>

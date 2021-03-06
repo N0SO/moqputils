@@ -55,5 +55,6 @@ MOCOUNTY = [ 'ADR', 'AND', 'ATC', 'AUD', 'BAR', 'BTN', 'BAT',
 COLUMNHEADERS = 'LOG ERRORS\tCALLSIGN\tOPS\tSTATION\tOPERATOR\t'+\
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tVHF QSO\t' + \
-                'TOTAL\tMULTS\tW0MA\tK0GQ\tCAB FILE\tSCORE\tERRORS\tDUPES\t' + \
+                'TOTAL\tMULTS\tW0MA\tK0GQ\tCAB FILE\tSCORE\tDUPES\t' + \
+                'SHOWME\tMISSOURI\t' + \
                 'MOQP CATEGORY\tDIGITAL\tVHF\tROOKIE\n'
