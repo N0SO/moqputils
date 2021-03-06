@@ -96,6 +96,7 @@ class MOQPLogcheck(MOQPCategory):
                        acceptedpath = None,
                        cabbonus = None):
         self.VERSION = '0.1.3'
+        self.cabbonus = cabbonus
         if (filename):
            if (filename):
               self.appMain(filename, acceptedpath, cabbonus)
@@ -103,62 +104,6 @@ class MOQPLogcheck(MOQPCategory):
     def getVersion(self):
        return self.VERSION
 
-    def exportcsv(self, log, Headers=True):
-       #print(Headers)
-       if (log):
-       
-           if (Headers): 
-               csvdata = COLUMNHEADERS
-               
-           else:
-               csvdata = ''
-
-           if (log['ERRORS'] != []):
-               csvdata += 'True'
-           csvdata += '\t'
-           csvdata += ('%s\t'%(log['HEADER']['CALLSIGN']))
-           csvdata += ('%s\t'%(log['HEADER']['OPERATORS']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-STATION']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OPERATOR']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-POWER']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-MODE']))
-           csvdata += ('%s\t'%(log['HEADER']['LOCATION']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OVERLAY']))
-           csvdata += ('%s\t'%(log['QSOSUM']['CW']))
-           csvdata += ('%s\t'%(log['QSOSUM']['PH']))
-           csvdata += ('%s\t'%(log['QSOSUM']['DG']))
-           csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
-           csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
-           csvdata += ('%s\t'%(log['MULTS'])) 
-           csvdata += ('%s\t'%(log['QSOSUM']['DUPES'])) 
-           if (log['BONUS']['W0MA']):
-               w0mabonus = '100'
-           else:
-               w0mabonus = '0'        
-           csvdata += ('%s\t'%(w0mabonus))         
-           if (log['BONUS']['K0GQ']):
-               k0gqbonus = '100'
-           else:
-               k0gqbonus = '0'        
-           csvdata += ('%s\t'%(k0gqbonus))         
-           if (log['BONUS']['CABRILLO']):
-               cab_bonus = '100'
-           else:
-               cab_bonus = '0'        
-           csvdata += ('%s\t'%(cab_bonus))         
-           csvdata += ('%s\t'%(log['SCORE']))         
-           csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
-           csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
-           csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
-           csvdata += ('%s\n'%(log['MOQPCAT']['ROOKIE']))
-
-           if (log['ERRORS'] != []):
-               for err in log['ERRORS']:
-                   csvdata += ('ERROR LINE\t%s\n'%(err))
-       else:
-          csvdata = None
-       return csvdata
-       
     def processOneFile(self, filename, 
                              headers=True, 
                              acceptedMovePath=None,
@@ -176,6 +121,9 @@ class MOQPLogcheck(MOQPCategory):
              #print("errorcount = %d, DUPE count = %d, PATH = %s"%(errorcount, dupecount, acceptedMovePath))
              if (errorcount == dupecount): logAccepted = True
              csvdata = self.exportcsv(log, headers)
+             
+             #print ('csvdata = ',csvdata)
+             
              if (csvdata == None):
                 csvdata = ('True\tFile %s is not in MOQP Cabrillo format Dude.\n'\
                          %(filename))

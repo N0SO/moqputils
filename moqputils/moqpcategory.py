@@ -343,6 +343,13 @@ class MOQPCategory(MOQPQSOUtils):
     def exportcsvfile(self, filename, Headers=True):
        csvdata = None
        log = self.checkLog(filename, self.cabbonus)
+       csvdata = self.exportcsv(log, Headers)
+       if csvdata == None :
+          csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
+       return csvdata
+       
+    def exportcsv(self, log, Headers):
+       csvdata = None
        if (log):
            """
            print(log['QSOSUM'])
@@ -350,7 +357,6 @@ class MOQPCategory(MOQPQSOUtils):
            print(log['MULTS'], log['SCORE'])
            print(log.keys())
            """
-           print(log.keys())
            if (Headers): 
                csvdata = COLUMNHEADERS
                
@@ -394,9 +400,8 @@ class MOQPCategory(MOQPQSOUtils):
                for err in log['ERRORS']:
                    csvdata += '%s\n'%(err)
        
-       else:
-          csvdata = ('File %s does not exist or is not in CABRILLO format.'%filename)
-       print(csvdata)  
+       #print(csvdata)  
+       return csvdata
         
     """
     This method processes all files in the passed in pathname
