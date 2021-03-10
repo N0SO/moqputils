@@ -167,26 +167,40 @@ class Handler():
 
         #print('My File selected: %s'%(file1.fileName))
         if (file1.fileName):# != None:
-            self.status1_text = file1.fileName
-            """
-            Getlog, summarize and check for errors
-            """       
-            check = runLogCheck(file1.fileName,
-                                widget, 
-                                self.sw_cabBonus,
-                                self.sw_loadLogs,
-                                self.sw_acceptErrors,
-                                self.sw_replaceExisting)
-            self.log = check.checkLog(file1.fileName, self.sw_cabBonus)
-            if (self.log is not None):
-                self.status2_text = check.processAndDisplay(self.log)
-                #ShowmeMo = BothAwards(self.log['HEADER']['CALLSIGN'],
-                #                     self.log['QSOLIST'])
-                #print('ShowmeMo =', ShowmeMo.Results['SHOWME'])
-                self.Showme = self.log['BONUS']['SHOWME']               
-                self.Missouri = self.log['BONUS']['MISSOURI']                  
+            path = os.path.split(file1.fileName)
+            #print(path)
+            if os.path.isdir(file1.fileName):
+                print('Folder of logs selected:\n%s'%(file1.fileName))  
+                fileList = os.listdir(file1.fileName)
+                addpath = file1.fileName + '/'
+                #print(fileList)
+            else:
+                fileList = [file1.fileName]
+                addpath = ''
+            for f in fileList:
+                f = addpath+f
+                #print(f)
+                if (os.path.isfile(f)):
+                    print ('processing %s...'%(f))
+                    self.status1_text = f
+                    """
+                    Getlog, summarize and check for errors
+                    """       
+                    check = runLogCheck(f,
+                                    widget, 
+                                    self.sw_cabBonus,
+                                    self.sw_loadLogs,
+                                    self.sw_acceptErrors,
+                                    self.sw_replaceExisting)
+                    self.log = check.checkLog(f, self.sw_cabBonus)
+                    if (self.log is not None):
+                        self.status2_text = check.processAndDisplay(self.log)
+                        self.Showme = self.log['BONUS']['SHOWME']               
+                        self.Missouri = self.log['BONUS']['MISSOURI']                  
             
-            print ('status2 = %s'%(self.status2_text))
+                    print ('status2 = %s'%(self.status2_text))
+                #else:
+                #    print('%s is not a file!'%(f))
         else:
             self.status1_text = None
             self.status2_text = None
@@ -307,6 +321,12 @@ class Handler():
         #print (dir(widget))
         my_report = my_file_save(self.log, self.status1_text)
         my_report.on_save_clicked(widget)
+        
+    def on_Open2_activate(self, widget):
+        print ('on_Open2_activate')
+        print (type(widget))
+        print (dir(widget))
+        
         
 class gui_MOQPLogCheck():
     def __init__(self):

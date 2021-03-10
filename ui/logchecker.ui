@@ -17,7 +17,13 @@
   <object class="GtkImage" id="image1">
     <property name="visible">True</property>
     <property name="can-focus">False</property>
-    <property name="stock">gtk-clear</property>
+    <property name="icon-name">document-open</property>
+    <property name="icon_size">1</property>
+  </object>
+  <object class="GtkImage" id="image2">
+    <property name="visible">True</property>
+    <property name="can-focus">False</property>
+    <property name="stock">gtk-open</property>
   </object>
   <object class="GtkListStore" id="liststore1">
     <columns>
@@ -834,12 +840,12 @@
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="Open1">
-                        <property name="label">gtk-open</property>
+                        <property name="label">File Open</property>
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
-                        <property name="tooltip-text" translatable="yes">Open and evaluate a log file.</property>
-                        <property name="use-underline">True</property>
-                        <property name="use-stock">True</property>
+                        <property name="tooltip-text" translatable="yes">Open and evaluate a single log file. Selecting a folder will attempt to process all files in the selected folder.</property>
+                        <property name="image">image2</property>
+                        <property name="use-stock">False</property>
                         <property name="always-show-image">True</property>
                         <signal name="activate" handler="on_Open1_activate" object="textWindow" swapped="no"/>
                         <signal name="activate" handler="set_Button_label" object="fileButton" swapped="no"/>
@@ -848,6 +854,16 @@
                         <signal name="activate" handler="set_logstatus3" object="liststore3" swapped="no"/>
                         <signal name="activate" handler="set_status1" object="status1" swapped="no"/>
                         <signal name="activate" handler="set_status2" object="status2" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkMenuItem" id="Open2">
+                        <property name="can-focus">False</property>
+                        <property name="no-show-all">True</property>
+                        <property name="tooltip-text" translatable="yes">Open and process a folder full of log files.</property>
+                        <property name="label" translatable="yes">Open Folder</property>
+                        <property name="use-underline">True</property>
+                        <signal name="activate" handler="on_Open2_activate" object="win" swapped="no"/>
                       </object>
                     </child>
                     <child>

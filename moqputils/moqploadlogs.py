@@ -34,6 +34,10 @@ Update History:
 - V0.1.5 - Added:
 -     Moved common QSO processing methods to module
 -     moqpqsoutils for better sharing between functions.
+* Wed Mar 10 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.6
+- Updates to method processFileList() to process only
+- the top level directory and skip sub-directories.
 
 
 """
@@ -137,10 +141,10 @@ class MOQPLoadLogs(MOQPLogcheck):
                                                       e.args))
 
               else:
-                  print("Errors writing %s data to database."%(filename))
+                  print("1\tLog File Errors - %s data NOT written to database."%(filename))
           else:
               csvdata = ( \
-               'True\tFile %s is not in MOQP Cabrillo format.\n'\
+               '1\tFile %s is not in MOQP Cabrillo format.\n'\
                                                      %(filename))
        return csvdata 
 
@@ -153,8 +157,9 @@ class MOQPLoadLogs(MOQPLogcheck):
         for (dirName, subdirList, fileList) in  \
                       os.walk(pathname, topdown=True):
            if (fileList != ''): 
-              #Headers = True
+              #print (fileList)
               for fileName in fileList:
+                 #print(fileName)
                  if (fileName.startswith('.')):
                      pass
                  else:
@@ -165,9 +170,10 @@ class MOQPLoadLogs(MOQPLogcheck):
                                            errorsaccepted,
                                            updatelog)
                      csvdata += thislog
+              break # Only process top level files, not sub directorioes
            else: 
-              csvdata += ('True\tLog File %s does not exist\n'% \
-                          (fileName))
+              csvdata += ('1\tNo files in folder'% \
+                          (pathName))
         return csvdata
 
 
