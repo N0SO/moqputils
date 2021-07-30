@@ -18,7 +18,7 @@ from robotconfig import *
 from cabrillofilter import *
 from email.mime.text import MIMEText
 
-VERSION = '1.0.1'
+VERSION = '1.0.3'
 ERRORINLOG = "Error! attached log is NOT a plain text file!"
 CTYPES = ['text/x-log',
           'application/octet-stream',
@@ -64,12 +64,24 @@ class emailRobot():
             log = part.get_payload(decode=True)
             #print ('Multi part %d - CTYPE = %s\nPayload = %s'%(pcount, ctype, log))
             if (fname != None):
+               for c in '/\\ ,':
+                  fname = fname.replace(c,'-')
+               #fname = fname.replace('/','_')
+               #fname = fname.replace('\\','_')
+               #fname = fname.replace(' ','-')
                if ctype in CTYPES:
-                  #print("ctype = %s\nfile name = %s\n"%(ctype, fname))
+                  #print("\nctype = %s\nfile name = %s\n"%(ctype, fname))
                   log = part.get_payload(decode=True)
                   #Gets file extension from filename
                   tmparry = fname.split('.')
-                  nametype = tmparry[len(tmparry) - 1]  # gets file extension
+                  if (len(tmparry) >1):
+                     nametype = tmparry[len(tmparry) - 1]  # gets file extension
+                  else:
+                     if (fname.startswith('=?UTF-8')):
+                        nametype = '.UTF'
+                     else:
+                        nametype = '.DAT'
+                     fname += nametype
                   break
       else:
          #print "Not multi--"
@@ -89,7 +101,8 @@ class emailRobot():
               tempdata += line.replace(',',' ')
           logdata = tempdata
       #open(logwait + logfilename, 'wb').write(logdata) # Save for log processing
-      if ( open(logwait + logfilename, 'wb').write(logdata) ):
+      #print(os.getcwd())
+      if ( open(logwait + logfilename, 'wb').writelines(logdata) ):
          return "!!!UNABLE TO SAVE LOGFILE!!!"
       else:
          return logfilename
@@ -237,12 +250,15 @@ The MOQP Log Contest Robot"""
       msgs = data[0].split()
       newfiles = []
       for uid in msgs:
-         #print('Processing uid: %s\n'%(uid))
+         if(len(uid) > 0):
+             print('--------\nrobotmail: %s'% \
+                (datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S-%f")))
+             print('robotmail: Processing message uid: %s'%(uid))
          typ, s = M.fetch(uid, '(RFC822)')
          #print ('typ = %s\n'%(typ))
          #print "s = ",s
          sender, subject, date, filename, filetype, log = self.process_message_string(s)
-         #print ("Sender = %s\nSubject = %s\nFile name:%s\nFile Type = %s\n"%(sender, subject, filename, filetype))
+         print ("Sender = %s\nSubject = %s\nFile name = %s\nFile Type = %s\n"%(sender, subject, filename, filetype))
          #logname = self.extract_call(subject)
          savedlog = None
          status = 'e-mail robot, '
@@ -259,7 +275,7 @@ The MOQP Log Contest Robot"""
                status += '*REJECTED*, error saving logfile, '
          else:
             status += '*REJECTED*, No logfile or wrong logfile type, '   
-         print('%s ,%s, %s, %s, %s, %s' \
+         print('%s ,%s, %s, %s, %s, %s\n--------' \
                     % (status, 
                        date.replace(',',' '), 
                        sender.replace(',',' '), 
@@ -275,7 +291,8 @@ The MOQP Log Contest Robot"""
       for dbentry in newfiles:
          dbFiles.write("%s\n" % dbentry)
       dbFiles.close()
-      cabfilter = CabrilloFilter(logwait, True, newfiles) 
+      if (len(newfiles) > 0):
+         cabfilter = CabrilloFilter(logwait, True, newfiles) 
               
 
 if __name__=='__main__':
