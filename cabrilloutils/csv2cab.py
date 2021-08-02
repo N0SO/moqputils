@@ -94,7 +94,7 @@ class csv2CAB(CabrilloUtils):
                if ('SOAPBOX:' in newline):          #Flag this file as processed by me
                   cabdata += TAGLINE
                   tag_needed = False                #Only insert tag once
-            cabdata += newline.decode('utf').encode('ascii', 'replace')+'\n'
+            cabdata += newline +'\n' 
       return cabdata
       
    def main(self, csvfilename):
