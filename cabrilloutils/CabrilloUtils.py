@@ -39,6 +39,7 @@ class CabrilloUtils():
              'CALLSIGN',
              'CREATED-BY',
              'LOCATION',
+             'GRID-LOCATOR',
              'CONTEST',
              'NAME',
              'ADDRESS',
