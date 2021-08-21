@@ -7,6 +7,10 @@ Update History:
 * Mon May 25 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.2 - Added call to self.modeSet method to set 
 - all digimodes to RY and all phone modes to PH for QSL checking.
+* Fri Aug 20 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.3 - Fix for Issue #4
+- RST not matching MODE is now a warning, but the QSO will
+- remain valid.
 """
 
 from datetime import timedelta
@@ -24,9 +28,9 @@ class MOQPQSOValidator(QSOUtils):
        qsovalid = True
        valid_date_chars = set('0123456789/-')
        valid_call_chars = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-')
-       qutils = QSOUtils()
+       #qutils = QSOUtils()
        if ( self.is_number(qso['FREQ']) ):
-          if (qutils.getBand(qso['FREQ'])):
+          if (self.getBand(qso['FREQ'])):
               pass
           else:
               errorData.append( \
@@ -53,7 +57,7 @@ class MOQPQSOValidator(QSOUtils):
           qsovalid = False
           qso['TIME'] = None
        if ( qso['DATE'] and qso['TIME'] ):
-          if (qutils.validateQSOtime(qso['DATE'], qso['TIME'])):
+          if (self.validateQSOtime(qso['DATE'], qso['TIME'])):
              pass
           else:
              errorData.append(  (\
@@ -71,10 +75,10 @@ class MOQPQSOValidator(QSOUtils):
               pass
           else:
               errorData.append( \
-                'QSO MY SIG REPORT %s does not match MODE: %s'%\
+                'WARNING: QSO MY SIG REPORT %s does not match MODE: %s'%\
                 (qso['MYREPORT'],
                  qso['MODE']) )
-              qsovalid = False
+              #qsovalid = False
        else:
           errorData.append(  ('QSO MYREPORT Parameter invalid: %s'%(qso['MYREPORT'])) )
           qsovalid = False
@@ -100,10 +104,10 @@ class MOQPQSOValidator(QSOUtils):
               pass
           else:
               errorData.append( \
-                'QSO UR SIG REPORT %s does not match MODE: %s'%\
+                'WARNING: QSO UR SIG REPORT %s does not match MODE: %s'%\
                 (qso['URREPORT'],
                  qso['MODE']) )
-              qsovalid = False
+              #qsovalid = False
        else:
           errorData.append(  ('QSO URREPORT Parameter invalid: %s'%(qso['URREPORT'])) )
           qsovalid = False

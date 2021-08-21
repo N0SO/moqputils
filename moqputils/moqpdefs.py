@@ -17,12 +17,13 @@ CANADA = 'MAR NL QC ONE ONN ONS GTA MB SK AB BC NT NB'
 
 STATIONS = ['FIXED', 'MOBILE','PORTABLE', 'ROVER','EXPEDITION',
             'HQ','SCHOOL']
-DIGIMODES = ['RY', 'DG', 'DIG', 'DIGI', 'RTTY']
+DIGIMODES = ['RY', 'DG', 'DIG', 'DIGI', 'RTTY', 'FT8', 'FT4']
 MODES2 = ['PH', 'SSB', 'USB', 'LSB', 'FM', 'DV']
-MODES3 = ['CW', 'RY', 'DG', 'DIG', 'DIGI', 'RTTY'] 
+MODES3 = ['CW', 'RY', 'DG', 'DIG', 'DIGI', 'RTTY',
+          'FT8', 'FT4'] 
 MODES = ['PH', 'SSB', 'USB', 'LSB', 'FM', 'DV',
          'CW', 'RY', 'DG', 'DIG', 'DIGI', 'RTTY', 
-         'MIXED']
+         'FT8', 'FT4', 'MIXED']
 
 OVERLAY = 'ROOKIE'
 

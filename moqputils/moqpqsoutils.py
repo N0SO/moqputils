@@ -10,6 +10,13 @@ Update History:
 - Improved error checking to make sure qsos are checked
 - for errors (within contest period, parameters valid,
 - etc) before performing DUP check.
+* Fri Aug 20 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.3 
+- Fix for Issue #16
+- Treat log file lines that start with 'x-' as comments.
+- Fix for Issue #4
+- Cases where RST does not match mode are flagged as
+- warnings, but QSO remains valid.
 """
 
 from cabrilloutils.qsoutils import QSOUtils
@@ -68,7 +75,7 @@ class MOQPQSOUtils(QSOUtils):
                break
            #print(qso, tagi)
        #Validate QSO
-       q_errors = self.qso_valid(qso)
+       q_errors, q_valid = self.qso_valid(qso)
        #print(qsodata, qso_elements_parsed, qsolen, qso)
        if ( (qso_elements_parsed != qelements) or len(q_errors) ):
           qso_errors.append(qsodata)
@@ -80,10 +87,10 @@ class MOQPQSOUtils(QSOUtils):
               for i in range(len(q_errors)): 
                   qso_errors.append('\t%s'%(q_errors[i]))
        qso['NOTES'] = qso_errors
-       if (len(qso_errors)):
-           qso['ERROR'] = True
-       else:
+       if (q_valid):
            qso['ERROR'] = False
+       else:
+           qso['ERROR'] = True
        return qso       
 
     def getQSOdata(self, logtext):
@@ -128,14 +135,16 @@ class MOQPQSOUtils(QSOUtils):
              elif (cabkey in header):
                 header[cabkey] += recdata
              else:
-                errString =\
-                 'CAB TAG ERROR, log file line %d: \"%s\"'% \
+                if (cabline.startswith('X-') == False):
+                   errString =\
+                    'CAB TAG ERROR, log file line %d: \"%s\"'% \
                                        (linecount, cabline)
-                headerNotes.append(errString)
-                errorData.append(errString)
+                   headerNotes.append(errString)
+                   errorData.append(errString)
           else:
-            errString =\
-              'CAB DATA BAD, log line %d: \"%s\" skipping'% \
+            if (cabline.startswith('X-') == False):
+               errString =\
+                 'CAB DATA BAD, log line %d: \"%s\" skipping'% \
                                                (linecount, 
                                                     cabline)
             headerNotes.append(errString)
@@ -222,6 +231,7 @@ class MOQPQSOUtils(QSOUtils):
              errorData.append(  (\
               'QSO DATE/TIME outside contest time period: %s'\
                %(qso['DATETIME'])))
+             qsovalid = False
        else:
           errorData.append('QSO DATE/TIME strings invalid!')
           qsovalid = False
@@ -239,10 +249,10 @@ class MOQPQSOUtils(QSOUtils):
               pass
           else:
               errorData.append( \
-                'QSO MY SIG REPORT %s does not match MODE: %s'%\
+                'WARNING: QSO MY SIG REPORT %s does not match MODE: %s'%\
                 (qso['MYREPORT'],
                  qso['MODE']) )
-              qsovalid = False
+              #qsovalid = False
        else:
           errorData.append(  ('QSO MYREPORT Parameter invalid: %s'%(qso['MYREPORT'])) )
           qsovalid = False
@@ -270,10 +280,10 @@ class MOQPQSOUtils(QSOUtils):
               pass
           else:
               errorData.append( \
-                'QSO UR SIG REPORT %s does not match MODE: %s'%\
+                'WARNING: QSO UR SIG REPORT %s does not match MODE: %s'%\
                 (qso['URREPORT'],
                  qso['MODE']) )
-              qsovalid = False
+              #qsovalid = False
        else:
           errorData.append(  ('QSO URREPORT Parameter invalid: %s'%(qso['URREPORT'])) )
           qsovalid = False
@@ -288,7 +298,7 @@ class MOQPQSOUtils(QSOUtils):
           errorData.append(  ('QSO URQTH Parameter invalid: %s'%(qso['URQTH'])) )
           qsovalid = False
           
-       return errorData
+       return errorData, qsovalid
 
     def calculate_score(self, qsosum, mults, bonus):
         if (bonus['W0MA']):
