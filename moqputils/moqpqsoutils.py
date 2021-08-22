@@ -11,12 +11,17 @@ Update History:
 - for errors (within contest period, parameters valid,
 - etc) before performing DUP check.
 * Fri Aug 20 2021 Mike Heitmann, N0SO <n0so@arrl.net>
-- V0.0.3 
+- V0.0.3
 - Fix for Issue #16
 - Treat log file lines that start with 'x-' as comments.
 - Fix for Issue #4
 - Cases where RST does not match mode are flagged as
 - warnings, but QSO remains valid.
+* Sun Aug 22 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.4
+- Added more DX entities to DX list in moqpqsoutils.
+- changed type check from isalpha() to isalnum() when
+- checking QSO MYQTH and URQTH.
 """
 
 from cabrilloutils.qsoutils import QSOUtils
@@ -27,7 +32,7 @@ from moqputils.moqpdefs import *
 class MOQPQSOUtils(QSOUtils):
 
     def __init__(self):
-       self.VERSION='0.0.1'
+       self.VERSION='0.0.4'
        pass
 
     def getVersion(self):
@@ -55,7 +60,7 @@ class MOQPQSOUtils(QSOUtils):
        qso = self.makeQSOdict()
        tagi = 0
        while (tagi < qelements):
-           if (tagi == 2): 
+           if (tagi == 2):
                """
                qso elements 2 and 3 should be date/time
                """
@@ -65,7 +70,7 @@ class MOQPQSOUtils(QSOUtils):
                qso[self.QSOTAGS[tagi]] = qsotimeobj
                qso_elements_parsed += 2
                tagi += 1
-           else: 
+           else:
                qso[self.QSOTAGS[tagi]] = \
                    self.packLine(qsoparts[qso_elements_parsed])
                qso_elements_parsed += 1
@@ -84,14 +89,14 @@ class MOQPQSOUtils(QSOUtils):
               '\tQSO has %d elements, it should have %d.'\
                                                     %(qsolen, qelements))
           if (len(q_errors)):
-              for i in range(len(q_errors)): 
+              for i in range(len(q_errors)):
                   qso_errors.append('\t%s'%(q_errors[i]))
        qso['NOTES'] = qso_errors
        if (q_valid):
            qso['ERROR'] = False
        else:
            qso['ERROR'] = True
-       return qso       
+       return qso
 
     def getQSOdata(self, logtext):
        thislog = dict()
@@ -145,7 +150,7 @@ class MOQPQSOUtils(QSOUtils):
             if (cabline.startswith('X-') == False):
                errString =\
                  'CAB DATA BAD, log line %d: \"%s\" skipping'% \
-                                               (linecount, 
+                                               (linecount,
                                                     cabline)
             headerNotes.append(errString)
             errorData.append(errString)
@@ -170,12 +175,12 @@ class MOQPQSOUtils(QSOUtils):
       summary['VHF'] = 0
       summary['DG'] = 0
       summary['DUPES'] = 0
-      
+
       for thisqso in data:
          if (thisqso['ERROR'] == False):
-      
+
            summary['QSOS'] += 1
-                        
+
            try:
              tfreq = thisqso['FREQ']
              freq = float(tfreq)
@@ -184,7 +189,7 @@ class MOQPQSOUtils(QSOUtils):
 
            if ((freq >= 50000.0) or (tfreq in self.VHFFREQ) ):
              summary['VHF'] += 1
-                                   
+
            mode = thisqso['MODE'].upper()
            if ('CW' in mode):
              summary['CW'] += 1
@@ -218,7 +223,7 @@ class MOQPQSOUtils(QSOUtils):
        else:
           errorData.append( ('QSO FREQ Parameter invalid: %s'%(qso['FREQ'])) )
           qsovalid = False
-       
+
        if ( qso['MODE'] in self.MODES ):
           pass
        else:
@@ -257,11 +262,11 @@ class MOQPQSOUtils(QSOUtils):
           errorData.append(  ('QSO MYREPORT Parameter invalid: %s'%(qso['MYREPORT'])) )
           qsovalid = False
 
-       if ( (qso['MYQTH'].isalpha()) and (\
+       if ( (qso['MYQTH'].isalnum()) and (\
             (qso['MYQTH'] in MOCOUNTY) or \
                (qso['MYQTH'] in US) or \
                (qso['MYQTH'] in CANADA) or \
-               (qso['MYQTH'] in DX) ) ): 
+               (qso['MYQTH'] in DX) ) ):
           pass
        else:
           errorData.append(  ('QSO MYQTH Parameter invalid: %s'%(qso['MYQTH'])) )
@@ -288,16 +293,16 @@ class MOQPQSOUtils(QSOUtils):
           errorData.append(  ('QSO URREPORT Parameter invalid: %s'%(qso['URREPORT'])) )
           qsovalid = False
 
-       if ( (qso['URQTH'].isalpha()) and (\
+       if ( (qso['URQTH'].isalnum()) and (\
             (qso['URQTH'] in MOCOUNTY) or \
                (qso['URQTH'] in US) or \
                (qso['URQTH'] in CANADA) or \
-               (qso['URQTH'] in DX) ) ): 
+               (qso['URQTH'] in DX) ) ):
           pass
        else:
           errorData.append(  ('QSO URQTH Parameter invalid: %s'%(qso['URQTH'])) )
           qsovalid = False
-          
+
        return errorData, qsovalid
 
     def calculate_score(self, qsosum, mults, bonus):
@@ -322,7 +327,7 @@ class MOQPQSOUtils(QSOUtils):
                            k0gqbonus + \
                            cab_bonus
         return Score
-        
+
     def getMOQPLog(self, fileName):
         logtext = None
         log = None
@@ -338,5 +343,3 @@ class MOQPQSOUtils(QSOUtils):
 if __name__ == '__main__':
     app = MOQPLoadLogs()
     print('Class MOQPLoadLogs() Version %s'%(app.getVersion))
-
-
