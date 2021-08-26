@@ -9,9 +9,9 @@ Update History:
 - V.0.0.1 - Just starting out
 """
 
-from contestmults import *
-from moqpdbutils import *
-from moqpdbconfig import *
+from cabrilloutils.contestmults import *
+from moqputils.moqpdbutils import *
+from moqputils.configs.moqpdbconfig import *
 
 VERSION = '0.0.1'
 
