@@ -49,6 +49,7 @@ class QSOUtils(CabrilloUtils):
             workString = unsafeString[:maxLen-1]
         else:
             workString = unsafeString
+        #print (workString)
         for bad in badchars:
             workString = workString.replace(bad, ' ')
         return workString
@@ -60,7 +61,7 @@ class QSOUtils(CabrilloUtils):
         """
         packedNote = ''
         for i in note:
-            print(i)
+            #print("Note = ",i)
             packedNote += self.trimAndEscape(i, 67) +'; '
         return packedNote
 

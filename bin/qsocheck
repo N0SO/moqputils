@@ -6,7 +6,10 @@ import datetime
 
 VERSION = '0.1.1' 
 
-DEVMODPATH = ['moqputils', 'cabrilloutils']
+wd = os.getcwd()
+print(wd)
+print(os.path.realpath(__file__))
+DEVMODPATH = [wd]
 # If the development module source paths exist, 
 # add them to the python path
 for mypath in DEVMODPATH:
@@ -59,9 +62,9 @@ def checkOneCall(call, mydb):
        
 if __name__ == '__main__':
     args = get_args()
-    from moqpdbutils import *
-    from moqpdbconfig import *
-    from moqpqsovalidator import MOQPQSOValidator
+    from moqputils.moqpdbutils import *
+    from moqputils.configs.moqpdbconfig import *
+    from moqputils.moqpqsovalidator import MOQPQSOValidator
     mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
     mydb.setCursorDict()
     if (args.args.callsign):
