@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 mqpcategory  - Determine which Missouri QSO Party Award
                category a Cabrillo Format log file is in.
@@ -23,6 +23,9 @@ Update History:
 - V0.1.3 
 - Updated to start the DEVMODPATH from the 
 - current working directory.
+* Mon Aug 31 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.4 - Added import of mqpdevpath.py to auto determine
+-          development module path if it exists.
 """
 
 import os.path
@@ -31,17 +34,13 @@ import argparse
 VERSION = '0.1.3'
 ARGS = None
 
-wd = os.getcwd()
-DEVMODPATH = [wd]
-
 # If the development module source paths exist, 
 # add them to the python path
-for mypath in DEVMODPATH:
-    if ( os.path.exists(mypath) and \
-                       (os.path.isfile(mypath) == False) ):
-        sys.path.insert(0,mypath)
-#print('Python path = %s'%(sys.path))
-        
+whereami = os.path.split( os.path.realpath(__file__) )
+if os.path.exists(whereami[0] + '/mqpdevpath.py'):
+    from mqpdevpath import *
+
+
 DESCRIPTION = \
 """moqpcategory  - Determine which Missouri QSO Party Award
                    category a Cabrillo Format log file is in.

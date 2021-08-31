@@ -41,26 +41,23 @@ Update History:
 -          Handle CABRILLO Bonus.
 -          Accept logs with errors beyond DUPES.
 -          Allow updating (replacing) an existing log.
+* Mon Aug 31 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Added import of mqpdevpath.py to auto determine
+-          development module path if it exists.
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 ARGS = None
 
-wd = os.getcwd()
-
-DEVMODPATH = [wd]
-#DEVMODPATH = [wd, 'moqputils', 'cabrilloutils']
 # If the development module source paths exist, 
 # add them to the python path
-for mypath in DEVMODPATH:
-    if ( os.path.exists(mypath) and \
-                       (os.path.isfile(mypath) == False) ):
-        sys.path.insert(0,mypath)
-#print('Working dir = %s\nPython path = %s'%(os.getcwd(), sys.path))
-        
+whereami = os.path.split( os.path.realpath(__file__) )
+if os.path.exists(whereami[0] + '/mqpdevpath.py'):
+    from mqpdevpath import *
+
 DESCRIPTION = \
 """moqchecklogs  - Initial Check of logfiles submitted for the 
                    ARRL Missouri QSO Party.
@@ -72,22 +69,6 @@ EPILOG = \
 """
 Running with no parameters will launch the GUI.
 """
-"""
-import os.path
-import sys
-import argparse
-VERSION = '0.0.1'
-ARGS = None
-
-DEVMODPATH = ['moqputils', 'cabrilloutils']
-# If the development module source paths exist, 
-# add them to the python path
-for mypath in DEVMODPATH:
-    if ( os.path.exists(mypath) and \
-                       (os.path.isfile(mypath) == False) ):
-        sys.path.insert(0,mypath)
-#print('Python path = %s'%(sys.path))
-"""        
 class get_args():
     def __init__(self):
         if __name__ == '__main__':
@@ -147,3 +128,4 @@ if __name__ == '__main__':
    else:
        from logchecker.ui import gui_MOQPLogCheck
        app=gui_MOQPLogCheck()
+

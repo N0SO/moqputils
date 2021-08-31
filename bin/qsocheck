@@ -6,16 +6,12 @@ import datetime
 
 VERSION = '0.1.1' 
 
-wd = os.getcwd()
-print(wd)
-print(os.path.realpath(__file__))
-DEVMODPATH = [wd]
 # If the development module source paths exist, 
 # add them to the python path
-for mypath in DEVMODPATH:
-    if ( os.path.exists(mypath) and \
-                       (os.path.isfile(mypath) == False) ):
-        sys.path.insert(0,mypath)
+whereami = os.path.split( os.path.realpath(__file__) )
+if os.path.exists(whereami[0] + '/mqpdevpath.py'):
+    from mqpdevpath import *
+
 #print('Python path = %s'%(sys.path))
 
 DESCRIPTION = \
