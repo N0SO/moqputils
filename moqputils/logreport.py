@@ -12,9 +12,11 @@ Update History:
 -          Improved error handling.
 * Sat Jun 20 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.1 - Adding HTML display options to support web apps.
+* Wed Sept 01 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.2 - Fix for Isuue #30.
 """
 
-VERSION = '0.1.0' 
+VERSION = '0.1.2' 
 
 from moqputils.moqpdbutils import *
 from cabrilloutils.CabrilloUtils import CabrilloUtils
@@ -51,26 +53,8 @@ class LogReport():
                     <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
                     <td>%s</td>
                     </tr>"""
-            
-            else: #old format
-                fmt ="""<tr>
-                    <td><a href='./qslcheck.php?qsoid=%d' target='_blank'>%d</a></td>
-                    <td>%d</td><td>%s</td><td>%s</td>
-                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
-                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
-                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
-                    <td>%s</td><td>%s</td>
-                    </tr>"""
-        else:
-            if ('DATETIME' in qso.keys()):
-                fmt = '%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t'+\
-                  '%s\t%s\t%s\t%s\t%s\n'
-            
-            else: # old format
-                fmt = '%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t'+\
-                  '%s\t%s\t%s\t%s\t%s\t%s\n'
-        if ('DATETIME' in qso.keys()):
-            qsoLine = (fmt %( qso['ID'], qso['ID'],
+
+                qsoLine = (fmt %( qso['ID'], qso['ID'],
                           qso['LOGID'],
                           qso['FREQ'],                             
                           qso['MODE'],
@@ -87,9 +71,64 @@ class LogReport():
                           qso['DUPE'],
                           qso['NOQSOS'],
                           qso['NOTE']))
+
+            else: #old format
+                fmt ="""<tr>
+                    <td><a href='./qslcheck.php?qsoid=%d' target='_blank'>%d</a></td>
+                    <td>%d</td><td>%s</td><td>%s</td>
+                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+                    <td>%s</td><td>%s</td><td>%s</td><td>%s</td>
+                    <td>%s</td><td>%s</td>
+                    </tr>"""
+
+                qsoLine = (fmt %( qso['ID'],qso['ID'],
+                          qso['LOGID'],
+                          qso['FREQ'],                             
+                          qso['MODE'],
+                          qso['DATE'],
+                          qso['TIME'],
+                          qso['MYCALL'],
+                          qso['MYREPORT'],
+                          qso['MYQTH'],
+                          qso['URCALL'],
+                          qso['URREPORT'],
+                          qso['URQTH'],
+                          qso['VALID'],
+                          qso['QSL'],
+                          qso['NOLOG'],
+                          qso['DUPE'],
+                          qso['NOQSOS'],
+                          qso['NOTE']))
+
+        else: # Not HTML
+            if ('DATETIME' in qso.keys()):
+                fmt = '%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t'+\
+                  '%s\t%s\t%s\t%s\t%s\n'
+
+                qsoLine = (fmt %( qso['ID'],
+                          qso['LOGID'],
+                          qso['FREQ'],                             
+                          qso['MODE'],
+                          qso['DATETIME'],
+                          qso['MYCALL'],
+                          qso['MYREPORT'],
+                          qso['MYQTH'],
+                          qso['URCALL'],
+                          qso['URREPORT'],
+                          qso['URQTH'],
+                          qso['VALID'],
+                          qso['QSL'],
+                          qso['NOLOG'],
+                          qso['DUPE'],
+                          qso['NOQSOS'],
+                          qso['NOTE']))
+            
+            else: # old format
+                fmt = '%d\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t'+\
+                  '%s\t%s\t%s\t%s\t%s\n'
         
-        else: #old format
-            qsoLine = (fmt %( qso['ID'], qso['ID'],
+                qsoLine = (fmt %( qso['ID'],
                           qso['LOGID'],
                           qso['FREQ'],                             
                           qso['MODE'],

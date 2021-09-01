@@ -26,6 +26,9 @@ Update History:
 * Thu Aug 26 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.2.0
 - Updating module  import paths to the same scheme as mqplogcheck 
+* Thu Sep 01 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.2.1
+- Adding code for mqpdevpath.py script 
 """
 
 import os.path
@@ -34,15 +37,11 @@ import argparse
 VERSION = '0.1.3'
 ARGS = None
 
-wd = os.getcwd()
-DEVMODPATH = [wd]
 # If the development module source paths exist, 
 # add them to the python path
-for mypath in DEVMODPATH:
-    if ( os.path.exists(mypath) and \
-                       (os.path.isfile(mypath) == False) ):
-        sys.path.insert(0,mypath)
-#print('Python path = %s'%(sys.path))
+whereami = os.path.split( os.path.realpath(__file__) )
+if os.path.exists(whereami[0] + '/mqpdevpath.py'):
+    from mqpdevpath import *
         
 DESCRIPTION = \
 """moqpreports  - Generate reports for MOQP
@@ -136,43 +135,43 @@ if __name__ == '__main__':
    if (args.args.callsign):
        if ((args.args.callsign == 'club') or \
            (args.args.callsign == 'club-update') ):
-           from moqpdbclubreport import MOQPDBClubReport
+           from moqputils.moqpdbclubreport import MOQPDBClubReport
            app = MOQPDBClubReport(args.args.callsign)
        elif (args.args.callsign == 'HTML'):
-           from moqphtmlreport import MOQPHtmlReport
+           from moqputils.moqphtmlreport import MOQPHtmlReport
            app = MOQPHtmlReport(args.args.callsign)       
        else:
-           from moqpdbcatreport import MOQPDBCatReport
+           from moqputils.moqpdbcatreport import MOQPDBCatReport
            app = MOQPDBCatReport(args.args.callsign)
    elif (args.args.cntyline):
-       from countylineops import CountyLineOps
+       from moqputils.countylineops import CountyLineOps
        app = CountyLineOps(args.args.cntyline,
                                 args.args.linecount)
    elif (args.args.logreport):
-       from logreport import LogReport
+       from moqputils.logreport import LogReport
        app = LogReport(args.args.logreport)
    elif (args.args.countiesworked):
        from moqputils.moqpdbcountycount import *
        app = MOQPDBCountyCountRpt(args.args.logreport)
    elif (args.args.digireport):
-       from moqpdbdigitalreport import MOQPDBDigitalReport
+       from moqputils.moqpdbdigitalreport import MOQPDBDigitalReport
        app = MOQPDBDigitalReport(args.args.digireport)
    elif (args.args.vhfreport):
-       from moqpdbvhfreport import MOQPDBVhfReport
+       from moqputils.moqpdbvhfreport import MOQPDBVhfReport
        app = MOQPDBVhfReport(args.args.vhfreport)
    elif (args.args.mostcounties):
        from moqpdbcountyrpt import MostCounties
        app = MostCounties(args.args.mostcounties)
    elif (args.args.states):
-       from moqpAwards.stateAwards import STATEAwards
+       from moqputils.moqpAwards.stateAwards import STATEAwards
        app = STATEAwards(args.args.states)
    elif (args.args.deletelog):
-       from deletelog import deleteLog
+       from moqputils.deletelog import deleteLog
        app = deleteLog(args.args.deletelog)
    elif (args.args.qsoerrors):
-       from moqpqsoerrorstats import MOQPQSOErrorStats
+       from moqputils.moqpqsoerrorstats import MOQPQSOErrorStats
        app = MOQPQSOErrorStats(args.args.qsoerrors)
    else:
-       from gui_reports import reports_ui
+       from moqputils.gui_reports import reports_ui
        app=gui_reports()
         
