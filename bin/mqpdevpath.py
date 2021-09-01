@@ -12,6 +12,7 @@ pathsplit = os.path.split(whereami[0])
 #print("here I am :", whereami, pathsplit)
 
 DEVMODPATH = [pathsplit[0]]
+os.chdir(pathsplit[0])
 
 for mypath in DEVMODPATH:
         if ( os.path.exists(mypath) and \
