@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from moqpcertificates import MOQPCertificates
-from moqpdbutils import MOQPDBUtils
-from moqpdbconfig import *
-from moqpmults import MOQPMults
-from bothawards import BothAwards
+from moqputils.moqpcertificates import MOQPCertificates
+from moqputils.moqpdbutils import MOQPDBUtils
+from moqputils.configs.moqpdbconfig import *
+from moqputils.moqpmults import MOQPMults
+from moqputils.bothawards import BothAwards
 
 
 class MOQPDBCertificates(MOQPCertificates):
@@ -182,11 +182,13 @@ class MOQPDBCertificates(MOQPCertificates):
        fullSummary = None
        logsummary = self.processLogdict(callsign)
        #print('parseLog: parsing errors: \n%s'%(logsummary['ERRORS'] ))
-       #print(logsummary)
+       #print(logsummary['QSOSUM'])
        if (logsummary):
           moqpcat = self.determineMOQPCatdict(logsummary)
           #print(moqpcat)
-          Score = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
+          #Score = self.calculate_score(logsummary['QSOSUM'],
+          #                             logsummary['MULTS'])
+          Score = 0
           fullSummary = dict()
           fullSummary['HEADER'] = logsummary['HEADER']
           fullSummary['QSOSUM'] = logsummary['QSOSUM']
@@ -275,3 +277,4 @@ class MOQPDBCertificates(MOQPCertificates):
        else:
            csvdata = self.scoreLog(call)
            print(csvdata)
+
