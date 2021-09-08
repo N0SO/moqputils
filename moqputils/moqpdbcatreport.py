@@ -23,13 +23,15 @@ Update History:
 -      MOQP Category
 -      Total Score
 -      Location.
+* Sun Sep 05 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Updates for 2021 and new devpath.py
 """
 
-from moqpdbutils import *
-from moqpdbconfig import *
+from moqputils.moqpdbutils import *
+from moqputils.configs.moqpdbconfig import *
 
 
-VERSION = '0.0.1' 
+VERSION = '0.1.0' 
 
 COLUMNHEADERS = \
      'CALLSIGN\tOPS\tLOCATION\tMOQP CATEGORY\t'+\
