@@ -24,11 +24,11 @@ Update History:
 - entry for the station exists already.
 """
 
-from moqpdbcategory import *
-from moqpdbutils import *
-from bonusaward import BonusAward
+from moqputils.moqpdbcategory import *
+from moqputils.moqpdbutils import *
+from moqputils.bonusaward import BonusAward
 
-VERSION = '0.1.0' 
+VERSION = '0.2.0' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\t' + \
@@ -208,7 +208,7 @@ class MOQPDBVhf(MOQPDBCategory):
                 log = None
         return log
 
-
+    """
     def appMain(self, callsign):
        csvdata = 'Nothing.'
        if (callsign == 'allcalls'):
@@ -226,3 +226,78 @@ class MOQPDBVhf(MOQPDBCategory):
        else:
            csvdata = self.exportcsvfile(callsign)
            print(csvdata)
+    """
+
+    def saveResults(self, mydb, vdata):
+        dquery ='DROP TABLE IF EXISTS VHF;'
+        dquery1 = 'CREATE TABLE VHF ('+\
+          'ID int NOT NULL AUTO_INCREMENT, '+\
+          'LOGID int NOT NULL, '+\
+          'QSOS int NULL, '+\
+          'CWQSO int NULL, '+\
+          'PHQSO int NULL, '+\
+          'RYQSO int NULL, '+\
+          'MULTS int NULL, '+\
+          'SCORE int NULL, '+\
+          'PRIMARY KEY (ID));'
+        mydb.write_query(dquery) # Delete old digital tables  
+        mydb.write_query(dquery1) # Delete old digital tables  
+        for entry in vdata:
+            digid = mydb.write_pquery(\
+               'INSERT INTO VHF '+\
+               '(LOGID, QSOS, CWQSO, PHQSO, RYQSO, MULTS, SCORE) '+\
+               'VALUES (%s, %s, %s, %s, %s, %s, %s)',
+               [ entry['LOGID'], 
+                 entry['QSOS'],
+                 entry['CWQSO'],
+                 entry['PHQSO'],
+                 entry['RYQSO'],
+                 entry['MULTS'],
+                 entry['SCORE'] ])
+            #print('Writing %d\n'%(digid))
+
+    def appMain(self, callsign):
+       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+       mydb.setCursorDict()
+       vList = mydb.read_query(\
+                 'SELECT * FROM SUMMARY WHERE VHF>0 ' +\
+                 'ORDER BY VHFQSO DESC')
+ 
+       #Score the digital list
+       Vresult = []       
+       for nextEnt in vList:
+           qsoqry = \
+             "SELECT * FROM `QSOS` WHERE LOGID=%s"%(nextEnt['LOGID'])
+           qsoqry += " AND VALID=1 AND (FREQ IN ('50','144','432') OR FREQ>=50000)"
+ 
+           entry = {'LOGID': nextEnt['LOGID'],
+                    'QSOS': 0,
+                    'CWQSO': 0,
+                    'PHQSO': 0,
+                    'RYQSO': 0,
+                    'MULTS': 0,
+                    'SCORE': 0 } 
+
+           qsoList = mydb.read_query(qsoqry)
+
+           #print(qsoList)
+           if (len(qsoList)>0):
+              for qso in qsoList:
+                  if qso['MODE'] == 'CW': entry['CWQSO']+=1
+                  if qso['MODE'] in MODES2: entry['PHQSO']+=1
+                  if qso['MODE'] in MODES3: entry['RYQSO']+=1
+              entry['QSOS'] = len(qsoList)
+              vhfmults = MOQPMults(qsoList)
+              entry['MULTS'] = vhfmults.sumMults()
+              if (entry['MULTS'] == 0): entry['MULTS']=1
+              entry['SCORE'] = ((((entry['CWQSO'] +
+                                   entry['RYQSO']) * 2) +\
+                                   entry['PHQSO']) *\
+                                   entry['MULTS']) +\
+                                   nextEnt['CABBONUS'] +\
+                                   nextEnt['W0MABONUS'] +\
+                                   nextEnt['K0GQBONUS']
+              Vresult.append(entry)
+       print(Vresult)
+       self.saveResults(mydb, Vresult)
+       print('%d Stations with VHF+ scores summarized database.'%(len(Vresult)))

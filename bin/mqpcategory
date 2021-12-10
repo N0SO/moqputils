@@ -92,7 +92,7 @@ if __name__ == '__main__':
        from moqputils.moqpdbcategory import MOQPDBCategory
        app = MOQPDBCategory(args.args.callsign)
    elif (args.args.digital):
-       from modqutils.moqpdbdigital import MOQPDBDigital
+       from moqputils.moqpdbdigital import MOQPDBDigital
        app = MOQPDBDigital(args.args.digital)
    elif (args.args.vhf):
        from moqputils.moqpdbvhf import MOQPDBVhf

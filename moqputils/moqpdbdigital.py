@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 """
-moqpdbcategory  - Same features as moqpdbcategory, except read only
-                  digital mode QSOs for the compare
+moqpdbdigital   - Creates digital mode only scores table named 
+                  DIGITAL; Uses data from tables LOGHEADER, QSO 
+                  and SUMMARY to create the new DIGITAL scores
+                  table with a LOGID that points to the LOGHEADER
+                  table. The valid digital only QSOs are fetched
+                  from the QSO table to create the new DIGITAL
+                  table. Also uses data from the SUMMARY table.
+                  Same features as moqpdbcategory, except read only
+                  digital mode QSOs for categorization and summary.
 
-                  The main dfference from the moqpcategory class 
-                  is all of the file read/write methods have been
-                  over ridden by same name methods that read
-                  data from and SQL database and update records
-                  in the same database SUMMARY table.
-                  
-                  QSO Validation (QSL, time check, etc) should
-                  already have been performed on the data.
-                
-                  Based on 2019 MOQP Rules
+                  QSO Validation (DUPE, QSL, time checks, etc) 
+                  should already have been 
+                  performed on the data.
+        
+                  Updated for the 2021 MOQP.
 Update History:
 * Thu Feb 13 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
@@ -25,11 +27,20 @@ Update History:
 * Fri Aug 28 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.1 - Fixed bug causing an error and failure to
 - to insert new table data found during updates.
+* Wed Dec 08 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.2.0 - Changes for 2021
+-  1. Refactored code to use data already collected
+-     in SUMMARY, LOGHEADER and QSO tables instead of
+-     repeating the previous operations.
+   2. Now deletes old tables and re-creates them with 
+      fresh reults each time.  
 """
 
-from moqpdbcategory import *
-from moqpdbutils import *
-from bonusaward import BonusAward
+from moqputils.moqpdbcategory import *
+from moqputils.moqpdbutils import *
+from moqputils.bonusaward import BonusAward
+from moqputils.moqpdefs import DIGIMODES
+from moqputils.moqpmults import *
 
 VERSION = '0.1.1' 
 
@@ -44,184 +55,68 @@ class MOQPDBDigital(MOQPDBCategory):
         if (callsign):
             self.appMain(callsign)
 
-    def exportcsvfile(self, callsign, Headers=True):
-       """
-       This method processes a single log file passed in filename
-       and returns the summary ino in .CSV format to be printed
-       or saved to a .CSV file.
-    
-       If the Headers option is false, it will skip printing the
-       csv header info.
-       """
-       csvdata = None
-       log = self.parseLog(callsign)
-       """
-       print (log.keys())
-       print(log['QSOSUM'].keys())
-       print(log['MULTS'])
-       print(log['MOQPCAT']['MOQPCAT'])
-       """
-       if (log):
-       
-           if (Headers): 
-               csvdata = COLUMNHEADERS
-               
-           else:
-               csvdata = ''
-
-           csvdata += ('%s\t'%(log['HEADER']['CALLSIGN']))
-           csvdata += ('%s\t'%(log['HEADER']['OPERATORS']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-STATION']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OPERATOR']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-POWER']))
-           csvdata += ('%s\t'%(log['HEADER']['CATEGORY-MODE']))
-           csvdata += ('%s\t'%(log['HEADER']['LOCATION']))
-           #csvdata += ('%s\t'%(log['HEADER']['CATEGORY-OVERLAY']))
-           #csvdata += ('%s\t'%(log['QSOSUM']['CW']))
-           #csvdata += ('%s\t'%(log['QSOSUM']['PH']))
-           csvdata += ('%s\t'%(log['QSOSUM']['DG']))
-           #csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
-           #csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
-           csvdata += ('%s\t'%(log['MULTS']))         
-           csvdata += ('%s\t'%(log['SCORE']['SCORE']))         
-           csvdata += ('%s\t'%(log['SCORE']['W0MA']))         
-           csvdata += ('%s\t'%(log['SCORE']['K0GQ']))         
-           csvdata += ('%s\t'%(log['SCORE']['CABFILE']))         
-           csvdata += ('%s\t'%(log['SCORE']['TOTAL']))         
-           #csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
-           #csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
-           #csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
-           #csvdata += ('%s'%(log['MOQPCAT']['ROOKIE']))
-
-           for err in log['ERRORS']:
-               if ( err != [] ):
-                   csvdata += err
-       
-       else:
-          csvdata = None
-       return csvdata 
-
-    def parseLog(self, callsign, Headers=True):
-       """
-       This method processes a single file passed in filename
-       If the Headers option is false, it will skip printing the
-       csv header info.
-    
-       Using dictionary objects
-       """
-       fullSummary = None
-       logsummary = self.processLogdict(callsign)
-       #print('parseLog: parsing errors: \n%s'%(logsummary['ERRORS'] ))
-       #print(logsummary)
-       if (logsummary):
-          moqpcat = self.determineMOQPCatdict(logsummary)
-          #print(moqpcat)
-          ba=BonusAward(logsummary['QSOLIST'])
-          if (ba.Award['W0MA']['INLOG']):
-              w0mabonus = 100
-          else:
-              w0mabonus = 0
-          if (ba.Award['K0GQ']['INLOG']):
-              k0gqbonus = 100
-          else:
-              k0gqbonus = 0
-          if (logsummary['HEADER']['CABBONUS']):
-              cabBonus = 100
-          else:
-              cabBonus = 0
-          qsoScore = self.calculate_score(logsummary['QSOSUM'], logsummary['MULTS'])
-          bonuspoints = { 'W0MA':w0mabonus,
-                          'K0GQ':k0gqbonus,
-                          'CABFILE':cabBonus,
-                          'SCORE':qsoScore,
-                          'TOTAL':(qsoScore + w0mabonus + k0gqbonus + cabBonus) }
-          
-          fullSummary = dict()
-          fullSummary['HEADER'] = logsummary['HEADER']
-          fullSummary['QSOSUM'] = logsummary['QSOSUM']
-          fullSummary['MULTS'] = logsummary['MULTS']
-          fullSummary['SCORE'] = bonuspoints
-          fullSummary['MOQPCAT'] = moqpcat
-          fullSummary['QSOLIST'] = logsummary['QSOLIST']
-          fullSummary['ERRORS'] = logsummary['ERRORS']
-          self.updateDB(logsummary['HEADER']['CALLSIGN'],
-                        logsummary['QSOSUM']['DG'],
-                        logsummary['MULTS'],
-                        bonuspoints['W0MA'],
-                        bonuspoints['K0GQ'],
-                        bonuspoints['TOTAL'])
-                        
-       return fullSummary
-       
-    def updateDB(self, call, qsos, mults, bonus1, bonus2, score):
-        did = None
-        db = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-        #logid = db.CallinLogDB(call)
-        logid = db.read_pquery(\
-            "SELECT ID FROM LOGHEADER WHERE CALLSIGN=%s",[call])
-        if (logid): logid=logid[0]
-        #print('Adding call %s, log ID %s, dig. qso count %d, mults %d'%(call, logid, qsos, mults))
-        # Does record exist already?
-        did = db.read_pquery("SELECT ID FROM DIGITAL WHERE LOGID=%s",[logid])
-        #print ('did = ',did, len(did))
-        if (len(did) > 0):
-            #print('update existing data for %s'%(call))
-            did = did[0]
-            db.write_pquery(\
-                "UPDATE DIGITAL SET LOGID=%s,QSOS=%s,MULTS=%s, "+\
-                "W0MABONUS=%s,K0GQBONUS=%s,SCORE=%s WHERE ID=%s",
-                [logid,qsos,mults,bonus1,bonus2,score,did])
-        else:
-            #print('insert new data for %s'%(call))
-            did=db.write_pquery(\
-                "INSERT INTO DIGITAL "+\
-                "(LOGID,QSOS,MULTS,W0MABONUS,K0GQBONUS,SCORE) "+\
-                "VALUES (%s,%s,%s,%s,%s,%s)", 
-                [logid,qsos,mults,bonus1,bonus2,score])
-        return did
-
-    def getLogFile(self, callsign):
-        log = None
-        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-        mydb.setCursorDict()
-        mults = MOQPMults()
-        #Fetch log header
-        logID = mydb.CallinLogDB(callsign)
-        if (logID):
-            dbheader = mydb.read_query( \
-                "SELECT * FROM `LOGHEADER` WHERE ID=%d"%(logID))
-            header = self.getLogHeader(dbheader)
-            #print(header)
-            #get digital QSOS only!
-            qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=1) AND MODE IN ('RY', 'DI', 'DG', 'PSK31','FT8','FT4') )"%(logID))
-            if (qsos == () ):
-                log=None
-            else:
-                log=dict()
-                for qso in qsos:
-                    mults.setMult(qso['URQTH'])
-                #print('mults = %d'%(mults.sumMults()))
-                log['HEADER'] = header
-                log['QSOLIST'] = qsos
-                log['MULTS'] = mults.sumMults()
-                log['ERRORS'] = []
-        return log
-
+    def saveResults(self, mydb, digidata):
+        dquery ='DROP TABLE IF EXISTS DIGITAL;'
+        dquery1 = 'CREATE TABLE DIGITAL ('+\
+          'ID int NOT NULL AUTO_INCREMENT, '+\
+          'LOGID int NOT NULL, '+\
+          'QSOS int NULL, '+\
+          'MULTS int NULL, '+\
+          'SCORE int NULL, '+\
+          'PRIMARY KEY (ID));'
+        mydb.write_query(dquery) # Delete old digital tables  
+        mydb.write_query(dquery1) # Delete old digital tables  
+        for entry in digidata:
+            digid = mydb.write_pquery(\
+               'INSERT INTO DIGITAL '+\
+               '(LOGID, QSOS, MULTS, SCORE) '+\
+               'VALUES (%s, %s, %s, %s)',
+               [ entry['LOGID'], 
+                 entry['QSOS'],
+                 entry['MULTS'],
+                 entry['SCORE'] ])
+            #print('Writing %d\n'%(digid))
 
     def appMain(self, callsign):
-       csvdata = 'Nothing.'
-       if (callsign == 'allcalls'):
-           mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-           mydb.setCursorDict()
-           loglist = mydb.read_query( \
-              "SELECT ID, CALLSIGN FROM LOGHEADER WHERE 1")
-           HEADER = True
-           for nextlog in loglist:
-               #print('callsign = %s'%(nextlog['CALLSIGN']))
-               csvdata = self.exportcsvfile(nextlog['CALLSIGN'], HEADER)
-               if (csvdata):
-                   HEADER = False
-                   print(csvdata)
-       else:
-           csvdata = self.exportcsvfile(callsign)
-           print(csvdata)
+       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+       mydb.setCursorDict()
+       digList = digList = mydb.read_query(\
+                 'SELECT * FROM SUMMARY WHERE DIGITAL>0 ' +\
+                 'ORDER BY RYQSO DESC')
+ 
+       #Score the digital list
+       digresult = []       
+       for nextEnt in digList:
+           query = \
+            "SELECT * FROM QSOS WHERE LOGID=%d"%(nextEnt['LOGID'])
+           query += " AND VALID=1 AND ("+\
+                "MODE LIKE '%RY%' OR "+\
+                "MODE LIKE '%DG%' OR "+\
+                "MODE LIKE '%DIG%' OR "+\
+                "MODE LIKE '%DIGI%' OR "+\
+                "MODE LIKE '%RTTY%' OR "+\
+                "MODE LIKE '%FT8%' OR "+\
+                "MODE LIKE '%FT4%' OR "+\
+                "MODE LIKE '%PSK31%')"
+
+           entry = {'LOGID': nextEnt['LOGID'],
+                    'QSOS': 0,
+                    'MULTS': 0,
+                    'SCORE': 0 } 
+
+           qsoList = mydb.read_query(query)
+
+           #print(qsoList)
+           if (len(qsoList)>0):
+              entry['QSOS'] = len(qsoList)
+              digimults = MOQPMults(qsoList)
+              entry['MULTS'] = digimults.sumMults()
+              if (entry['MULTS'] == 0): entry['MULTS']=1
+              entry['SCORE'] = ((len(qsoList) * 2) * entry['MULTS']) + nextEnt['CABBONUS'] + nextEnt['W0MABONUS'] + nextEnt['K0GQBONUS']
+              digresult.append(entry)
+           #print(len(qsoList), nextEnt['RYQSO'], entry['MULTS'])
+           #print(nextEnt)
+           #print(entry)
+           #exit()          
+       self.saveResults(mydb, digresult)
+       print('%d Stations with digital scores summarized database.'%(len(digresult)))

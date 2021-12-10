@@ -74,7 +74,7 @@ class MOQPDBClubReport(MOQPDBCatReport):
                [club, logcount, thisScore])
             # Create club member entries
             for station in loglist:
-                memberid = db.write_pquery(\
+                memberid = mydb.write_pquery(\
                    'INSERT INTO CLUB_MEMBERS '+\
                    '(CLUBID, LOGID) '+\
                    'VALUES(%s, %s)',
