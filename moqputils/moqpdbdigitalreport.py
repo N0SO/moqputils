@@ -66,14 +66,19 @@ class MOQPDBDigitalReport():
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
 
+       call = callsign.upper()
+
        query = 'SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, '+\
                 'LOGHEADER.OPERATORS, LOGHEADER.LOCATION, ' +\
                 'DIGITAL.*, '+\
                 'SUMMARY.W0MABONUS, SUMMARY.K0GQBONUS, '+\
                 'SUMMARY.CABBONUS '+\
                 'FROM DIGITAL JOIN LOGHEADER ON '+\
-                'LOGHEADER.ID=DIGITAL.LOGID '+\
-                'JOIN SUMMARY ON DIGITAL.LOGID = SUMMARY.LOGID '+\
+                'LOGHEADER.ID=DIGITAL.LOGID '
+       if (call != 'ALLCALLS'):
+           query += 'AND LOGHEADER.CALLSIGN="%s" '%(call)
+
+       query += 'JOIN SUMMARY ON DIGITAL.LOGID = SUMMARY.LOGID '+\
                 'ORDER BY SCORE DESC'
 
        digList = mydb.read_query(query)

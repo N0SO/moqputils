@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
-moqpdbvhfreport - Same features as moqpcategory, except read
-                  all data from an SQL database VHF Summary
-                  table.
+moqpdbvhfreport - Display VHF scores only from data stored
+                  in the VHF table.
 
                   Prerequisits:
                    1. All logs loaded into database with
@@ -23,6 +22,22 @@ Update History:
 - V0.0.1 - Start tracking revs.
 * Thu Dec 09 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 - Refactored for efficiency.
+- Much of the code replaced was holdover from the file
+- processing version, which inefficiently recalculated
+- a number of things already available in the LOGHEADER,
+- SUMMARY, and QSO tables. Code reworked to:
+-    1. Use the VHF field in SUMMARY to determine LOGIDs
+-       that contain VHF QSOs.
+-    2. Select only QSOs  for the log being scored based
+-       on the FREQ field in the QSO table. 
+-    3. Count total number of VHF QSOs, also CW, PH and 
+-       RY QSOS.
+-    4. Use the BONUS fields from SUMMARY when scoring.
+-    5. Save only the LOGID and new results in the VHF
+-       table. Delete and recreate the table each time.
+-    6. Remove all report generation code. Use 
+=       moqpdbvhfreports class to display results.
+- Lots of 'extra' code was removed.      
 """
 
 from moqputils.moqpdbutils import *
@@ -42,67 +57,7 @@ class MOQPDBVhfReport():
         if (callsign):
             self.appMain(callsign)
 
-    def exportcsvsumdata(self, log):
-       """
-       This method processes a single log file passed in filename
-       and returns the summary ino in .CSV format to be printed
-       or saved to a .CSV file.
-       """
-       csvdata= None
-
-       if (log):
-           csvdata = ('%s\t'%(log['CALLSIGN']))
-           csvdata += ('%s\t'%(log['OPERATORS']))
-           csvdata += ('%s\t'%(log['LOCATION']))
-           csvdata += ('%d\t'%(log['QSOS']))
-           csvdata += ('%s\t'%(log['MULTS']))
-           csvdata += ('%s\t'%(log['SCORE']))
-           csvdata += ('%s\t'%(log['W0MABONUS']))
-           csvdata += ('%s\t'%(log['K0GQBONUS']))
-           csvdata += ('%s'%(log['CABBONUS']))
-
-       return csvdata
-
-    def fetchVHFSummary(self, mydb, call='allcalls'):
-        sumdata = None
-        query = 'SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, '+\
-                'LOGHEADER.LOCATION, LOGHEADER.CABBONUS, '+\
-                'LOGHEADER.OPERATORS, VHF.* '+\
-                'FROM VHF INNER JOIN LOGHEADER ON '+\
-                'LOGHEADER.ID=VHF.LOGID '
-        if (call != 'allcalls'):
-            query += 'WHERE CALLSIGN=\'%s\' '%(call)
-        else:
-            query += 'ORDER BY LOGHEADER.LOCATION, VHF.SCORE DESC'
-        sumdata = mydb.read_query(query)
-        return sumdata
-    def ProcessData(self, call):
-       ReportList = None
-       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-       mydb.setCursorDict()
-       data = self.fetchVHFSummary(mydb, call)
-       if (data):
-           ReportList = []
-           for ent in data:
-               ReportList.append(self.exportcsvsumdata(ent))
-       return ReportList
-    """
-    def appMain(self, callsign):
-       csvdata = 'No Data.'
-       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-       mydb.setCursorDict()
-       csvList = self.ProcessData(callsign)
-       if (csvList):
-           print(COLUMNHEADERS)
-           for line in csvList:
-               print(line)
-    """
     def showData(self, log):
-       """
-       This method processes a single log file passed in filename
-       and returns the summary ino in .CSV format to be printed
-       or saved to a .CSV file.
-       """
        csvdata= None
 
        if (log):
@@ -126,19 +81,23 @@ class MOQPDBVhfReport():
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
 
-       query = 'SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, '+\
+       call = callsign.upper()
+
+       cquery = 'SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, '+\
                 'LOGHEADER.OPERATORS, LOGHEADER.LOCATION, ' +\
                 'VHF.*, '+\
                 'SUMMARY.W0MABONUS, SUMMARY.K0GQBONUS, '+\
                 'SUMMARY.CABBONUS '+\
                 'FROM VHF JOIN LOGHEADER ON '+\
-                'LOGHEADER.ID=VHF.LOGID '+\
-                'JOIN SUMMARY ON VHF.LOGID = SUMMARY.LOGID '+\
+                'LOGHEADER.ID=VHF.LOGID '
+       if (call != 'ALLCALLS'):
+           cquery += 'AND LOGHEADER.CALLSIGN="%s" '%(call)
+
+       cquery+= 'JOIN SUMMARY ON VHF.LOGID = SUMMARY.LOGID '+\
                 'ORDER BY SCORE DESC'
 
-       digList = mydb.read_query(query)
+       digList = mydb.read_query(cquery)
 
        print(COLUMNHEADERS)
        for ent in digList:
            print(self.showData(ent))
-       #print(digList,len(digList))
