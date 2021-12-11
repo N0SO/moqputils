@@ -17,13 +17,13 @@ Update History:
 - Award.
 """
 
-from contestmults import *
-from moqpdbutils import *
-from moqpdbconfig import *
-from qsoutils import QSOUtils
+from cabrilloutils.contestmults import *
+from moqputils.moqpdbutils import *
+from moqputils.configs.moqpdbconfig import *
+from cabrilloutils.qsoutils import QSOUtils
 
 
-VERSION = '0.0.3'
+VERSION = '0.1.0'
 
 MULTFILES = ['shared/multlists/moqp-counties.csv']
 
@@ -130,7 +130,7 @@ class MOQPDBCountyRpt():
 
     def processOne(self, mydb, callsign, Headers = True):
         csvData = None
-        qu=QSOUtils()
+        #qu=QSOUtils()
         logID = mydb.CallinLogDB(callsign)
         ctys=MOQPDBCountyMults()
         #print(ctys.mults)
@@ -143,7 +143,8 @@ class MOQPDBCountyRpt():
             # present in this log
             if (len(log['QSOLIST']) > 0):
                 for qso in log['QSOLIST']:
-                    logtime = qu.qsotimeOBJ(qso['DATE'], qso['TIME'])
+                    #logtime = qu.qsotimeOBJ(qso['DATE'], qso['TIME'])
+                    logtime = qso['DATETIME']
                     ctys.setMult(qso['URQTH'], qso['ID'], logtime)
                 #print(ctys.mults,ctys.last_new_county,ctys.lnc_date,ctys.lnc_time)
                 countycount = ctys.sumMults()
@@ -173,6 +174,16 @@ class MOQPDBCountyRpt():
            
     def processAll(self, mydb):
         csvdata = []
+        #LOGID, COUNT, NAMES, LASTWORKED, LWTIME
+        mydb.write_query('DROP TABLE IF EXISTS COUNTY;')
+        mydb.write_query('CREATE TABLE COUNTY ('+\
+          'ID int NOT NULL AUTO_INCREMENT, '+\
+          'LOGID int NULL, '+\
+          'COUNT int NULL, '+\
+          'NAMES VARCHAR(600), '+\
+          'LASTWORKED VARCHAR(6), '+\
+          'LWTIME DATETIME, '+\
+          'PRIMARY KEY (ID));')
         headers = True
         loglist = mydb.fetchLogList()
         if (loglist):
@@ -184,7 +195,7 @@ class MOQPDBCountyRpt():
                 csvdata.append(csvd)
                 Headers = False
             #print(csvdata)
-            return csvdata
+        return csvdata
     
     def appMain(self, callsign):
        csvdata = 'No Data.'

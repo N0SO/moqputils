@@ -38,5 +38,6 @@ class commonAwards():
            tsvdata += 'NO ENTRY'
        return tsvdata
  
-    def appMain(self, callsign):
+    def appMain(self, callsign, extra=None):
+        print('commonAwards: %s, %s'%(callsign, extra))
         pass

@@ -2,11 +2,11 @@
 from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
 from moqputils.moqpawardefs import *
-from . commonAwards import commonAwards
+from moqputils.moqpAwards.commonAwards import commonAwards
 
 class STATEAwards(commonAwards):
     
-    def __init__(self, place = None):
+    def __init__(self, place = None, extra = None):
         if (place):
             self.appMain(place)
 

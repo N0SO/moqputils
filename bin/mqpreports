@@ -160,7 +160,7 @@ if __name__ == '__main__':
        from moqputils.moqpdbvhfreport import MOQPDBVhfReport
        app = MOQPDBVhfReport(args.args.vhfreport)
    elif (args.args.mostcounties):
-       from moqpdbcountyrpt import MostCounties
+       from moqputils.moqpdbcountyrpt import MostCounties
        app = MostCounties(args.args.mostcounties)
    elif (args.args.states):
        from moqputils.moqpAwards.stateAwards import STATEAwards
