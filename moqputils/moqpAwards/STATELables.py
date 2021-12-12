@@ -1,7 +1,7 @@
 #!/usr/bin/python3
-from moqpdbutils import *
-from moqpdbconfig import *
-from moqpawardefs import *
+from moqputils.moqpdbutils import *
+from moqputils.configs.moqpdbconfig import *
+from moqputils.moqpawardefs import *
 
 class STATELabels(STATEAwards):
 

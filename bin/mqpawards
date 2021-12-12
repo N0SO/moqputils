@@ -14,22 +14,19 @@ DESCRIPTION = \
 Update History:
 * Fri May 29 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 -First interation for 2020 MOQP
+* Sat Dec 10 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 -Update to support new DEVMODPATH
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.0.1'
+VERSION = '0.1.0'
 ARGS = None
 
-DEVMODPATH = ['moqputils', 'cabrilloutils']
-# If the development module source paths exist, 
-# add them to the python path
-for mypath in DEVMODPATH:
-    if ( os.path.exists(mypath) and \
-                       (os.path.isfile(mypath) == False) ):
-        sys.path.insert(0,mypath)
-#print('Python path = %s'%(sys.path))
+whereami = os.path.split( os.path.realpath(__file__) )
+if os.path.exists(whereami[0] + '/mqpdevpath.py'):
+    from mqpdevpath import *
         
 
 EPILOG = \
@@ -84,19 +81,19 @@ if __name__ == '__main__':
    #print (args.args)
    
    if (args.args.award):
-       from moqpAwards.CATEGORYPlaques import CATEGORYPlaques
+       from moqputils.moqpAwards.CATEGORYPlaques import CATEGORYPlaques
        app = CATEGORYPlaques()
    elif (args.args.category):
-       from moqpAwards.CATEGORYAwards import CATEGORYAwards
+       from moqputils.moqpAwards.CATEGORYAwards import CATEGORYAwards
        app = CATEGORYAwards(args.args.category)
    elif (args.args.showme):
-       from moqpAwards.SHOWMEAwards import SHOWMEAwards
+       from moqputils.moqpAwards.SHOWMEAwards import SHOWMEAwards
        app = SHOWMEAwards('SHOWME')
    elif (args.args.missouri):
-       from moqpAwards.SHOWMEAwards import MOAwards
+       from moqputils.moqpAwards.SHOWMEAwards import MOAwards
        app = MOAwards('MISSOURI')
    elif (args.args.provstate):
-       from moqpAwards.stateAwards import STATEAwards
+       from moqputils.moqpAwards.stateAwards import STATEAwards
        app = STATEAwards(args.args.provstate)
    else:
        from gui_reports import labels_ui

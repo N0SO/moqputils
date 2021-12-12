@@ -7,12 +7,14 @@ moqplables - A collection of classes to help with the creation
 Update History:
 * Fri Feb 20 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V.0.0.1 - Just starting out
+* Sun Dec 11 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+-V0.1.0 - Update to support the new DEVMODPATH code.
 """
 
-from moqpdbutils import *
-from moqpdbconfig import *
+from moqputils.moqpdbutils import *
+from moqputils.configs.moqpdbconfig import *
 
-VERSION = '0.0.1'
+VERSION = '0.1.0'
 
 AWARDLIST = ['MISSOURI FIXED MULTI-OP',
     'MISSOURI FIXED SINGLE-OP HIGH POWER',

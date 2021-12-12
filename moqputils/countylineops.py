@@ -9,11 +9,13 @@ Update History:
 * Sat Jun 13 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V.0.0.2 - Added 3 and 4 county line checks.
 -           Pretty crude, lots of false positives.
+* Sut Dec 12 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V.0.1.0 - Update for ne DEVMODPATH sctructure.
 """
 
-from moqpdbutils import *
-from moqpdbconfig import *
-from moqpdefs import MOCOUNTY
+from moqputils.moqpdbutils import *
+from moqputils.configs.moqpdbconfig import *
+from moqputils.moqpdefs import MOCOUNTY
 
 VERSION = '0.0.1'
 

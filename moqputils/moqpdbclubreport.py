@@ -17,16 +17,18 @@ moqpdbclubreport - Fetches a list of logs that have something
 Update History:
 * Fri Jan 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
-* San May 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
+* Sun May 31 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.2 -Added CLUBS and CLUB_MEMBERS DB Tables
 - and reworked code to let SQL do the sorting work.
+* Sat Dec 10 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Updates to use new devmodpath code.
 """
 
-from moqpdbcatreport import *
-from moqpdbconfig import *
+from moqputils.moqpdbcatreport import *
+from moqputils.configs.moqpdbconfig import *
 
 
-VERSION = '0.0.2' 
+VERSION = '0.1.0' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tCLUB\tSCORE\n'
 
@@ -74,7 +76,7 @@ class MOQPDBClubReport(MOQPDBCatReport):
                [club, logcount, thisScore])
             # Create club member entries
             for station in loglist:
-                memberid = mydb.write_pquery(\
+                memberid = db.write_pquery(\
                    'INSERT INTO CLUB_MEMBERS '+\
                    '(CLUBID, LOGID) '+\
                    'VALUES(%s, %s)',

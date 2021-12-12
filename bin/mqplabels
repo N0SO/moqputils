@@ -17,22 +17,21 @@ Update History:
 * Fri May 29 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 -V0.1.1 - Fixed bug that required adding a dummy paramemer after
 -         -c, -s,-m, etc.
+* Sun Dec 11 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+-V0.2.0 - Update to support the new DEVMODPATH code.
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.0.2'
+VERSION = '0.2.0'
 ARGS = None
 
-DEVMODPATH = ['moqputils', 'cabrilloutils']
 # If the development module source paths exist, 
 # add them to the python path
-for mypath in DEVMODPATH:
-    if ( os.path.exists(mypath) and \
-                       (os.path.isfile(mypath) == False) ):
-        sys.path.insert(0,mypath)
-#print('Python path = %s'%(sys.path))
+whereami = os.path.split( os.path.realpath(__file__) )
+if os.path.exists(whereami[0] + '/mqpdevpath.py'):
+    from mqpdevpath import *
         
 DESCRIPTION = \
 """moqpreports  - Generate reports for MOQP
@@ -82,17 +81,17 @@ if __name__ == '__main__':
    #print (args.args)
    
    if (args.args.category):
-       from stateAwards import CATEGORYLabels
-       app = CATEGORYLabels(args.args.category)
+       from moqputils.moqplabels import CATEGORYLabels
+       app = CATEGORYLabels()
    elif (args.args.showme):
-       from moqplabels import SHOWMELabels
+       from moqputils.moqplabels import SHOWMELabels
        app = SHOWMELabels('SHOWME')
    elif (args.args.missouri):
-       from moqplabels import SHOWMELabels
+       from moqputils.moqplabels import SHOWMELabels
        app = SHOWMELabels('MISSOURI')
    elif (args.args.provstate):
-       from stateAwards import STATELabels
-       app = STATELabels(args.args.provstate)
+       from moqputils.moqplabels import STATELabels
+       app = STATELabels()
    else:
        from gui_reports import labels_ui
        app=gui_reports()
