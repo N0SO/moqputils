@@ -138,8 +138,9 @@ if __name__ == '__main__':
            from moqputils.moqpdbclubreport import MOQPDBClubReport
            app = MOQPDBClubReport(args.args.callsign)
        elif (args.args.callsign == 'HTML'):
-           from moqputils.moqphtmlreport import MOQPHtmlReport
-           app = MOQPHtmlReport(args.args.callsign)       
+           #from moqputils.moqphtmlreport import MOQPHtmlReport
+           from moqputils.moqpdbcatreport import MOQPHtmlReport
+           app = MOQPHtmlReport('allcalls')       
        else:
            from moqputils.moqpdbcatreport import MOQPDBCatReport
            app = MOQPDBCatReport(args.args.callsign)

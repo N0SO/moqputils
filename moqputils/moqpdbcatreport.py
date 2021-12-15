@@ -161,6 +161,11 @@ class MOQPDBCatReport():
                     csvList.append(csvdata)
         return csvList
     
+    def showReport(self, csvdata):
+      if (csvdata):
+        for csvLine in csvdata:
+          print(csvLine)
+
     def appMain(self, callsign):
        csvdata = 'No Data.'
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
@@ -170,6 +175,64 @@ class MOQPDBCatReport():
        else:
            csvdata = self.processOneSum(mydb, callsign)
            #print(csvdata)
-       for csvLine in csvdata:
-           print(csvLine)
+       self.showReport(csvdata)
 
+class MOQPHtmlReport(MOQPDBCatReport):
+  
+    def showReport(self, csvdata):
+        if (csvdata):
+            html=self.wrapStringInHTMLMac('MOQP-Scores-By-Category',
+                                     'Missouri QSO Party Scores by Category',
+                                     csvdata)
+        print(html)
+    """
+    Given name of calling program, a url and a string to wrap,
+    output string in html body with basic metadata and open in Firefox tab.
+    """
+    def wrapStringInHTMLMac(self, program, url, body):
+        import datetime
+        from webbrowser import open_new_tab
+
+        now = datetime.datetime.today().strftime("%Y%m%d-%H%M%S")
+        filename = program + '.html'
+        tbody = self.makehtmlTable(body)
+        wrapper = """<html>
+            <head>
+            <title>%s output - %s</title>
+            <link href="./styles.css" rel="stylesheet" type="text/css" />
+            </head>
+            <body><p>URL: <a href=\"%s\">%s</a></p><p>%s</p>
+            </body>
+            </html>"""
+
+        whole = wrapper % (program, now, url, url, tbody)
+        with open(filename,'w') as f:
+            f.writelines(whole)
+            f.close()
+
+        #Change the filepath variable below to match the location of your directory
+        #filename = 'file:///./' + filename
+
+        open_new_tab(filename)
+        
+        return whole
+        
+    """
+    Convert Tab Separated Variables line to HTML table
+    """     
+    def makehtmlTable(self, tdata, headers = True):
+        tbody ="<table>"
+        for l in tdata: 
+            tbody +='<tr>'
+            tl = l.split('\t')
+            for td in tl:
+              if(headers): 
+                tbody+='<th>%s</th>'%(td)
+              else:
+                tbody+='<td>%s</td>'%(td)
+            headers = False
+            tbody +='</tr>'
+        tbody += '</table>'
+        return tbody
+        
+  

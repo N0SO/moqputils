@@ -200,6 +200,12 @@ class LogReport():
                 Headers = False
             #print(csvdata)
             return csvdata
+            
+    def showReport(self, csvdata):
+       if(csvdata):
+           for csvline in csvdata:
+               print(csvline)
+        
 
     def appMain(self, callsign):
        print('Log Report for %s:'%(callsign))
@@ -211,7 +217,61 @@ class LogReport():
        else:
            csvdata = []
            csvdata.append(self.processOne(mydb, callsign))
-       if(csvdata):
-           for csvline in csvdata:
-               print(csvline)
 
+       self.showReport(csvdata)
+        
+class HTML_LogReport(LogReport):
+    
+    def showReport(self, csvdata):
+        if (csvdata):
+            self.wrapStringInHTMLMac('test',
+                                     'http://localhost/',
+                                     csvdata)
+           
+    """
+    Given name of calling program, a url and a string to wrap,
+    output string in html body with basic metadata and open in Firefox tab.
+    """
+    def wrapStringInHTMLMac(self, program, url, body):
+        import datetime
+        from webbrowser import open_new_tab
+
+        now = datetime.datetime.today().strftime("%Y%m%d-%H%M%S")
+        filename = program + '.html'
+        logparts = body[0].split('END-OF-LOG:')
+        #print(logparts)
+        theader=self.makehtmlTable(logparts[0])
+        tbody = self.makehtmlTable(logparts[1])
+        wrapper = """<html>
+            <head>
+            <title>%s output - %s</title>
+            </head>
+            <body><p>URL: <a href=\"%s\">%s</a></p><p>%s</p><p>%s</p>
+            </body>
+            </html>"""
+
+        whole = wrapper % (program, now, url, url, theader, tbody)
+        with open(filename,'w') as f:
+            f.writelines(whole)
+            f.close()
+
+        #Change the filepath variable below to match the location of your directory
+        #filename = 'file:///./' + filename
+
+        open_new_tab(filename)
+        
+    """
+    Convert Tab Separated Variables line to HTML table
+    """     
+    def makehtmlTable(self, tdata):
+        bodyl = tdata.splitlines()
+        tbody ="<table>"
+        for l in bodyl: 
+            tbody +='<tr>'
+            tl = l.split('\t')
+            for td in tl: 
+                tbody+='<td>%s</td>'%(td)
+            tbody +='</tr>'
+        tbody += '</table>'
+        return tbody
+        

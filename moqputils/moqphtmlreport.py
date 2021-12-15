@@ -8,13 +8,15 @@ moqphtmlreport - Same features as moqpdbcategory, except
 Update History:
 * Sat Sep 05 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
+* Wed Dec 15 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.0.2 - DEVMODPATH updates.
 """
-from moqpdbcatreport import *
+from moqputils.moqpdbcatreport import *
 #from moqpdbutils import *
 #from moqpdbconfig import *
 
 
-VERSION = '0.0.1' 
+VERSION = '0.0.2' 
 
 HEADERLINE = \
     '<tr>\n'+\
@@ -82,7 +84,7 @@ class MOQPHtmlReport(MOQPDBCatReport):
         stationList.append(\
                 '<P>\n<table border="0" style="border: 1px solid #000000; margin-left: auto; margin-right: auto;" cellpadding="0">' +\
                 ('<caption><h2><strong>%s</strong></h2></caption>'%(catName)) +\
-                '<tbody>\n<table border="0" style="border: 1px solid #000000; margin-left: auto; margin-right: auto;" cellpadding="0">' +\
+                '<tbody>\n' +\
                 HEADERLINE)
 
         rank = 0
