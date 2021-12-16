@@ -39,7 +39,21 @@ COLUMNHEADERS = \
      'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t'+\
      'CABFILE BONUS\tVHF QSO\tVHF\tDIGITAL\tROOKIE\t'+\
      'STATION\tOPERATOR\tPOWER\tMODE\tOVERLAY\t'
-                
+ 
+HEADERLINE = \
+    '<tr>\n'+\
+    '<th>RANK</th>\n' +\
+    '<th>CALLSIGN</th>\n' +\
+    '<th>OPERATORS</th>\n' +\
+    '<th>CW QSOs</th>\n' +\
+    '<th>PH QSOs</th>\n' +\
+    '<th>RY QSOs</th>\n' +\
+    '<th>MULTS</th>\n' +\
+    '<th>W0MA BONUS</th>\n' +\
+    '<th>K0GQ BONUS</th>\n' +\
+    '<th>CABRILLO BONUS</th>\n' +\
+    '<th>SCORE</th>\n' +\
+    '</tr>\n'
 
 class MOQPDBCatReport():
     def __init__(self, callsign = None):
@@ -178,61 +192,102 @@ class MOQPDBCatReport():
        self.showReport(csvdata)
 
 class MOQPHtmlReport(MOQPDBCatReport):
-  
-    def showReport(self, csvdata):
-        if (csvdata):
-            html=self.wrapStringInHTMLMac('MOQP-Scores-By-Category',
-                                     'Missouri QSO Party Scores by Category',
-                                     csvdata)
-        print(html)
-    """
-    Given name of calling program, a url and a string to wrap,
-    output string in html body with basic metadata and open in Firefox tab.
-    """
-    def wrapStringInHTMLMac(self, program, url, body):
-        import datetime
-        from webbrowser import open_new_tab
 
-        now = datetime.datetime.today().strftime("%Y%m%d-%H%M%S")
-        filename = program + '.html'
-        tbody = self.makehtmlTable(body)
-        wrapper = """<html>
-            <head>
-            <title>%s output - %s</title>
-            <link href="./styles.css" rel="stylesheet" type="text/css" />
-            </head>
-            <body><p>URL: <a href=\"%s\">%s</a></p><p>%s</p>
-            </body>
-            </html>"""
+    def __init__(self, callsign):
+        if (callsign):
+            self.appMain(callsign)
+            
+    def makeCell(self, cdata):
+        return '<td>%s</td>'%(cdata)
+            
+    def formatStationData(self, ranking, stationData):
+        retData = '<tr>\n'
+        if ranking<3:
+            retData += self.makeCell(ranking)
+        else:
+            retData += '<td></td>'
+        retData +='\n'
+        retData += '</td>\n'
+        retData += self.makeCell(stationData['CALLSIGN']) + '\n'
+        retData += self.makeCell(stationData['OPERATORS']) + '\n'
+        retData += self.makeCell(stationData['CWQSO']) + '\n'
+        retData += self.makeCell(stationData['PHQSO']) + '\n'
+        retData += self.makeCell(stationData['RYQSO']) + '\n'
+        retData += self.makeCell(stationData['MULTS']) + '\n'
+        retData += self.makeCell(stationData['W0MABONUS']) + '\n'
+        retData += self.makeCell(stationData['K0GQBONUS']) + '\n'
+        retData += self.makeCell(stationData['CABBONUS']) + '\n'
+        retData += self.makeCell(stationData['SCORE']) + '\n'
+        return retData
 
-        whole = wrapper % (program, now, url, url, tbody)
-        with open(filename,'w') as f:
-            f.writelines(whole)
-            f.close()
+    def processCat(self, mydb, catName):
+        stationList = []
+        sumdata = mydb.read_pquery(\
+           'SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, '+\
+           'LOGHEADER.OPERATORS, SUMMARY.* '+\
+           'FROM LOGHEADER INNER JOIN SUMMARY ON '+\
+           'LOGHEADER.ID=SUMMARY.LOGID '+\
+           'WHERE SUMMARY.MOQPCAT=%s ' +\
+           'ORDER BY SCORE DESC, LOCATION ASC',
+              [catName])
 
-        #Change the filepath variable below to match the location of your directory
-        #filename = 'file:///./' + filename
+        stationList.append(\
+                '<P>\n<table>' +\
+                ('<caption><h2><strong>%s</strong></h2></caption>'%(catName)) +\
+                '<tbody>\n' +\
+                HEADERLINE)
 
-        open_new_tab(filename)
+        rank = 0
+        for station in sumdata:
+            rank += 1
+            thiStation = self.formatStationData(rank, station)
+            stationList.append(thiStation)
+        stationList.append('</tbody>\n</table>\n</P>\n')
+
+        return stationList   
+            
+    def processSums(self, mydb):
+        htmlList=[]
+        reportList = []
+        sumdata = mydb.read_query('SELECT DISTINCT MOQPCAT '+\
+              'FROM SUMMARY ORDER BY MOQPCAT ASC')
+        #sumdata = mydb.read_query('SELECT * FROM SUMMARY '+\
+        #      'ORDER BY MOQPCAT ASC, SCORE DESC, LOCATION ASC')
+        #print ('sumdata = %s'%(sumdata))
+        if (sumdata):
+            htmlList = []
+            for thisCat in sumdata:
+                category = {'NAME': thisCat['MOQPCAT'],
+                            'STATIONS': []}
+                category['STATIONS'] = \
+                    self.processCat(mydb, thisCat['MOQPCAT'])
+                htmlList.append(category)
+        return htmlList
         
-        return whole
-        
-    """
-    Convert Tab Separated Variables line to HTML table
-    """     
-    def makehtmlTable(self, tdata, headers = True):
-        tbody ="<table>"
-        for l in tdata: 
-            tbody +='<tr>'
-            tl = l.split('\t')
-            for td in tl:
-              if(headers): 
-                tbody+='<th>%s</th>'%(td)
-              else:
-                tbody+='<td>%s</td>'%(td)
-            headers = False
-            tbody +='</tr>'
-        tbody += '</table>'
-        return tbody
-        
-  
+    def displayDoc(self, htmlDoc):
+       PAGETITLE = '2021 Missouri QSO Party Scores by Category'
+       STYLESHEET = './styles.css'
+       WRAPPER = """<html>
+          <head>
+          <title>%s</title>
+ 	      <link href="%s" rel="stylesheet" type="text/css" />
+          </head>
+          <body>
+          <H2 align="center">%s</H2>"""
+          
+       wholePage = WRAPPER % (PAGETITLE, 
+                               STYLESHEET,
+                               PAGETITLE)
+       for htmlCat in htmlDoc:
+           for station in htmlCat['STATIONS']:
+               wholePage += station
+       wholePage += '</body></html>'
+       print(wholePage)
+            
+    def appMain(self, callsign):
+       htmldata = '<p>No Data.</p>'
+       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+       mydb.setCursorDict()
+       if (callsign == 'HTML'):
+           htmldata=self.processSums(mydb)
+       self.displayDoc(htmldata)

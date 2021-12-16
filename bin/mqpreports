@@ -140,7 +140,7 @@ if __name__ == '__main__':
        elif (args.args.callsign == 'HTML'):
            #from moqputils.moqphtmlreport import MOQPHtmlReport
            from moqputils.moqpdbcatreport import MOQPHtmlReport
-           app = MOQPHtmlReport('allcalls')       
+           app = MOQPHtmlReport('HTML')       
        else:
            from moqputils.moqpdbcatreport import MOQPDBCatReport
            app = MOQPDBCatReport(args.args.callsign)
@@ -155,11 +155,19 @@ if __name__ == '__main__':
        from moqputils.moqpdbcountycount import *
        app = MOQPDBCountyCountRpt(args.args.logreport)
    elif (args.args.digireport):
-       from moqputils.moqpdbdigitalreport import MOQPDBDigitalReport
-       app = MOQPDBDigitalReport(args.args.digireport)
+       if (args.args.digireport == 'HTML'):
+           from moqputils.moqpdbdigitalreport import HTML_DigitalRpt
+           app = HTML_DigitalRpt(args.args.digireport)
+       else:
+           from moqputils.moqpdbdigitalreport import MOQPDBDigitalReport
+           app = MOQPDBDigitalReport(args.args.digireport)
    elif (args.args.vhfreport):
-       from moqputils.moqpdbvhfreport import MOQPDBVhfReport
-       app = MOQPDBVhfReport(args.args.vhfreport)
+       if (args.args.vhfreport == 'HTML'):
+           from moqputils.moqpdbvhfreport import HTML_VHFRpt
+           app = HTML_VHFRpt(args.args.vhfreport)
+       else:
+           from moqputils.moqpdbvhfreport import MOQPDBVhfReport
+           app = MOQPDBVhfReport(args.args.vhfreport)
    elif (args.args.mostcounties):
        from moqputils.moqpdbcountyrpt import MostCounties
        app = MostCounties(args.args.mostcounties)

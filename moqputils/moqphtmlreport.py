@@ -94,17 +94,16 @@ class MOQPHtmlReport(MOQPDBCatReport):
             stationList.append(thiStation)
         stationList.append('</tbody>\n</table>\n</P>\n')
 
-        return stationList    
+        return stationList   
             
     def processSums(self, mydb):
         htmlList=[]
         reportList = []
         sumdata = mydb.read_query('SELECT DISTINCT MOQPCAT '+\
               'FROM SUMMARY ORDER BY MOQPCAT ASC')
-        """
-        sumdata = mydb.read_query('SELECT * FROM SUMMARY '+\
-              'ORDER BY MOQPCAT ASC, SCORE DESC, LOCATION ASC')
-        """
+        #sumdata = mydb.read_query('SELECT * FROM SUMMARY '+\
+        #      'ORDER BY MOQPCAT ASC, SCORE DESC, LOCATION ASC')
+        #print ('sumdata = %s'%(sumdata))
         if (sumdata):
             htmlList = []
             for thisCat in sumdata:
@@ -118,10 +117,12 @@ class MOQPHtmlReport(MOQPDBCatReport):
         return htmlList
         
     def displayDoc(self, htmlDoc):
-        for category in htmlDoc:
-            for catrows in category['STATIONS']:
-                print(catrows)
- 
+       for htmlCat in htmlDoc:
+           for station in htmlCat['STATIONS']:
+               print(station)
+           #print(htmlLine['STATIONS'])
+           #print(type(htmlLine))
+           #print(dir(htmlLine))
             
     def appMain(self, callsign):
        htmldata = '<p>No Data.</p>'
