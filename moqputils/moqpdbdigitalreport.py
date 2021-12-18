@@ -34,7 +34,7 @@ VERSION = '0.1.0'
 
 #Column headers for printed/csv reports
 COLUMNHEADERS = \
-     'CALLSIGN\tOPS\tLOCATION\t'+\
+     'RANKING\tCALLSIGN\tOPS\tLOCATION\t'+\
      'SCORE\tQSOS\tMULTS\t'+\
      'CABFILE BONUS\tW0MA BONUS\tK0GQ BONUS\t'
 
@@ -80,9 +80,10 @@ class MOQPDBDigitalReport():
        and returns the summary ino in .CSV format to be printed
        or saved to a .CSV file.
        """
-       csvdata= None
+       csvdata= ""
 
        if (log):
+           csvdata += ('%s\t'%(log['RANK']))
            csvdata += ('%s\t'%(log['CALLSIGN']))
            csvdata += ('%s\t'%(log['OPERATORS']))
            csvdata += ('%s\t'%(log['LOCATION']))
@@ -135,12 +136,20 @@ class MOQPDBDigitalReport():
 
     def appMain(self, callsign):
 
-       digList = self.fetchDigital(callsign)
+       digList = self.fetchDigital(callsign,'mo')
+       rankeddigList = self.addRankingField(digList, 'RANK', 3)
        
        print(COLUMNHEADERS)
-       for ent in digList:
+       for ent in rankeddigList:
            print(self.showData(ent))
-       #print(digList,len(digList))
+
+       digList = self.fetchDigital(callsign,'non-mo')
+       rankeddigList = self.addRankingField(digList, 'RANK', 3)
+       
+       print(COLUMNHEADERS)
+       for ent in rankeddigList:
+           print(self.showData(ent))
+
        
 class HTML_DigitalRpt(MOQPDBDigitalReport):
     def __init__(self, callsign = None):
