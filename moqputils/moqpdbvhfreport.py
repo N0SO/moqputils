@@ -42,6 +42,7 @@ Update History:
 
 from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
+from htmlutils.htmldoc import htmlDoc
 
 
 VERSION = '0.1.0'
@@ -109,7 +110,7 @@ class MOQPDBVhfReport():
            cquery += 'AND LOGHEADER.CALLSIGN="%s" '%(call)
 
        cquery+= 'JOIN SUMMARY ON VHF.LOGID = SUMMARY.LOGID '+\
-                'ORDER BY LOCATION ASC SCORE DESC'
+                'ORDER BY LOCATION ASC, SCORE DESC'
 
        vList = mydb.read_query(cquery) 
        return vList
