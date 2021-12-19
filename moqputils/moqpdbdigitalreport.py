@@ -80,10 +80,10 @@ class MOQPDBDigitalReport():
        and returns the summary ino in .CSV format to be printed
        or saved to a .CSV file.
        """
-       csvdata= ""
+       csvdata= None
 
        if (log):
-           csvdata += ('%s\t'%(log['RANK']))
+           csvdata = ('%s\t'%(log['RANK']))
            csvdata += ('%s\t'%(log['CALLSIGN']))
            csvdata += ('%s\t'%(log['OPERATORS']))
            csvdata += ('%s\t'%(log['LOCATION']))

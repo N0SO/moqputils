@@ -46,12 +46,49 @@ from htmlutils.htmldoc import htmlDoc
 
 
 VERSION = '0.1.0'
-
+#Column headers
 COLUMNHEADERS = \
-     'CALLSIGN\tOPS\tLOCATION\tSCORE\t'+\
+     'RANKING\tCALLSIGN\tOPS\tLOCATION\tSCORE\t'+\
      'QSOs\tCW QSOs\tPH QSOs\tRY QSOs\tMULTS\t'+\
      'CABFILE BONUS\tW0MA BONUS\tK0GQ BONUS'
 
+#Column headers for HTML reports
+HEADERLINE = [
+    'RANK',
+    'CALLSIGN',
+    'OPERATORS',
+    'LOCATION',
+    'SCORE',
+    'QSOs',
+    'CW QSOs',
+    'PH QSOs',
+    'RY QSOs',
+    'MULTS',
+    'CABRILLO BONUS',
+    'W0MA BONUS',
+    'K0GQ BONUS']
+
+"""
+Index of dictionary keys from the database column names. Use 
+these to iterate over the dictionary returned by the database
+queries. The order will determin the order of the items in the
+reports. The HEADER item names should match this for the reports
+data to be in the correct order.
+"""
+DIGTABLEIDX = ['RANK',
+               'CALLSIGN',
+               'OPERATORS',
+                'LOCATION',
+                'SCORE',
+                'QSOS',
+                'CWQSO',
+                'PHQSO',
+                'RYQSO',
+                'MULTS',
+                'CABBONUS',
+                'W0MABONUS',
+                'K0GQBONUS']
+"""                
 HEADERLINE = \
     '<tr>\n'+\
     '<th>RANK</th>\n' +\
@@ -68,7 +105,7 @@ HEADERLINE = \
     '<th>W0MA BONUS</th>\n' +\
     '<th>K0GQ BONUS</th>\n' +\
     '</tr>\n'
-
+"""
 
 class MOQPDBVhfReport():
     def __init__(self, callsign = None):
@@ -79,7 +116,8 @@ class MOQPDBVhfReport():
        csvdata= None
 
        if (log):
-           csvdata = ('%s\t'%(log['CALLSIGN']))
+           csvdata = ('%s\t'%(log['RANK']))
+           csvdata += ('%s\t'%(log['CALLSIGN']))
            csvdata += ('%s\t'%(log['OPERATORS']))
            csvdata += ('%s\t'%(log['LOCATION']))
            csvdata += ('%s\t'%(log['SCORE']))
@@ -93,7 +131,7 @@ class MOQPDBVhfReport():
            csvdata += ('%s'%(log['K0GQBONUS']))
        return csvdata
 
-    def fetchVHF(self, callsign):
+    def fetchVHF(self, callsign, ftype=None):
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
 
@@ -106,20 +144,42 @@ class MOQPDBVhfReport():
                 'SUMMARY.CABBONUS '+\
                 'FROM VHF JOIN LOGHEADER ON '+\
                 'LOGHEADER.ID=VHF.LOGID '
+       if (ftype):
+           ftype = ftype.lower()
+           if (ftype =='mo'):
+               cquery += 'AND LOCATION="MO" '
+           elif (ftype == 'non-mo'):
+               cquery += 'AND LOCATION<>"MO" '
        if (call != 'ALLCALLS'):
            cquery += 'AND LOGHEADER.CALLSIGN="%s" '%(call)
 
        cquery+= 'JOIN SUMMARY ON VHF.LOGID = SUMMARY.LOGID '+\
-                'ORDER BY LOCATION ASC, SCORE DESC'
+                'ORDER BY SCORE DESC, LOCATION ASC;'
 
        vList = mydb.read_query(cquery) 
        return vList
 
+    def addRankingField(self, dictList, fname, maxRank = 3):
+       rank = 1
+       rankeddictList = []
+       for station in dictList:
+           if rank < maxRank: station[fname] = '%s'%(rank)
+           else: station[fname] = ' '
+           rankeddictList.append(station)
+           rank += 1
+       return rankeddictList
 
     def appMain(self, callsign):
-       digList = self.fetchVHF(callsign)
+       temp = self.fetchVHF(callsign, 'mo')
+       rankeddigList = self.addRankingField(temp, 'RANK', 3)
        print(COLUMNHEADERS)
-       for ent in digList:
+       for ent in rankeddigList:
+           print(self.showData(ent))
+
+       temp = self.fetchVHF(callsign, 'non-mo')
+       rankeddigList = self.addRankingField(temp, 'RANK', 3)
+       print(COLUMNHEADERS)
+       for ent in rankeddigList:
            print(self.showData(ent))
 
 class HTML_VHFRpt(MOQPDBVhfReport):
@@ -127,64 +187,40 @@ class HTML_VHFRpt(MOQPDBVhfReport):
         if (callsign):
             self.appMain('ALLCALLS')
 
-    def makeCell(self, cdata):
-        return '<td>%s</td>'%(cdata)
-            
-    def makeRow(self, ranking, stationData):
-        retData = '<tr>\n'
-        if ranking<3:
-            retData += self.makeCell(ranking)
-        else:
-            retData += '<td></td>'
-        retData +='\n'
-        retData += '</td>\n'
-        retData += self.makeCell(stationData['CALLSIGN']) + '\n'
-        retData += self.makeCell(stationData['OPERATORS']) + '\n'
-        retData += self.makeCell(stationData['LOCATION']) + '\n'
-        retData += self.makeCell(stationData['SCORE']) + '\n'
-        retData += self.makeCell(stationData['QSOS']) + '\n'
-        retData += self.makeCell(stationData['CWQSO']) + '\n'
-        retData += self.makeCell(stationData['PHQSO']) + '\n'
-        retData += self.makeCell(stationData['RYQSO']) + '\n'
-        retData += self.makeCell(stationData['MULTS']) + '\n'
-        retData += self.makeCell(stationData['CABBONUS']) + '\n'
-        retData += self.makeCell(stationData['W0MABONUS']) + '\n'
-        retData += self.makeCell(stationData['K0GQBONUS']) + '\n'
-        retData += '</tr>\n'
-        return retData
-        
-    def makeTable(self, qdata):
-       retData = '<p><table>\n'
-       retData += HEADERLINE
-       rank = 1
-       for station in qdata:
-           retData += self.makeRow(rank, station)
-           rank += 1
-       retData += '</table></p>\n'
-       
-       return retData
-
-    def displayDoc(self, stationList):
-       PAGETITLE = '2021 Missouri QSO Party VHF Scores'
-       STYLESHEET = './styles.css'
-       WRAPPER = """<html>
-          <head>
-          <title>%s</title>
- 	      <link href="%s" rel="stylesheet" type="text/css" />
-          </head>
-          <body>
-          <H2 align="center">%s</H2>"""
-          
-       wholePage = WRAPPER % (PAGETITLE, 
-                               STYLESHEET,
-                               PAGETITLE)
-       wholePage += self.makeTable(stationList)
-       wholePage += '</body></html>'
-       print(wholePage)
-
     def appMain(self, callsign):
+       d = htmlDoc()
+       d.openHead('2021 Missouri QSO Party VHF ONLY Scores',
+                  './styles.css')
+       d.closeHead()
+       d.openBody()
+       d.addTimeTag(prefix='Report Generated On ', 
+                    tagType='comment') 
+                         
+       d.add_unformated_text(\
+             """<h2 align='center'>2021 Missouri QSO Party VHF ONLY Scores</h2>""")
 
-       digList = self.fetchVHF(callsign)
-       
-       self.displayDoc(digList)
-       
+       modictList = self.fetchVHF(callsign,ftype='mo')
+       rankeddictList = self.addRankingField(modictList,
+                                             'RANK',
+                                              3)
+
+       d.addTablefromDict(dictList=rankeddictList, 
+                          HeaderList=HEADERLINE,
+                          caption='MISSOURI STATIONS',
+                          dictIndexList=DIGTABLEIDX)
+       modictList = self.fetchVHF(callsign,ftype='non-mo')
+       rankeddictList = self.addRankingField(modictList,
+                                             'RANK',
+                                              3)
+
+       d.addTablefromDict(dictList=rankeddictList, 
+                          HeaderList=HEADERLINE,
+                          caption='NON-MISSOURI STATIONS',
+                          dictIndexList=DIGTABLEIDX)
+              
+              
+       d.closeBody()
+       d.closeDoc()
+
+       d.showDoc()
+       d.saveAndView('ttest2.html')
