@@ -3,7 +3,7 @@
 #import os
 #from moqpcategory import *
 
-VERSION = '0.2.0'
+VERSION = '0.2.1'
 
 """
 GenAward - Generic award class
@@ -154,7 +154,7 @@ class GenAward():
             qualify = True
             wcreturn = ''
         elif ( (stats['COUNT'] == (match - 1)) and 
-               (wildcard != None) ):
+               (wildcard != "") ): # Change this from != None to fix issue #33
             qualify = True
             wcreturn = wildcard
         return { 'QUALIFY': qualify,

@@ -4,8 +4,10 @@ htmlreports - A collection of things to help posting
               contest results on the web.
 
 Update History:
-* Fri Sep 11 Mike Heitmann, N0SO <n0so@arrl.net>
+* Fri Sep 11 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - First interation
+* Sun Dec 19 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Moved from cabrilloutils to htmlutils module
 """
 VERSION = '0.0.1' 
 

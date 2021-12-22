@@ -22,15 +22,33 @@ Update History:
 - and reworked code to let SQL do the sorting work.
 * Sat Dec 10 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 - Updates to use new devmodpath code.
+* Mon Dec 20 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Added HTML report.
 """
 
 from moqputils.moqpdbcatreport import *
 from moqputils.configs.moqpdbconfig import *
+from htmlutils.htmldoc import *
 
 
-VERSION = '0.1.0' 
+VERSION = '0.1.1' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tCLUB\tSCORE\n'
+
+HEADERLINE = ['CLUB',
+              'CALL',
+              'OPERATORS',
+              'LOCATION',
+              'OP SCORE',
+              'LOG COUNT',
+              'SCORE']
+              
+CLUBTABLEKEYS = ['CLUB',
+                 'CALL',
+                 'OPS',
+                 'LOCATION',
+                 'SCORE']      
+
 
 class MOQPDBClubReport(MOQPDBCatReport):
            
@@ -113,30 +131,32 @@ class MOQPDBClubReport(MOQPDBCatReport):
         else:
             print('No logs.')
 
-    
+    def fetchClublist(self, db):
+        return db.read_query(\
+         'SELECT * FROM CLUBS WHERE 1 ORDER BY SCORE DESC')
+         
+    def fetchStationList(self, db, club): 
+        return db.read_query("""SELECT LOGHEADER.ID, 
+               LOGHEADER.CALLSIGN,
+               LOGHEADER.LOCATION, LOGHEADER.OPERATORS, 
+               CLUB_MEMBERS.*, SUMMARY.SCORE 
+               FROM CLUB_MEMBERS INNER JOIN LOGHEADER ON
+               LOGHEADER.ID=CLUB_MEMBERS.LOGID 
+               INNER JOIN SUMMARY ON SUMMARY.LOGID=LOGHEADER.ID
+               WHERE 
+               CLUB_MEMBERS.CLUBID='%s'
+               ORDER BY SCORE DESC"""%(club['CLUBID']))
+ 
+             
     def printClubsDB(self, db):
-        queryL = 'SELECT * FROM CLUBS WHERE 1 ORDER BY SCORE DESC'
-        query = 'SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, '+\
-                'LOGHEADER.LOCATION, LOGHEADER.OPERATORS, '+\
-                'CLUB_MEMBERS.* '+\
-                'FROM CLUB_MEMBERS INNER JOIN LOGHEADER ON '+\
-                'LOGHEADER.ID=CLUB_MEMBERS.LOGID '
-        clubList = db.read_query(queryL)
+        clubList = self.fetchClublist(db)
+        #print(clubList)
         printText = []
         print('CLUB\tCALL\tOPERATORS\tLOCATION\t'+\
               'OP SCORE\tLOG COUNT\tSCORE')
         for club in clubList:
             #print(club)
-            stationList = db.read_query(\
-               'SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, '+\
-               'LOGHEADER.LOCATION, LOGHEADER.OPERATORS, '+\
-               'CLUB_MEMBERS.*, SUMMARY.SCORE '+\
-               'FROM CLUB_MEMBERS INNER JOIN LOGHEADER ON '+\
-               'LOGHEADER.ID=CLUB_MEMBERS.LOGID '+\
-               'INNER JOIN SUMMARY ON SUMMARY.LOGID=LOGHEADER.ID'+\
-               ' WHERE '+\
-               'CLUB_MEMBERS.CLUBID='+('%s'%(club['CLUBID']))+\
-               ' ORDER BY SCORE DESC')
+            stationList = self.fetchStationList(db, club)
             #print(stationList)
             print('%s\t\t\t\t\t%s\t%s'%(club['NAME'], 
                                     club['LOGCOUNT'],
@@ -159,4 +179,57 @@ class MOQPDBClubReport(MOQPDBCatReport):
             'Updating club database before generating report...')
            self.processAll(mydb)
        self.printClubsDB(mydb)
+
+class HTML_ClubReport(MOQPDBClubReport):
+
+    def makeClubTable(self, db):
+        clubList = self.fetchClublist(db)
+        #print(clubList)
+        clubTable = [HEADERLINE]
+        for club in clubList:
+            #print(club)
+            stationList = self.fetchStationList(db, club)
+            #print(stationList)
+            row = [club['NAME'],
+                        ' ',
+                        ' ',
+                        ' ',
+                        ' ', 
+                        club['LOGCOUNT'],
+                        club['SCORE'] ]
+           
+            clubTable.append(row)
+            #print(row)
+            for station in stationList:
+                row = [ '',
+                        station['CALLSIGN'],
+                        station['OPERATORS'],
+                        station['LOCATION'],
+                        station['SCORE'],
+                        '',
+                        '' ]
+                #print(row)
+                clubTable.append(row)
+        return clubTable               
+                       
+    def appMain(self, callsign):
+       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+       mydb.setCursorDict()
+       d = htmlDoc()
+       d.openHead('2021 Missouri QSO Party Club Scores',
+                  './styles.css')
+       d.closeHead()
+       d.openBody()
+       d.addTimeTag(prefix='Report Generated On ', 
+                    tagType='comment') 
+                         
+       d.add_unformated_text(\
+             """<h2 align='center'>2021 Missouri QSO Party Club Scores</h2>\n""")
+
+       d.addTable(self.makeClubTable(mydb), header=True)
+       d.closeBody()
+       d.closeDoc()
+
+       d.showDoc()
+       d.saveAndView('clubs.html')
 

@@ -109,10 +109,10 @@ class get_args():
                  "Entering \'allcalls\' will display the "+ \
                  "summary for all stations in the database "+\
                  "for a Most Counties Worked report. ")
-        parser.add_argument('-s', '--states', 
+        parser.add_argument('-s', '--showme', 
                                    default=None,
-            help="Summarize all valid QSOS for a total "+ \
-                 "Counties Worked report. ")
+            help=""""Display detailed report of SHOME or MISSOURI
+                     tables from the database sorted by callsign.""")
 
         parser.add_argument('-D', '--deletelog', default=None,
             help="Delete log for callsign specified.")
@@ -140,7 +140,10 @@ if __name__ == '__main__':
        elif (args.args.callsign == 'HTML'):
            #from moqputils.moqphtmlreport import MOQPHtmlReport
            from moqputils.moqpdbcatreport import MOQPHtmlReport
-           app = MOQPHtmlReport('HTML')       
+           app = MOQPHtmlReport('HTML')   
+       elif (args.args.callsign == 'club-html'):
+           from moqputils.moqpdbclubreport import HTML_ClubReport
+           app = HTML_ClubReport(args.args.callsign)
        else:
            from moqputils.moqpdbcatreport import MOQPDBCatReport
            app = MOQPDBCatReport(args.args.callsign)
@@ -171,9 +174,19 @@ if __name__ == '__main__':
    elif (args.args.mostcounties):
        from moqputils.moqpdbcountyrpt import MostCounties
        app = MostCounties(args.args.mostcounties)
-   elif (args.args.states):
-       from moqputils.moqpAwards.stateAwards import STATEAwards
-       app = STATEAwards(args.args.states)
+   elif (args.args.showme):
+       if (args.args.showme.lower() == 'showme'):
+           from moqputils.moqpdbcertificates import SHOWMEReport
+           app = SHOWMEReport(args.args.showme)
+       elif (args.args.showme.lower() == 'showme-html'):
+           from moqputils.moqpdbcertificates import HTMLShowMe
+           app = HTMLShowMe(args.args.showme)
+       elif (args.args.showme.lower() == 'missouri'):
+           from moqputils.moqpdbcertificates import MISSOURIReport
+           app = MISSOURIReport(args.args.showme)
+       elif (args.args.showme.lower() == 'missouri-html'):
+           from moqputils.moqpdbcertificates import HTMLMORpt
+           app = HTMLMORpt(args.args.showme)
    elif (args.args.deletelog):
        from moqputils.deletelog import deleteLog
        app = deleteLog(args.args.deletelog)

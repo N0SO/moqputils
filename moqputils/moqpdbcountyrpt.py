@@ -273,7 +273,7 @@ class MostCounties():
        return ReportList
 
     def htmlExport(self, data):
-        from htmlreports import HTMLReports
+        from htmlutils.htmlreports import HTMLReports
         html=HTMLReports('Most Counties Worked')
         html.doc += """
            <style>
@@ -307,7 +307,7 @@ class MostCounties():
         html.headerend()
         html.bodystart()
         html.doc += """
-        <h1>2020 Missouri QSO Party Most Counties Worked</h1>
+        <h1>2021 Missouri QSO Party Most Counties Worked</h1>
         <p> 
         <table>
         <caption>MOST COUNTIES</caption>

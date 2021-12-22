@@ -11,7 +11,7 @@ class MOQPDBCertificates(MOQPCertificates):
 
     def __init__(self, call = None):
         if (call):
-            self.appMain(call)
+            self.appMain(call.upper())
 
     def writeSHOWME(self, db, logID, smresult):
         showmeID = None
@@ -263,11 +263,16 @@ class MOQPDBCertificates(MOQPCertificates):
 
     def appMain(self, call):
        csvdata = 'Nothing.'
-       if (call == 'allcalls'):
-           mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-           mydb.setCursorDict()
-           loglist = mydb.read_query( \
-              "SELECT ID, CALLSIGN FROM LOGHEADER WHERE 1")
+       query = 'SELECT ID, CALLSIGN FROM LOGHEADER WHERE '
+       if (call == 'ALLCALLS'):
+           query += '1;'
+       else:
+           query += 'CALLSIGN = "%s";'%(call)
+           
+       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+       mydb.setCursorDict()
+       loglist = mydb.read_query(query)
+       if (loglist):
            HEADER = True
            for nextlog in loglist:
                #print('callsign = %s'%(nextlog['CALLSIGN']))
@@ -275,6 +280,201 @@ class MOQPDBCertificates(MOQPCertificates):
                HEADER=False     
                print(csvdata)
        else:
-           csvdata = self.scoreLog(call)
-           print(csvdata)
+           print('No %s found in database.'%(call))
+
+LABELS1 = ['STATION',
+           'OPERATORS',
+           'QUALIFY',
+           'S',
+           'H',
+           'O',
+           'W',
+           'M',
+           'E',
+           'WILDCARD']
+
+KEYS1 = ['CALLSIGN',
+         'OPERATORS',
+         'QUALIFY',
+         'S',
+         'H',
+         'O',
+         'W',
+         'M',
+         'E',
+         'WC']
+         
+
+"""Generate SHOWME and MISSOURI reports from the
+   SHOME and MISSOURI database results table"""
+class SHOWMEReport():
+    def __init__(self, call = None):
+        if (call):
+            self.appMain(call)
+            
+    def fetchShowMe(self, callsign):
+       db = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+       db.setCursorDict()
+       query = """SELECT LOGHEADER.CALLSIGN, LOGHEADER.OPERATORS,
+              SHOWME.*
+              FROM LOGHEADER INNER JOIN SHOWME ON
+              LOGHEADER.ID=SHOWME.LOGID """
+       if ('SHOWME' in callsign):      
+            query+= 'ORDER BY QUALIFY DESC, CALLSIGN;'
+       else:
+            query+= 'WHERE CALLSIGN = "%s";'%(callsign)
+       #print (query)
+       dbData = db.read_query(query)
+       return dbData
+
+    def buildDictHeader(self, hkeys, hdata):
+       header = dict()
+       i=0
+       for key in hkeys:
+           header[key] = hdata[i]
+           i+=1
+       return header
+
+    def addHeader(self, header, dictdata): 
+       retData = [header]
+       for ent in dictdata:
+          retData.append(ent)
+       return retData
+       
+    def exportCSV(self, dictkeys, dictdata):
+       csvdata = ''
+       #print(dictkeys)
+       #print(dictdata)
+       for ent in dictdata:
+          for entkey in dictkeys:
+             csvdata += '%s\t'%(ent[entkey])
+          csvdata+='\n'
+       return csvdata
+
+    def appMain(self, call):
+       call = call.upper()
+       showmeList = self.fetchShowMe(call)
+       theader = self.buildDictHeader(KEYS1, LABELS1)
+       showmeList= self.addHeader(theader, showmeList)
+       #print(showmeList)
+       print(self.exportCSV(KEYS1, showmeList))
+
+class HTMLShowMe(SHOWMEReport):
+    def appMain(self, call):
+       call = call.upper()
+       #print (call)
+       showmeList = self.fetchShowMe(call)
+       #print(showmeList)
+       if (showmeList):
+           #theader = self.buildDictHeader(KEYS1, LABELS1)
+           #showmeList= self.addHeader(theader, showmeList)
+
+           from htmlutils.htmldoc import htmlDoc   
+           d = htmlDoc()
+           d.openHead('2021 Missouri QSO Party Showme Report',
+                  './styles.css')
+           d.closeHead()
+           d.openBody()
+           d.addTimeTag(prefix='Report Generated On ', 
+                    tagType='comment') 
+                         
+           d.add_unformated_text(\
+             """<h2 align='center'>2021 Missouri QSO Party SHOWME Report</h2>""")
+           d.addTablefromDict(dictList=showmeList, 
+                          HeaderList=LABELS1,
+                          caption='SHOWME Status By Call',
+                          dictIndexList=KEYS1)
+           d.closeBody()
+           d.closeDoc()
+
+           d.showDoc()
+           d.saveAndView('shomerpt.html')
+
+KEYS2 = ('CALLSIGN',
+           'OPERATORS',
+           'QUALIFY',
+           'M',
+           'I_1',
+           'S_1',
+           'S_2',
+           'O',
+           'U',
+           'R',
+           'I_2',
+           'WC')
+
+LABELS2 = ('STATION',
+         'OPERATORS',
+         'QUALIFY',
+         'M',
+         'I',
+         'S',
+         'S',
+         'O',
+         'U',
+         'R',
+         'I',
+         'WILDCARD')
+         
+
+"""Generate SHOWME and MISSOURI reports from the
+   SHOME and MISSOURI database results table"""
+class MISSOURIReport(SHOWMEReport):
+            
+    def fetchMO(self, callsign):
+       db = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+       db.setCursorDict()
+       query = """SELECT LOGHEADER.CALLSIGN, LOGHEADER.OPERATORS,
+              MISSOURI.*
+              FROM LOGHEADER INNER JOIN MISSOURI ON
+              LOGHEADER.ID=MISSOURI.LOGID """
+       if ('MISSOURI' in callsign):      
+            query+= 'ORDER BY QUALIFY DESC, CALLSIGN;'
+       else:
+            query+= 'WHERE CALLSIGN = "%s";'%(callsign)
+       #print (query)
+       dbData = db.read_query(query)
+       return dbData
+
+    def appMain(self, call):
+       call = call.upper()
+       showmeList = self.fetchMO(call)
+       theader = self.buildDictHeader(KEYS2, LABELS2)
+       showmeList= self.addHeader(theader, showmeList)
+       #print(showmeList)
+       print(self.exportCSV(KEYS2, showmeList))
+
+class HTMLMORpt(MISSOURIReport):
+    def appMain(self, call):
+       call = call.upper()
+       #print (call)
+       showmeList = self.fetchMO(call)
+       #print(showmeList)
+       if (showmeList):
+           #theader = self.buildDictHeader(KEYS1, LABELS1)
+           #showmeList= self.addHeader(theader, showmeList)
+
+           from htmlutils.htmldoc import htmlDoc   
+           d = htmlDoc()
+           d.openHead('2021 Missouri QSO Party MISSOURI Report',
+                  './styles.css')
+           d.closeHead()
+           d.openBody()
+           d.addTimeTag(prefix='Report Generated On ', 
+                    tagType='comment') 
+                         
+           d.add_unformated_text(\
+             """<h2 align='center'>2021 Missouri QSO Party MISSOURI Report</h2>""")
+           d.addTablefromDict(dictList=showmeList, 
+                          HeaderList=LABELS2,
+                          caption='MISSOURI Status By Call',
+                          dictIndexList=KEYS2)
+           d.closeBody()
+           d.closeDoc()
+
+           d.showDoc()
+           d.saveAndView('missourirpt.html')
+
+
+
 
