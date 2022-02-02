@@ -137,3 +137,22 @@ class htmlDoc():
         retVal = self.add_unformated_text(ctext, document)
         return retVal
 
+    """ Convert a Tab Separated Variable string to a list of the
+        items separated by a tab character"""         
+    def tsv2list(self, tsvText):
+        temp = tsvText.split('\t')
+        retlist = []
+        for item in temp:
+            retlist.append(item)
+        return retlist
+
+    """ Convert the multiple lines of a Tab Separated Varialble string 
+        to a list of multiple lists. Each entry in the 'list of lists'
+        will represent a line in the tsv text block, in the form of a
+        list of the items separated by a tab."""
+    def tsvlines2list(self, csvdata):
+           retdata=[]
+           for line in csvdata:
+               retdata.append(self.tsv2list(line))
+           return retdata
+

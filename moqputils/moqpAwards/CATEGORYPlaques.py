@@ -17,32 +17,32 @@ class CATEGORYPlaques(commonAwards):
        catlist = cati[1].upper()
        if cat in 'MISSOURI ROOKIE':
            sumlist = mydb.read_query(\
-             "SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, "+\
-              "LOGHEADER.CALLSIGN, LOGHEADER.OPERATORS, "+\
-              "LOGHEADER.NAME, LOGHEADER.ADDRESS, "+\
-              "LOGHEADER.CITY, LOGHEADER.STATEPROV ,"+\
-              "LOGHEADER.ZIPCODE, LOGHEADER.COUNTRY, "+\
-              "LOGHEADER.EMAIL, SUMMARY.* "+\
-              "FROM LOGHEADER INNER JOIN SUMMARY ON "+\
-              "LOGHEADER.ID=SUMMARY.LOGID "+\
-              "WHERE ROOKIE > 0 "+\
-              "ORDER BY (SCORE) DESC")
+           """SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN,
+              LOGHEADER.OPERATORS, LOGHEADER.LOCATION,
+              LOGHEADER.NAME, LOGHEADER.ADDRESS, 
+              LOGHEADER.CITY, LOGHEADER.STATEPROV ,
+              LOGHEADER.ZIPCODE, LOGHEADER.COUNTRY,
+              LOGHEADER.EMAIL, SUMMARY.*
+              FROM LOGHEADER INNER JOIN SUMMARY ON 
+              LOGHEADER.ID=SUMMARY.LOGID
+              WHERE ROOKIE > 0 AND LOGHEADER.LOCATION='MO'
+              ORDER BY (SCORE) DESC""")
        elif cat in "MISSOURI SCHOOL CLUB":
            sumlist = mydb.read_query(\
-              "SELECT CLUBS.*, CLUB_MEMBERS.*, "+\
-              "LOGHEADER.ID, LOGHEADER.CALLSIGN, "+\
-              "LOGHEADER.OPERATORS, "+\
-              "LOGHEADER.NAME, LOGHEADER.ADDRESS, "+\
-              "LOGHEADER.CITY, LOGHEADER.STATEPROV ,"+\
-              "LOGHEADER.ZIPCODE, LOGHEADER.COUNTRY, "+\
-              "LOGHEADER.EMAIL \n"+\
-              "FROM CLUBS INNER JOIN CLUB_MEMBERS ON "+\
-              "CLUBS.CLUBID=CLUB_MEMBERS.CLUBID "+\
-              "INNER JOIN LOGHEADER ON "+\
-              "CLUB_MEMBERS.LOGID=LOGHEADER.ID \n"+\
-              "WHERE LOGHEADER.NAME LIKE '%SCHOOL%' AND LOGHEADER.LOCATION='MO' "+\
-              "ORDER BY (SCORE) DESC\n"+\
-              "LIMIT 25")
+           """SELECT CLUBS.*, CLUB_MEMBERS.*, 
+              LOGHEADER.ID, LOGHEADER.CALLSIGN, 
+              LOGHEADER.OPERATORS, 
+              LOGHEADER.NAME, LOGHEADER.ADDRESS,
+              LOGHEADER.CITY, LOGHEADER.STATEPROV ,
+              LOGHEADER.ZIPCODE, LOGHEADER.COUNTRY, 
+              LOGHEADER.EMAIL
+              FROM CLUBS INNER JOIN CLUB_MEMBERS ON 
+              CLUBS.CLUBID=CLUB_MEMBERS.CLUBID 
+              INNER JOIN LOGHEADER ON 
+              CLUB_MEMBERS.LOGID=LOGHEADER.ID 
+              WHERE LOGHEADER.NAME LIKE '%SCHOOL%' AND 
+              LOGHEADER.LOCATION='MO'
+              ORDER BY (SCORE) DESC LIMIT 25""")
            schoolclub = True
        elif cat in "MISSOURI CLUB":
            sumlist = mydb.read_query(\
@@ -80,10 +80,10 @@ class CATEGORYPlaques(commonAwards):
                LOGHEADER.NAME, LOGHEADER.ADDRESS, 
                LOGHEADER.CITY, LOGHEADER.STATEPROV,
                LOGHEADER.ZIPCODE, LOGHEADER.COUNTRY,
-               LOGHEADER.EMAIL, COUNTY.COUNT, COUNTY.NAMES
+               LOGHEADER.EMAIL, COUNTY.COUNT, COUNTY.NAMES, COUNTY.LWTIME
                FROM LOGHEADER INNER JOIN COUNTY ON 
                LOGHEADER.ID=COUNTY.LOGID 
-               ORDER BY (COUNT) DESC
+               ORDER BY (COUNTY.COUNT) DESC, (COUNTY.LWTIME) ASC
                LIMIT 10""")
        else:
            sumlist = mydb.read_query(\
@@ -97,6 +97,7 @@ class CATEGORYPlaques(commonAwards):
               "LOGHEADER.ID=SUMMARY.LOGID "+\
               "WHERE SUMMARY.MOQPCAT IN ("+ catlist +") "+\
               "ORDER BY (SCORE) DESC")
+       #print(cat, sumlist)
        return sumlist
 
     def processOne(self, mydb, cati, placement):
@@ -123,8 +124,37 @@ class CATEGORYPlaques(commonAwards):
     def appMain(self, placement):
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
+       self.AwardList=['AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
        for CAT in PLAQUELIST:
            #print(CAT)
            tsvdata = self.processOne(mydb, CAT, placement)
            self.AwardList.append(tsvdata)
        self.AwardDisplay(self.AwardList) 
+       
+class HTMLPlaques(CATEGORYPlaques):
+
+    def AwardDisplay(self, tsvdata): 
+       if (tsvdata):
+           from htmlutils.htmldoc import htmlDoc   
+           d = htmlDoc()
+           d.openHead('2021 Missouri QSO Party First Place Plaques',
+                  './styles.css')
+           d.closeHead()
+           d.openBody()
+           d.addTimeTag(prefix='Report Generated On ', 
+                    tagType='comment') 
+                         
+           d.add_unformated_text(\
+             """<h2 align='center'>2021 Missouri QSO Party First Place Plaques</h2>""")
+           tsvlist=d.tsvlines2list(tsvdata)
+           d.addTable(tdata=tsvlist, 
+                          header=True,
+                          caption='2021 Missouri QSO Party First Place Plaque Winners')
+           d.closeBody()
+           d.closeDoc()
+
+           d.showDoc()
+           d.saveAndView('plaquerpt.html')
+           
+               
+       

@@ -48,7 +48,7 @@ class get_args():
                                   version = VERSION)
         parser.add_argument('-a', '--award',
                                    action='store_true',
-                                   default=False,
+                                   default=None,
             help="Create a list of the 1st place award (plaque) "+\
                   "winners in each MOQPCATEGORY. ")
         parser.add_argument('-c', '--category',
@@ -71,6 +71,14 @@ class get_args():
                   "STATE/PROV certificate winners. "+\
                   "mqoawards -p 1 = FIRST PLACE List, "+\
                   "mqoawards -p 2 = SECOND PLACE List.")
+        parser.add_argument('-t', '--reportType',
+                                   default = 'csv',
+            help="""Set report type for output. Only valid if more than
+                    one report output type is avaible. Options are: 
+                    csv (Comma Separated Variables) for printing or
+                    for import to a spreadsheet, or 
+                    html for web page use.
+                    default value is csv""")
         args = parser.parse_args()
         #print(args)
         return args
@@ -80,12 +88,27 @@ if __name__ == '__main__':
 
    #print (args.args)
    
+   if (args.args.reportType):
+       reportType = args.args.reportType.lower()
+   else:
+       reportType='csv'
    if (args.args.award):
-       from moqputils.moqpAwards.CATEGORYPlaques import CATEGORYPlaques
-       app = CATEGORYPlaques()
+       #print('Running plaques')
+       if ('csv' in reportType):
+           from moqputils.moqpAwards.CATEGORYPlaques import CATEGORYPlaques
+           app = CATEGORYPlaques()
+       elif ('html' in reportType):
+           from moqputils.moqpAwards.CATEGORYPlaques import HTMLPlaques
+           app = HTMLPlaques()
    elif (args.args.category):
-       from moqputils.moqpAwards.CATEGORYAwards import CATEGORYAwards
-       app = CATEGORYAwards(args.args.category)
+       #print('Running CATEGORY Awards %s %s'%(args.args.category, args.args.reportType))
+       category = args.args.category.lower()
+       if ('csv' in reportType):
+           from moqputils.moqpAwards.CATEGORYAwards import CATEGORYAwards
+           app = CATEGORYAwards(category)
+       elif ('html' in reportType):
+           from moqputils.moqpAwards.CATEGORYAwards import HTMLAwards
+           app = HTMLAwards(category)
    elif (args.args.showme):
        arg=args.args.showme.lower()
        if (arg == 'showme'):
