@@ -1,2 +1,2 @@
 SHELL="/usr/local/cpanel/bin/jailshell"
-*/15 * * * * /usr/local/bin/php /home/w0ma/email-robot/emailrobot.php
+*/5 * * * * /home/w0ma/moqputils/bin/logrobot >>robotlog.txt 2>&1

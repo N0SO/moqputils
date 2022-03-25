@@ -1,5 +1,5 @@
 #/bin/bash
 cd
-DEVPATH=$PWD
-PATH=$DEVPATH/'MO_QSO_PARTY/moqputils/bin:'$PATH
+DEVPATH=$PWD'/moqputils'
+PATH=$DEVPATH/'bin:'$PATH
 export PATH

@@ -30,6 +30,13 @@ Update History:
 * Wed Feb 24 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.1
 - Added emailCheck() method.
+* Fri Mar 25 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0
+- Split getLogdict() into two parts: 
+-    getLogdict() to process log data from a file as before then call ...
+-    getLogdictData() to process the data. This allows the method  
+     getLogdictData() to be used if you already have the raw log text in 
+     a string to parse and don't need to read it first.
 """
 
 import re
@@ -119,12 +126,27 @@ class CabrilloUtils():
 
     def IsThisACabFile(self, data):
         cabfile = False
+        sol = False
+        eol = False
+        callsign = False
+        qsol = False
         if(data):
-            if ( (any ('START-OF-LOG:' in string for string in data)) and
-              (any ('CALLSIGN:' in string for string in data)) and
-              (any ('QSO:' in string for string in data)) and
-              (any ('END-OF-LOG:' in string for string in data)) ):
-                cabfile = True
+            if('START-OF-LOG:' in data):
+                sol = True
+                if('CALLSIGN:' in data):
+                    callsign = True
+                    if('QSO:' in data):
+                        qsol = True
+                        if ('END-OF-LOG:' in data):
+                            eol = True
+                            cabfile = True
+                            
+        if (not(cabfile)):
+            print('NOT A VALID CABFILE!')
+            print('START-OF-LOG: present - ', sol)
+            print('CALLSIGN: present - ',callsign)
+            print('QSO: lines present - ', qsol)
+            print('END-OF-LOG: line present - ', eol)
         return cabfile
         
     def getCabstg(self, target, data):
@@ -215,36 +237,52 @@ class CabrilloUtils():
        return header
        
     """
-    Method getLogDist(filename)
-    Reads target cabrillo file filename
-    verifies data is a cab file
+    Method getLogdict(filename)
+    Reads target cabrillo file filename, and then calls getLogdictData()
+    to parse the data.
+    """
+    def getLogdictFile(self, fileName):
+       logtext = self.readFile(fileName)
+       if (logtext):
+           logdict = self.getLogdictData(logtext)
+       else:
+           logdict = None
+       return logdict
+
+    """
+    Method getLogdictData(logtext)
+    Verifies text data is a cab file
     returns a DICT object:
-    result['HEADE'] = a DICT object of the HEADER data using
+    result['HEADER'] = a DICT object of the HEADER data using
                    self.CABRILLOTAGS and the dict index list.
     result['QSOLIST'] = a list of the QSO: taged lines. No 
                      verification of the QSO data is attempted.
 
-    If filename cannot be read or is not CAB data, then
+    If logtext is not CAB data, then
     result is returned as None type.
     """
-    def getLogdict(self, fileName):
-       logtext = self.readFile(fileName)
-       if (logtext):
+    def getLogdictData(self, logtext):
+       #print('cabrilloutils (250) logtext = %s'%(logtext))
+       if (self.IsThisACabFile(logtext)):
           logdict = dict()
           header = self.makeHEADERdict()
           qsolist = []
-          for line in logtext:
+          lines = logtext.splitlines()
+          for line in lines:
               newline = self.packLine(line.upper())
+              #print('newline = %s'%(newline))
               tagsplit = newline.split(':')
+              #print(tagsplit)
               if (tagsplit[0] in 'QSO END-OF-LOG'):
                  if (tagsplit[0] == 'QSO'):
                     qsolist.append(newline)
               else:
                  if (len(tagsplit) > 1):
-                    header[tagsplit[0]] += tagsplit[1]
+                    header[tagsplit[0]] += self.packLine(tagsplit[1])
           logdict['HEADER'] = header
           logdict['QSOLIST'] = qsolist
        else:
+          print('Not a CAB file')
           logdict = None
        return logdict
 

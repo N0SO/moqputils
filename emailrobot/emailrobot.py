@@ -47,6 +47,13 @@ class emailRobot():
    def process_message_string(self, s):
       mail = email.message_from_string(s[0][1])
       
+      """
+      #For debuging...
+      print(dir(mail))
+      print(mail['values'])
+      print(mail['items'])
+      print(mail['Body'])
+      """
       sender = mail["From"]
       replyto = mail["Reply-To"]
       subject = mail["Subject"]
@@ -54,6 +61,12 @@ class emailRobot():
       log = None
       nametype = None
       fname = None
+      
+      mailparts = dict()
+      mailparts['sender'] = mail["From"]
+      mailparts['replyto'] = mail["Reply-To"]
+      mailparts['subject'] = mail["Subject"]
+      mailparts['date'] =  mail["Date"]
 
       if mail.is_multipart():
          #print"multi---"
@@ -88,8 +101,11 @@ class emailRobot():
          #print "Not multi--"
          log = mail.get_payload()
       
+      mailparts['log'] = log
+      mailparts['nametype'] = nametype
+      mailparts['fname'] = fname
       #print sender, subject, date, nametype   
-      return sender, subject, date, fname, nametype, log, replyto
+      return sender, subject, date, fname, nametype, log, replyto, mailparts
       
    def saveLog(self, filename, logdata, filetype):
       now = datetime.datetime.now()
@@ -256,12 +272,25 @@ The MOQP Log Contest Robot"""
                 (datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S-%f")))
              print('robotmail: Processing message uid: %s'%(uid))
          typ, s = M.fetch(uid, '(RFC822)')
+
          """
          print ('typ = %s\n'%(typ))
          print "s = ",s
          """
-         sender, subject, date, filename, filetype, log, replyto = self.process_message_string(s)
+
+         sender, subject, date, filename, filetype, log, replyto, msgparts = self.process_message_string(s)
          print ("Sender = %s\nReply-To = %s\nSubject = %s\nFile name = %s\nFile Type = %s\n"%(sender, replyto, subject, filename, filetype))
+         #print('msgparts = %s'%(msgparts))
+         
+         cabFilter = CabrilloFilter()
+         logdict = cabFilter.main(msgparts['log'])
+         #print('emailrobot: logdict (285) =%s'%(logdict) )
+         if (logdict):
+             logcall=logdict['HEADER']['CALLSIGN']
+             logemail=logdict['HEADER']['EMAIL']
+             print('emailrobot(291):\nlogcall=%s\nlogemail=%s\n'%(logcall, logemail))
+         
+         
          #logname = self.extract_call(subject)
          savedlog = None
          status = 'e-mail robot, '
@@ -290,13 +319,14 @@ The MOQP Log Contest Robot"""
          #      tfile.write('%s'%(newfiles))
          if ('*REJECTED*' in status):
             self.process_bademail(sender, subject, date)
+      """
       dbFiles = open('filelist.txt','w')
       for dbentry in newfiles:
          dbFiles.write("%s\n" % dbentry)
       dbFiles.close()
       if (len(newfiles) > 0):
          cabfilter = CabrilloFilter(logwait, True, newfiles) 
-              
+      """          
 
 if __name__=='__main__':
     mailbot = emailRobot(True)

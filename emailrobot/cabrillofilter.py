@@ -10,10 +10,10 @@ cabrillofilter.py - Parse a text file to determine if it meets
 """
 VERSION = '1.0.1'
 
-class CabrilloFilter():
-    def __init__(self, path=None,startfrommail=False,emailAddress=None):
-        if (path != None):
-            self.main(path, startfrommail,emailAddress)
+class CabrilloFilter(CabrilloUtils):
+    def __init__(self, log=None, path=None):
+        if (log or path):
+            self.main(log, path)
 
     def getVersion(self):
         return self.VERSION
@@ -71,8 +71,18 @@ class CabrilloFilter():
             
         return True
     
-    
-    def main(self, path, startfromMail,fileList):
+    def main(self, logtext=None, logpath=None):
+        #print('cabrillofilter (75) logtext = %s'%(logtext))
+        if(logtext):
+            logdict = self.getLogdictData(logtext)
+        else:
+            logdict = self.getLogdict(logpath)
+        
+        #print('cabrillofilter (81) logdict = %s'%(logdict))
+        
+        return logdict
+
+    def oldmain(self, path, startfromMail,fileList):
         #for root, dirs, files in os.walk(path):
             addtodb_list = ''
             #for file in files:
