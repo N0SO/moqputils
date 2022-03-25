@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+import os.path
+import sys
+# If the development module source paths exist,
+# add them to the python path
+whereami = os.path.split( os.path.realpath(__file__) )
+if os.path.exists(whereami[0] + '/mqpdevpath.py'):
+    from mqpdevpath import *
+    
+#print(sys.path)
+
+from emailrobot.emailrobot import emailRobot
+bot = emailRobot(True)

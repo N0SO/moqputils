@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 emailrobot - Process Missouri QSO Party log files received as 
              e-mail attachments.
@@ -18,7 +18,7 @@ from robotconfig import *
 from cabrillofilter import *
 from email.mime.text import MIMEText
 
-VERSION = '1.0.3'
+#VERSION = '1.0.3'
 ERRORINLOG = "Error! attached log is NOT a plain text file!"
 CTYPES = ['text/x-log',
           'application/octet-stream',
@@ -48,6 +48,7 @@ class emailRobot():
       mail = email.message_from_string(s[0][1])
       
       sender = mail["From"]
+      replyto = mail["Reply-To"]
       subject = mail["Subject"]
       date =  mail["Date"]
       log = None
@@ -88,7 +89,7 @@ class emailRobot():
          log = mail.get_payload()
       
       #print sender, subject, date, nametype   
-      return sender, subject, date, fname, nametype, log
+      return sender, subject, date, fname, nametype, log, replyto
       
    def saveLog(self, filename, logdata, filetype):
       now = datetime.datetime.now()
@@ -255,10 +256,12 @@ The MOQP Log Contest Robot"""
                 (datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S-%f")))
              print('robotmail: Processing message uid: %s'%(uid))
          typ, s = M.fetch(uid, '(RFC822)')
-         #print ('typ = %s\n'%(typ))
-         #print "s = ",s
-         sender, subject, date, filename, filetype, log = self.process_message_string(s)
-         print ("Sender = %s\nSubject = %s\nFile name = %s\nFile Type = %s\n"%(sender, subject, filename, filetype))
+         """
+         print ('typ = %s\n'%(typ))
+         print "s = ",s
+         """
+         sender, subject, date, filename, filetype, log, replyto = self.process_message_string(s)
+         print ("Sender = %s\nReply-To = %s\nSubject = %s\nFile name = %s\nFile Type = %s\n"%(sender, replyto, subject, filename, filetype))
          #logname = self.extract_call(subject)
          savedlog = None
          status = 'e-mail robot, '

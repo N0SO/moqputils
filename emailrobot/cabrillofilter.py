@@ -1,8 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 import os, shutil, datetime
 from robotconfig import *
 from robotmail import *
-from CabrilloUtils import *
+from cabrilloutils.CabrilloUtils import *
 """
 cabrillofilter.py - Parse a text file to determine if it meets
                     ARRL CABRILLO Format log file. If so, extract 
