@@ -1,2 +1,2 @@
 SHELL="/usr/local/cpanel/bin/jailshell"
-*/5 * * * * /home/w0ma/moqputils/bin/logrobot >>robotlog.txt 2>&1
+*/5 * * * * /home/w0ma/moqputils/bin/logrobot >>/home/w0ma/mo_qso_party/results/2022/robotlog.txt 2>&1

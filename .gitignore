@@ -1,0 +1,3 @@
+*.pyc
+emailrobot/robotconfig.py
+phpfiles/logsubmission/webupload.php

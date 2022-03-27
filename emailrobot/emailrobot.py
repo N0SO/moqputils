@@ -9,16 +9,27 @@ cabrillofilter.py to verify the integrety of the Cabrillo format
 log file, and to pull data about the station and submitter for
 inclusion in the MOQP database file defined in robotconfig.py.
 
-This script is called with an exec() statement from emailrobot.php.
-emailrobot.php writes the data to the SQL database -- I could never
-get the SQL functions to work on w0ma.org via python.
+This script is intended to be called from the cron daemon to periodically
+check for new logs, but could be triggered from a web browser as well.
+
+Update History:
+* Sat Mar 26 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V2.0.0 - Support for Python SQL functions added to w0ma.org server.
+-          This app was refactored to eliminate the need for calling
+-          a PHP script to perform the SQL functions.
+-          Also, fixes for issues #11, #12, #13, #14, and a partial
+-          for #15. 15 could use some refinement for further sorting
+-          of excel and pdf docs.
+
 """
-import getpass, imaplib, smtplib, os, email, datetime, string
+import getpass, imaplib, smtplib, os, email, string, datetime
+import mysql.connector
 from robotconfig import *
 from cabrillofilter import *
+from robotmail import *
 from email.mime.text import MIMEText
 
-#VERSION = '1.0.3'
+VERSION = '2.0.0'
 ERRORINLOG = "Error! attached log is NOT a plain text file!"
 CTYPES = ['text/x-log',
           'application/octet-stream',
@@ -61,6 +72,7 @@ class emailRobot():
       log = None
       nametype = None
       fname = None
+      method = None
       
       mailparts = dict()
       mailparts['sender'] = mail["From"]
@@ -104,163 +116,44 @@ class emailRobot():
       mailparts['log'] = log
       mailparts['nametype'] = nametype
       mailparts['fname'] = fname
-      #print sender, subject, date, nametype   
-      return sender, subject, date, fname, nametype, log, replyto, mailparts
-      
-   def saveLog(self, filename, logdata, filetype):
-      now = datetime.datetime.now()
-      timestring = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S-%f")
-      logfilename = timestring + '-' + filename
-      logfilename = logfilename.lower()
-      if (logfilename.endswith('.csv')):
-          tempdata = ''
-          for line in logdata:
-              tempdata += line.replace(',',' ')
-          logdata = tempdata
-      #open(logwait + logfilename, 'wb').write(logdata) # Save for log processing
-      #print(os.getcwd())
-      if ( open(logwait + logfilename, 'wb').writelines(logdata) ):
-         return "!!!UNABLE TO SAVE LOGFILE!!!"
+      if ('MOQP WEB' in mailparts['subject']):
+          mailparts['method'] = 'WEB'
       else:
-         return logfilename
-         
-   def createDBEntry(self, sender, subject, date, logname):
-      # Open database connection
-      db = MySQLdb.connect(dbhostname,dbusername,dbpassword,dbname )
+          mailparts['method'] = 'EMAIL'
+      #print sender, subject, date, nametype   
+      #return sender, subject, date, fname, nametype, log, replyto, mailparts
+      return mailparts
+        
+   def createDBEntry(self, status, msgparts, logdict):
+       cnx = mysql.connector.connect(user=dbusername, password=dbpassword, 
+                                     host=dbhostname, database=dbname)
+       timestring = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
+       curser=cnx.cursor(prepared=True)
+       query = """INSERT INTO logs_received 
+                            (STA_CALL,
+	      					 OP_NAME,
+	      					 EMAIL,
+	                         RECEIVED_BY,
+	                         FILENAME,
+	                         DATE_REC,
+	                         EMAILSUBJ)	
+	       
+	             VALUES (%s,%s,%s,%s,%s,%s,%s)"""
+       params = (logdict['HEADER']['CALLSIGN'],
+	            logdict['HEADER']['NAME'],
+	            msgparts['replyto'],
+	            msgparts['method'],
+	            msgparts['fname'],
+	            timestring,
+	            msgparts['subject'])
+	                    
+       #print('query = %s'%(query))
+       curser.execute(query, params)
+       cnx.commit()
+       cnx.close()
 
-      # prepare a cursor object using cursor() method
-      cursor = db.cursor()
-
-      # Prepare SQL query to INSERT a record into the database.
-      sql = "INSERT INTO logs_received(STA_CALL, EMAIL, \
-                                       RECEIVED_BY, FILENAME, \
-                                       DATE_REC) \
-                         VALUES ('%s', '%s', '%s', '%s', '%s' )" % \
-                                ('TE0ST', sender,'EMAIL', logname, date)
-      try:
-         # Execute the SQL command
-         cursor.execute(sql)
-         print "DB Success!"
-         db.commit()
-      except:
-         # Rollback in case there is any error
-         print "Error writing data to database!"
-         db.rollback()
-
-      # disconnect from server
-      db.close()
-      
-
-   def extract_call(self, s):
-      call = ""
-      count = 0
-      hasletters = 0
-      hasnumbers = 0
-
-      for c in s:
-         if (c in string.digits):
-            call += c
-            hasnumbers += 1
-         elif (c in string.letters):
-            call += c
-            hasletters += 1
-         else:
-            if (count < 3):
-               call = "INVALID"
-            break
-
-         count += 1
-         if (count >= 8):
-            break
-
-      if ( (hasletters == 0) or (hasnumbers == 0) ):
-         call = "INVALID"
-
-      if (call != "INVALID"):
-         call = call.upper()
-
-      #print "s= {0}, call = {1}, count = {2}, hasletters ={3}, hasnumbers={4}".format(s, call, count, hasletters, hasnumbers)
-
-      return call
-
-   def sendrobotmail(self, to, subject, body):
-      msg = MIMEText(body)
-      msg['Subject'] = subject
-      msg['From'] = ROBOTSENDER
-      msg['To'] = to
-      try:
-         smtpObj = smtplib.SMTP(imap_host, 25)
-         smtpObj.login(imap_user, imap_pass)
-         smtpObj.sendmail(ROBOTSENDER, to, msg.as_string())         
-      except:
-         print "Error: unable to send email"
-
-   def process_goodlog(self, sender, subject, savedlog):
-      #self.createDBEntry(logname, subject, timerec, savedlog)
-      #print 'SUCCESS!,; {0},; {1},; {2},; {3}'.format(logname, sender, timerec, savedlog)
-      # e-mail the log processing team to let them know a new log is available
-#      message = 'A new logfile has been received via e-mail:\nFrom: {0}\nSubject: {1}\nDate: {2}, Logfile Name: {3}, Date/time received:{4}\n'.format(sender, subject, date, savedlog, timerec)
-      message = 'A new logfile has been received via e-mail:\nFrom: %s\nSubject: %s\nLogfile Name: %s\n'% \
-                (sender, subject, savedlog)
-      subject = "[MOQP log submission] from %s"%(sender)
-      self.sendrobotmail(LOGPROCESSORS,subject, message)
-      
-      # e-mail the log submitter to acknowledge log receipt
-      subject = 'Thank You For Submitting Your Missouri QSO Party Log'
-      message ="""Thank you for submitting your Missouri QSO party log. 
-You may verify your log has been received by visiting:
-http://w0ma.org/mo_qso_party/logsubmission/logsreceived.php
-Please note, it could take up to 24 hours before your call
-appears in our Received Logs list. If the log processing
-robot has difficulty processing your log file, we may contact
-you for further information.
-
-
-73 and thanks for making the Missouri QSO party fun!
-
-The MOQP Log Contest Robot"""
-
-
-      self.sendrobotmail(sender, subject, message)
-#      return savedlog
-
-   def process_badlog(self, sender, subject):
-      message = """Logfile missing or of wrong file type in MOQP e-mail:\n
-From: %s\n
-Subject:%s\n"""%(sender, subject)
-      message +="""The e-mail message appeared to have a callsign as the first word of the SUBJECT,
-but there was no log file attached or the attachment was of the wrong type. Acceptable file formats:
-Plain text (.TXT, .LOG)
-.CSV (exported from MS Excel)
-.XLS, .XLXS (MS Excel)
-.PDF
-
-Please resubmit your log by attaching the file to an e-mail or by using the web based log submission
-form.
-
-73,
-The MOQP Log Contest Robot"""
-      subject = "No logfile attached to e-mail received from %s"%(sender)
-      self.sendrobotmail(LOGPROCESSORS,subject, message)
-   
-      pass
-
-   def process_bademail(self, sender, subject, date):
-      message = ('A suspicious MOQP logfile was received via e-mail:\nFrom: %s\nSubject: %s\nDate: %s.\n\nCould be SPAM.' \
-                   % (sender, subject, date))
-      message+="""The e-mail contained no logfile attachment or the attachment was 
-      of the wrong type. I can't tell if the e-mail is an attempt to submit a logfile 
-      or if it is SPAM. Please check the robot logfile and examine the e-mail to 
-      verify I have not missed a valid log file.
-      
-      73 de the MOQP Log Processing Robot
-      """           
-      subject = "MOQP e-mail logfile rejected"
-      self.sendrobotmail(LOGPROCESSORS,subject, message)
-      pass
-           
-   
    def main(self):
+      mailSender = robotMail() # For sending results to recipients and senders
       M = self.connect()
       M.select('INBOX')
       typ, data = M.search(None, 'unseen')
@@ -278,62 +171,66 @@ The MOQP Log Contest Robot"""
          print "s = ",s
          """
 
-         sender, subject, date, filename, filetype, log, replyto, msgparts = self.process_message_string(s)
-         print ("Sender = %s\nReply-To = %s\nSubject = %s\nFile name = %s\nFile Type = %s\n"%(sender, replyto, subject, filename, filetype))
+         msgparts = self.process_message_string(s)
+         print ("Sender = %s\nReply-To = %s\nSubject = %s\nFile name = %s\nFile Type = %s\n"%(msgparts['sender'], 
+                           msgparts['replyto'], 
+                           msgparts['subject'], 
+                           msgparts['fname'], 
+                           msgparts['nametype']))
+         if ( (msgparts['replyto'] == None) or (len(msgparts['replyto'])<3) ):
+             """Reply-to address does not exist, use sender address
+                Fix for issue #11"""
+             msgparts['replyto']=msgparts['sender']
          #print('msgparts = %s'%(msgparts))
+         status = 'e-mail robot, '         
+         if (msgparts['fname'] != None):
          
-         cabFilter = CabrilloFilter()
-         logdict = cabFilter.main(msgparts['log'])
-         #print('emailrobot: logdict (285) =%s'%(logdict) )
-         if (logdict):
-             logcall=logdict['HEADER']['CALLSIGN']
-             logemail=logdict['HEADER']['EMAIL']
-             print('emailrobot(291):\nlogcall=%s\nlogemail=%s\n'%(logcall, logemail))
-         
-         
-         #logname = self.extract_call(subject)
-         savedlog = None
-         status = 'e-mail robot, '
-         if (filename != None):
-            # Log file of correct type found - save and accept it.
-            savedlog = self.saveLog(filename, log, filetype)
-            if (savedlog != "!!!UNABLE TO SAVE LOGFILE!!!"):
-               status += 'Accepted, ,'
-               newfiles.append( ('%s,%s,%s' \
-                   % (sender.replace(',',' '), 
-                      subject.replace(',',' '), 
-                      savedlog) ) )
-            else:
-               status += '*REJECTED*, error saving logfile, '
-         else:
-            status += '*REJECTED*, No logfile or wrong logfile type, '   
-         print('%s ,%s, %s, %s, %s, %s\n--------' \
-                    % (status, 
-                       date.replace(',',' '), 
-                       sender.replace(',',' '), 
-                       subject.replace(',',' '), 
-                       filetype, 
-                       savedlog))
-         #if (newfiles != ''):
-         #   with open('new-emails.txt', 'w') as tfile:
-         #      tfile.write('%s'%(newfiles))
-         if ('*REJECTED*' in status):
-            self.process_bademail(sender, subject, date)
-      """
-      dbFiles = open('filelist.txt','w')
-      for dbentry in newfiles:
-         dbFiles.write("%s\n" % dbentry)
-      dbFiles.close()
-      if (len(newfiles) > 0):
-         cabfilter = CabrilloFilter(logwait, True, newfiles) 
-      """          
+             cabFilter = CabrilloFilter()
+             logdict = cabFilter.main(msgparts['log'])
+             #print('emailrobot: logdict (285) =%s'%(logdict) )
+             if (logdict):
+                 logcall=cabFilter.stripCallsign(logdict['HEADER']['CALLSIGN'])
+                 logemail=logdict['HEADER']['EMAIL']
+                 print('emailrobot(291):\nlogcall=%s\nlogemail=%s\n'%(logcall, logemail))
+                 msgparts['fname']=logcall.upper()+'.LOG'
+                 open(logready + msgparts['fname'], 'wb').writelines(msgparts['log'])
+                 status += 'Accepted, ,'
 
+             else:
+                 #Not a CAB file, but may be PDF, CSV or other type
+                 #Need code here to sort PDFs, CSVs, XLS, etc.
+                 nameparts= os.path.splitext(msgparts['fname'])
+                 filetype = nameparts[1].upper()
+                 if (nameparts[1].upper() in ('.CSV','.PDF','.XLS','.XLSX')):
+                     open(logwait + msgparts['fname'], 'wb').writelines(msgparts['log'])
+                     status += '*WAITING*, for human action, '
+                 else:
+                     open(logfurther + msgparts['fname'], 'wb').writelines(msgparts['log'])
+                     status += '*REJECTED*, unknown file type ['+filetype+'], '
+                     
+         else:
+             status += '*REJECTED*, No logfile, '   
+         print('%s ,"%s", "%s", "%s", %s, %s\n--------' \
+                    % (status, 
+                       msgparts['date'], 
+                       msgparts['sender'], 
+                       msgparts['subject'], 
+                       msgparts['nametype'], 
+                       msgparts['fname']))
+
+         if ('*REJECTED*' in status):
+            mailSender.process_bademail(msgparts['replyto'], 
+                                        msgparts['subject'], 
+                                        msgparts['date'])
+         elif ('*WAITING*' in status):
+             """Send messages to sender/log processors the file 
+                needs attention.
+                Code TBD."""
+             mailSender.emailResults(msgparts, logdict)
+         elif ('Accepted' in status):
+             """Write log specifics to logs received DB and
+                send messages to sender/log processors"""
+             self.createDBEntry(status, msgparts, logdict)
+             mailSender.emailResults(msgparts, logdict)
 if __name__=='__main__':
     mailbot = emailRobot(True)
-    #bot.process_goodlog('mheitmann@n0so.net', 'Test Log', '2014-03-27', 'TEST LOG DATA', 'N0SO')
-    #bot.sendrobotmail('mheitmann@n0so.net','Subject: This is a test','\nThis is a test message')
-    #bot.createDBEntry('TE0ST', 'TE0ST@ARRL.NET, '2017-03-13', 'TE0ST.LOG'):
-    #print bot.extract_call("w100aw-log.log")
-    #bot.main()  
-    #os.system('pwd')
-    #os.system("ls -l "+logpath)
