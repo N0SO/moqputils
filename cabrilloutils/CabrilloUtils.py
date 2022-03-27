@@ -37,6 +37,13 @@ Update History:
 -    getLogdictData() to process the data. This allows the method  
      getLogdictData() to be used if you already have the raw log text in 
      a string to parse and don't need to read it first.
+* Sun Mar 27 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.1
+- Added .isalpha() check for log file data in method IsThisACabFile().
+- During testing with files submitted for 2021, some non-cab files passed
+- the IsThisACabFile() check because the strings being tested for were
+- detectable in a binary file types like xls, csv and pdf. 
+
 """
 
 import re
@@ -131,15 +138,16 @@ class CabrilloUtils():
         callsign = False
         qsol = False
         if(data):
-            if('START-OF-LOG:' in data):
-                sol = True
-                if('CALLSIGN:' in data):
-                    callsign = True
-                    if('QSO:' in data):
-                        qsol = True
-                        if ('END-OF-LOG:' in data):
-                            eol = True
-                            cabfile = True
+            if (data.isalpha()):
+                if('START-OF-LOG:' in data):
+                    sol = True
+                    if('CALLSIGN:' in data):
+                        callsign = True
+                        if('QSO:' in data):
+                            qsol = True
+                            if ('END-OF-LOG:' in data):
+                                eol = True
+                                cabfile = True
                             
         if (not(cabfile)):
             print('NOT A VALID CABFILE!')
