@@ -4,7 +4,7 @@ require_once "recaptchalib.php";
 include 'moqpconfig.php';
 
 // your secret key
-$secret = "your_key_goes_here";
+$secret = "Your_Key_Goes_Here";
 
 // empty response
 $response = null;
@@ -45,7 +45,8 @@ if(isset($_POST['submit'])){
     // Check whether submitted data is not empty
     if(!empty($email) && !empty($name) && 
        !empty($submittercall) && !empty($callsign) &&
-       !empty($category) && !empty($location)){
+       !empty($category) && !empty($location) &&
+       !empty($_FILES["attachment"]["name"])){
         
         // Validate email
         if(filter_var($email, FILTER_VALIDATE_EMAIL) === false){
@@ -103,6 +104,7 @@ if(isset($_POST['submit'])){
                     "<p>Name: $name, $submittercall<br>".
                     "e-mail: $email<br>MOQP Call Sign Used: $callsign<br>".
                     "Category: $category<br>Location: $location<br></p>".
+                    "<p>Uploaded filename: $fileName</p>".
                     "<p>Note/Message: $message</p>".
                     "<p>This data received via the MOQP Web Form.</p>";
                     
@@ -280,7 +282,7 @@ if(isset($_POST['submit'])){
     <br>
     <div class="form-group">
       <label>Browse For Log File: 
-        <input type="file" name="attachment" class="form-control">
+        <input type="file" name="attachment" class="form-control" required="this is a required field">
       </label>
     </div>
     <div class="submit">
