@@ -39,14 +39,15 @@ Update History:
      a string to parse and don't need to read it first.
 * Sun Mar 27 2022 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.1
-- Added .isalpha() check for log file data in method IsThisACabFile().
+- Added IsplainText() method to check for plain text in log file data.
+- The new IsplainText() method is now called in IsThisACabFile().
 - During testing with files submitted for 2021, some non-cab files passed
 - the IsThisACabFile() check because the strings being tested for were
 - detectable in a binary file types like xls, csv and pdf. 
 
 """
 
-import re
+import re, string
 
 class CabrilloUtils():
     CABRILLOTAGS = ['START-OF-LOG',
@@ -131,6 +132,15 @@ class CabrilloUtils():
         except ValueError:
             return False
 
+    def IsplainText(self, data):
+        #if (data.isprintable()):
+        plainText=True
+        for c in data:
+            if not((c in string.printable)):
+                plainText= False
+                break
+        return plainText
+
     def IsThisACabFile(self, data):
         cabfile = False
         sol = False
@@ -138,7 +148,9 @@ class CabrilloUtils():
         callsign = False
         qsol = False
         if(data):
-            if (data.isalpha()):
+            plainText=self.IsplainText(data)
+            #plainText=data.isprintable()
+            if (plainText):
                 if('START-OF-LOG:' in data):
                     sol = True
                     if('CALLSIGN:' in data):
@@ -151,10 +163,13 @@ class CabrilloUtils():
                             
         if (not(cabfile)):
             print('NOT A VALID CABFILE!')
-            print('START-OF-LOG: present - ', sol)
-            print('CALLSIGN: present - ',callsign)
-            print('QSO: lines present - ', qsol)
-            print('END-OF-LOG: line present - ', eol)
+            if (plainText):
+                print('START-OF-LOG: present - ', sol)
+                print('CALLSIGN: present - ',callsign)
+                print('QSO: lines present - ', qsol)
+                print('END-OF-LOG: line present - ', eol)
+            else:
+                print('Not a Plain Text file!')
         return cabfile
         
     def getCabstg(self, target, data):
