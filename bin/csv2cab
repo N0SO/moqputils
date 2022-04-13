@@ -32,6 +32,12 @@ mycabdata = mycab.processcsvData(mycsvdata)
 * Mon Oct 14 2019 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.0 - Ready for release
 - Also renamed module directory to cabrilloutils
+* Sun Apr 02 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V2.0.0 - Updated to use new developmet module pathing methods.
+-          Also added code to remove all the  QSO column header
+-          lines and the extra QSO: ,,,,, lines present in our
+-          MOQP_log.xls(x) spreadsheet. Most changes were in the
+-          cabrilloutils.cab2csv.py file.
 """
 
 
@@ -46,18 +52,11 @@ EPILOG = \
 Running with no parameters will launch the GUI.
 """
 
-DEVMODPATH = ['cabrilloutils']
+whereami = os.path.split( os.path.realpath(__file__) )
+if os.path.exists(whereami[0] + '/mqpdevpath.py'):
+    from mqpdevpath import *
 
-#VERSION = '0.1.1'
-
-# If the development module source paths exist, 
-# add them to the python path
-for mypath in DEVMODPATH:
-    if ( os.path.exists(mypath) and \
-                       (os.path.isfile(mypath) == False) ):
-        sys.path.insert(0,mypath)
-#print('Python path = %s'%(sys.path))
-from common import common
+from cabrilloutils.common import common
 
 """
 The main app class.
@@ -83,7 +82,7 @@ class theApp():
     def appMain(self):
         args = self.getArgs()
         if (args.inputfile):
-            from csv2cab import csv2CAB
+            from cabrilloutils.csv2cab import csv2CAB
             app = csv2CAB(args.inputfile)
         else:
             from ui_csv2cab import gui_csv2cab

@@ -16,6 +16,10 @@ Update History:
 - V0.0.1 -First interation for 2020 MOQP
 * Sat Dec 10 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 -Update to support new DEVMODPATH
+* Sat Apr 02 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0 -Added HTML reports to SHOWME, MISSOURI and
+-         STATE PROVINCE reports and the calls to 
+-         decide whiich one to use.
 """
 
 import os.path
@@ -52,21 +56,21 @@ class get_args():
             help="Create a list of the 1st place award (plaque) "+\
                   "winners in each MOQPCATEGORY. ")
         parser.add_argument('-c', '--category',
-                                   default=False,
+                                   default=None,
             help="Create a list of the 1st or 2nd place "+\
                   "winners in each MOQPCATEGORY. "+\
                   "mqoawards -c 1 = FIRST PLACE List, "+\
                   "mqoawards -c 2 = SECOND PLACE List.")
         parser.add_argument('-s', '--showme', 
-                                   #action='store_true',
+                                   action='store_true',
                                    default=None,
             help="Create a list of the SHOWME certificate winners.")
         parser.add_argument('-m', '--missouri', 
-                                   #action='store_true',
-                                   default='missouri',
+                                   action='store_true',
+                                   default=None,
             help="Create a list of the MISSOURI certificate winners.")
         parser.add_argument('-p', '--provstate', 
-                                   default=False,
+                                   default=None,
             help="Create a list of the 1st or 2nd place "+\
                   "STATE/PROV certificate winners. "+\
                   "mqoawards -p 1 = FIRST PLACE List, "+\
@@ -80,7 +84,7 @@ class get_args():
                     html for web page use.
                     default value is csv""")
         args = parser.parse_args()
-        #print(args)
+        print(args)
         return args
 
 if __name__ == '__main__':
@@ -102,33 +106,39 @@ if __name__ == '__main__':
            app = HTMLPlaques()
    elif (args.args.category):
        #print('Running CATEGORY Awards %s %s'%(args.args.category, args.args.reportType))
-       category = args.args.category.lower()
        if ('csv' in reportType):
            from moqputils.moqpAwards.CATEGORYAwards import CATEGORYAwards
-           app = CATEGORYAwards(category)
+           app = CATEGORYAwards(args.args.category)
        elif ('html' in reportType):
            from moqputils.moqpAwards.CATEGORYAwards import HTMLAwards
-           app = HTMLAwards(category)
+           app = HTMLAwards(args.args.category)
    elif (args.args.showme):
-       arg=args.args.showme.lower()
-       if (arg == 'showme'):
+       if ('csv' in reportType):
            from moqputils.moqpAwards.SHOWMEAwards import SHOWMEAwards
            app = SHOWMEAwards('SHOWME')
-       if (arg == 'showme-html'):
+       elif ('html' in reportType):
            from moqputils.moqpAwards.SHOWMEAwards import HTMLShowMeAwards
            app = HTMLShowMeAwards('SHOWME')
    elif (args.args.missouri):
-       arg=args.args.missouri.lower()
-       if (arg == 'missouri'):
+       if ('csv' in reportType):
            from moqputils.moqpAwards.SHOWMEAwards import MOAwards
            app = MOAwards('MISSOURI')
-       if (arg == 'missouri-html'):
+       elif ('html' in reportType):
            from moqputils.moqpAwards.SHOWMEAwards import HTMLMoAwards
            app = HTMLMoAwards('MISSOURI')
-   elif (args.args.provstate):
-       from moqputils.moqpAwards.stateAwards import STATEAwards
-       app = STATEAwards(args.args.provstate)
+   elif (args.args.provstate): 
+       #print("Running STATEAwards ", args.args.provstate,args.args.reportType)
+       rtype = args.args.reportType.lower()
+       if ('html' in rtype):
+           #Run the HTML report when it's ready
+           from moqputils.moqpAwards.stateAwards import HTMLSTATEAwards
+           app = HTMLSTATEAwards(args.args.provstate)
+       else:
+           #Run the csv report
+           from moqputils.moqpAwards.stateAwards import STATEAwards
+           app = STATEAwards(args.args.provstate)
    else:
+       print("Attempting to run GUI...")
        from gui_reports import labels_ui
        app=gui_reports()
         

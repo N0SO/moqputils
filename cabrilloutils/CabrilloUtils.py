@@ -133,12 +133,13 @@ class CabrilloUtils():
             return False
 
     def IsplainText(self, data):
-        #if (data.isprintable()):
-        plainText=True
-        for c in data:
-            if not((c in string.printable)):
-                plainText= False
-                break
+        plainText = False
+        if (data != None):
+            plainText=True
+            for c in data:
+                if not((c in string.printable)):
+                    plainText = False
+                    break
         return plainText
 
     def IsThisACabFile(self, data):

@@ -7,6 +7,7 @@ from moqputils.moqpAwards.commonAwards import commonAwards
 class STATEAwards(commonAwards):
     
     def __init__(self, place = None, extra = None):
+        #print("Running STATEAwards...")
         if (place):
             self.appMain(place)
 
@@ -21,7 +22,7 @@ class STATEAwards(commonAwards):
                                sdata['CITY'],
                                sdata['STATEPROV'],
                                sdata['ZIPCODE'],
-                               sdata['COUNTRY'],                               
+                               sdata['COUNTRY'],
                                sdata['EMAIL'],
                                sdata['SCORE']))
         return tsvdata
@@ -73,3 +74,47 @@ class STATEAwards(commonAwards):
            mydb.setCursorDict()
            awards = self.states(mydb, place)
            self.AwardDisplay(awards)
+
+class HTMLSTATEAwards(STATEAwards):
+
+    def __init__(self, place = None, extra = None):
+        #print("Running STATEAwards...")
+        if (place):
+            self.appMain(place)
+
+    def forDebug(self):
+        print('In the HTMLSTATEAwards class...')
+
+
+    def AwardDisplay(self, awards):
+       if (awards):
+           #theader = self.buildDictHeader(KEYS1, LABELS1)
+           #showmeList= self.addHeader(theader, showmeList)
+
+           from htmlutils.htmldoc import htmlDoc
+           from htmlutils.htmltable import htmlTable
+           d = htmlDoc()
+           thisPlace='WTF'
+           if ('FIRST PLACE' in  awards[0]):
+               thisPlace='FIRST'
+           elif ('SECOND PLACE' in awards[0]):
+               thisPlace='SECOND'
+           titleStr = '2021 Missouri QSO Party  State / Province %s PLACE Awards'%(thisPlace)
+           d.openHead(titleStr, './styles.css')
+           d.closeHead()
+           d.openBody()
+           d.addTimeTag(prefix='Report Generated On ', 
+                    tagType='comment') 
+                         
+           d.add_unformated_text(\
+             """<h2 align='center'>%s</h2>"""%(titleStr) )
+
+           awardslist = d.tsvlines2list(awards)
+           t = htmlTable()
+           d.add_unformated_text(t.makeTable(awardslist,
+                            header=None,
+                            caption='Certificates only, no plaques'))
+           d.closeDoc()
+
+           d.showDoc()
+           d.saveAndView('states%s.html'%(thisPlace))

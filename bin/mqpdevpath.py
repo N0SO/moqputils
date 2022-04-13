@@ -9,10 +9,10 @@ import sys
 
 whereami = os.path.split( os.path.realpath(__file__) )
 pathsplit = os.path.split(whereami[0])
-print("here I am :", whereami, pathsplit)
+#print("here I am :", whereami, pathsplit)
 
 DEVMODPATH = [pathsplit[0]]
-print('DEVPATH=',DEVPATH)
+print('Using DEVMODPATH=',DEVMODPATH)
 os.chdir(pathsplit[0])
 
 for mypath in DEVMODPATH:

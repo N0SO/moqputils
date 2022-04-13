@@ -1,5 +1,0 @@
-#/bin/bash
-cd
-DEVPATH=$PWD'/moqputils'
-PATH=$DEVPATH/'bin:'$PATH
-export PATH
