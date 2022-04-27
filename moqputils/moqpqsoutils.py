@@ -331,9 +331,10 @@ class MOQPQSOUtils(QSOUtils):
     def getMOQPLog(self, fileName):
         logtext = None
         log = None
-        logtext = self.readFile(fileName)
+        logtext = self.readFile(fileName, linesplit=False)
         if (self.IsThisACabFile(logtext)):
             if (logtext):
+                logtext = logtext.splitlines()
                 log = self.getQSOdata(logtext)
                 if (log):
                     log['RAWTEXT'] = logtext

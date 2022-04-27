@@ -44,7 +44,11 @@ Update History:
 - During testing with files submitted for 2021, some non-cab files passed
 - the IsThisACabFile() check because the strings being tested for were
 - detectable in a binary file types like xls, csv and pdf. 
-
+* Mon April 25 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.2
+- Modified readFile() method to allow specifying to read and return
+- a file as a list of lines, or as a single string containing the 
+- entire file (readlines() vs read())
 """
 
 import re, string
@@ -106,7 +110,7 @@ class CabrilloUtils():
                     'CATEGORY-TRANSMITTER', 'CATEGORY-OVERLAY']
 
     def __init__(self):
-        self.VERSION = '1.0.12'
+        self.VERSION = '1.0.2'
         pass
 
     def __version__(self):
@@ -115,12 +119,23 @@ class CabrilloUtils():
     def getVersion(self):
        return self.VERSION
        
-    def readFile(self, filename):
-        """Read and return the entire file"""
+    def readFile(self, filename, linesplit=True):
+        """Read and return the entire file
+           linesplit = True:
+             returns data as a list of lines.
+           linesplit = False:
+             return data as a single screen.
+        """
         data = None
         try:
             with open(filename, 'r') as thisfile:
-                data = thisfile.readlines()
+                if(linesplit):
+                    """Return file as list of lines"""
+                    data = thisfile.readlines()
+                else:
+                    """return entire file as a single string
+                    usefile if you want to validate as text only file"""
+                    data = thisfile.read()
         except:
             data = None
         return data

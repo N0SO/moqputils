@@ -78,10 +78,13 @@ class MOQPCategory(MOQPQSOUtils):
     def getVersion(self):
        return VERSION
 
+
     def getLogFile(self, filename):
+        print('MOQPCategory:getLogFile')
         log = None
         fileText = self.readFile(filename)
         if (self.IsThisACabFile(fileText)):
+            fileText = fileText.splitlines()
             log = self.getQSOdata(fileText)
         return log
 
@@ -393,13 +396,22 @@ class MOQPCategory(MOQPQSOUtils):
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
-           csvdata += ('%s\n'%(log['MOQPCAT']['ROOKIE']))
+           csvdata += ('%s\t'%(log['MOQPCAT']['ROOKIE']))
            
+           errstring =''
            if len(log['ERRORS'])> 0 :
+               """
+               Changed for better error report formating
                csvdata += 'LOG ERRORS:\n'
                for err in log['ERRORS']:
                    csvdata += '%s\n'%(err)
-       
+               """
+               errstring = self.packNote(log['ERRORS'])
+               if (len(errstring) > 4096):
+                   tempstg = 'TOO MANY ERRORS TO LIST ALL - ' +\
+                   'SEE THE RAW LOG FILE; ' + errstring[:4096]
+                   errstring=tempstg
+           csvdata += '%s\n'%(errstring)
        #print(csvdata)  
        return csvdata
         

@@ -44,7 +44,7 @@ class QSOUtils(CabrilloUtils):
         Remove characters SQL statements don't like, and trim
         strings to the maxLen characters
         """
-        badchars = '\"\''
+        badchars = '\"\'\`\t'
         if (len(unsafeString) > maxLen):
             workString = unsafeString[:maxLen-1]
         else:
@@ -62,7 +62,10 @@ class QSOUtils(CabrilloUtils):
         packedNote = ''
         for i in note:
             #print("Note = ",i)
-            packedNote += self.trimAndEscape(i, 67) +'; '
+            if isinstance(i, list):
+              packedNote += self.packNote(i)
+            else:
+              packedNote += self.trimAndEscape(i, 67) +'; '
         return packedNote
 
     def qthSet(self, qth):
