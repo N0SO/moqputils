@@ -12,7 +12,7 @@ pathsplit = os.path.split(whereami[0])
 #print("here I am :", whereami, pathsplit)
 
 DEVMODPATH = [pathsplit[0]]
-print('Using DEVMODPATH=',DEVMODPATH)
+#print('Using DEVMODPATH=',DEVMODPATH)
 os.chdir(pathsplit[0])
 
 for mypath in DEVMODPATH:
