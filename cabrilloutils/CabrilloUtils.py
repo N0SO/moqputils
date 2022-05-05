@@ -49,6 +49,14 @@ Update History:
 - Modified readFile() method to allow specifying to read and return
 - a file as a list of lines, or as a single string containing the 
 - entire file (readlines() vs read())
+* Tue May 03 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.3
+- Added changes to fix Issues #16 (missed when issue was closed) and
+- Issue #43. Method getLogdictData was modified to ignore and skip
+- any line that does not start with a tag [<TAGNAME>:] defined in
+- CABRILLO tags - This will prevent crashing due to an undefined
+- Cabrillo tag.
+-
 """
 
 import re, string
@@ -317,7 +325,11 @@ class CabrilloUtils():
                     qsolist.append(newline)
               else:
                  if (len(tagsplit) > 1):
-                    header[tagsplit[0]] += self.packLine(tagsplit[1])
+                    if(tagsplit[0] in self.CABRILLOTAGS):
+                        header[tagsplit[0]] += \
+                                 self.packLine(tagsplit[1])
+                                 
+                                 
           logdict['HEADER'] = header
           logdict['QSOLIST'] = qsolist
        else:
@@ -491,6 +503,7 @@ class CabrilloUtils():
        return emailValid
 
 if __name__ == '__main__':
+   import sys
    app=CabrilloUtils()
    """
    logdata = app.getLogFile('../testfiles/W0QBX.LOG')
@@ -503,6 +516,13 @@ if __name__ == '__main__':
                                              header['NAME'],
                                              header['OPERATORS']))"""
    
-   
+    
    print ('Classname: %s Version: %s'%(app.__class__.__name__,
-                                       app.__version__()))
+                                      app.__version__()))
+   if (len(sys.argv) >= 2):                                   
+       testString = sys.argv[1].strip().upper()
+       if testString in app.CABRILLOTAGS:
+           print("I'm in! {}".format(testString))
+       else:
+           print('{} Not present!'.format(testString))
+       
