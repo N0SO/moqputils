@@ -75,6 +75,6 @@ class DUPECheck(QSOUtils):
                                      dupeOf = t
                                      dupeIs = q
                                  newlist[dupeOf]['DUPE'] = dupeIs+1
-                                 newlist[dupeOf]['NOTES'] = 'DUPE of QSO %d'%(dupeIs+1)
+                                 #newlist[dupeOf]['NOTES'] = 'DUPE of QSO %d'%(dupeIs+1)
                                  newlist[dupeOf]['ERROR'] = True
        return newlist

@@ -44,13 +44,17 @@ Update History:
 - V0.3.7
 - Minor tweak to exportcsv so command line error 
 - report is pretty.
- * Wed Mar 03 2021 Mike Heitmann, N0SO <n0so@arrl.net>
+* Wed Mar 03 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.3.8
 - Added SHOWME and MISSOURI status to summary generated
 - Rearranged columns to make the display read more logically
+* Thu May 05 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0
+- Incorporated new MOQPLogFile class to hold the logfile.
+
        
 """
-from moqputils.moqpqsoutils import MOQPQSOUtils
+from moqputils.moqplogfile import MOQPLogFile
 from moqputils.bonusaward import BonusAward
 from moqputils.bothawards import *
 from moqputils.dupecheck import DUPECheck
@@ -58,16 +62,17 @@ from moqputils.moqpmults import *
 from moqputils.moqpdefs import *
 import os, re
 
-VERSION = '0.3.6' 
+VERSION = '1.0.0' 
 FILELIST = './'
 ARGS = None
 
-class MOQPCategory(MOQPQSOUtils):
-
+class MOQPCategory(MOQPLogFile):
+    """
     QSOTAGS = ['FREQ', 'MODE', 'DATETIME', 'MYCALL',
                'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 
                'URQTH', 'ERROR', 'NOTES']
-
+    """
+    
     def __init__(self, filename = None, cabbonus=None):
         self.cabbonus=cabbonus
         self.filename = filename
@@ -365,8 +370,13 @@ class MOQPCategory(MOQPQSOUtils):
                
            else:
                csvdata = ''
+               
+           errcount = 0
+           for q in log['QSOLIST']:
+               if q['ERROR']: errcount +=1
+           """			   
            errcount = len(log['ERRORS'])
-           
+           """
            qsoscore = (((log['QSOSUM']['CW'] + log['QSOSUM']['DG']) * 2) +\
                         log['QSOSUM']['PH']) * log['MULTS']
                         
@@ -499,47 +509,69 @@ class MOQPCategory(MOQPQSOUtils):
     """
     def checkLog(self, fileName, cabbonus=False):
         result = dict()
-        log = self.getMOQPLog(fileName)
+        errors = []
+        log = self.buildLog(fileName)
         if ( log ):
-            errors = log['ERRORS']
             headerResult = self.headerReview(log['HEADER'])
-            errors = self.errorCopy(headerResult['ERRORS'], 
-                                                     errors)
-            result['HEADERSTAT'] = headerResult['STAT']
-            dupes = DUPECheck(log['QSOLIST'])
-            #print(dupes.newlist)
-            if (dupes.newlist):
-                qcount = 1
-                for qso in dupes.newlist:
-                    if (qso['DUPE'] > 0):
-                      errors.append('QSO %d DUPE of QSO %s'%\
-                                  (qcount, dupes.showQSO(qso)))
-                    qcount += 1
-                
-                log['QSOLIST'] = dupes.newlist
+            #result['HEADERSTAT'] = headerResult['STAT']
 
-            validqsos = []
-            for qso in log['QSOLIST'] :
-                #print(qso)
-                if qso['ERROR'] == False :
-                    validqsos.append(qso)          
+            """
+            for qso in log['QSOLIST']:
+                print(qso)
+            """
+            #get valid qsos
+            validqsos = self.getValidQSOs()
+            #get invalid qsos
+            invalidqsos = self.getValidQSOs(witherrors=True)
+            if (validqsos):
+                sortedGood = self.sortQSOdictList(validqsos)
+                if (sortedGood):
+                    dupes = DUPECheck(sortedGood)
+                    if (dupes.newlist):
+                        #add back the original invalid qsos if any
+                        newlist = dupes.newlist
+                        if (invalidqsos):
+                            for q in invalidqsos:
+                                newlist.append(q)
+                        #put list back in original order
+                        log['QSOLIST'] = self.sortQSOdictList(newlist,
+                                                         sortKey='QID')
+                        validqsos = self.getValidQSOs(log['QSOLIST'])
+
                 
-            #Bonus = BonusAward(log['QSOLIST'])
-            Bonus = BonusAward(validqsos)
+            if(validqsos):
+                Bonus = BonusAward(validqsos)
             
-            ShowmeMo = BothAwards(log['HEADER']['CALLSIGN'],
-                                                    validqsos)
-            ShowMe = Missouri = False
-            if ShowmeMo.Results:
-                if ShowmeMo.Results['SHOWME']['QUALIFY'] :
-                    ShowMe = True
-                if ShowmeMo.Results['MO']['QUALIFY'] :
-                    Missouri = True
+                mults = MOQPMults(validqsos)
+                log['MULTS'] = mults.sumMults()
+            
+                ShowmeMo = BothAwards(log['HEADER']['CALLSIGN'],
+                                                        validqsos)
+                ShowMe = Missouri = False
+                if ShowmeMo.Results:
+                    if ShowmeMo.Results['SHOWME']['QUALIFY'] :
+                        ShowMe = True
+                    if ShowmeMo.Results['MO']['QUALIFY'] :
+                        Missouri = True
                       
-            qsosummary = self.sumQSOList(log['QSOLIST'])
-            
-            #print(qsosummary)
+                qsosummary = self.sumQSOList(log['QSOLIST'])
+            else: # No valid QSOs
+                print('No valid QSOs for {}'.format(fileName))
+                # Set things that got skipped because no valid qsos.
+                Bonus = BonusAward()
+                Bonus.Award['W0MA']['INLOG']=False
+                Bonus.Award['K0GQ']['INLOG']=False
 
+                log['MULTS'] = 0
+                qsosummary = { 'QSOS':0,
+                               'CW': 0,
+                               'PH': 0,
+                               'VHF': 0,
+                               'DG':0,
+                               'DUPES':0,
+                               'INVALID':0 }
+                ShowMe = Missouri = False
+         
             log['QSOSUM'] = qsosummary
 
             log['BONUS'] = {   'W0MA': Bonus.Award['W0MA']['INLOG'],
@@ -551,7 +583,24 @@ class MOQPCategory(MOQPQSOUtils):
             log['SCORE'] = self.calculate_score(log['QSOSUM'], 
                                                 log['MULTS'],
                                                 log['BONUS'])
-            log['ERRORS'] = errors
+            """
+            Build log error summary
+            """
+            qcount = 1
+            lerrors =[]
+            for qso in log['QSOLIST']:
+                if (qso['ERROR'] or len(qso['NOTES']) > 0):
+                    qline = self.showQSO(qso)
+                    qerrors = self.buildQSOerrSum(qso, qcount)                          
+                    if (qerrors):
+                        lerrors = self.errorCopy(qerrors, lerrors)
+                qcount += 1
+            # Add any log header errors
+            if (headerResult['STAT'] == False):
+                lerrors.append('LOG HEADER ERRORS: ')
+                for l in headerResult['ERRORS']:
+                    lerrors.append('\t {}'.format(l))
+            log['ERRORS'] = lerrors
         return log
 
     def qsolist_valid(self, qsolist):
@@ -572,6 +621,28 @@ class MOQPCategory(MOQPQSOUtils):
        else:
           csvdata = self.exportcsvflist(pathname)
        print(csvdata)
+       
+    def buildQSOerrSum(self, qso, qcount = None):
+        elist = None
+        if (qso['ERROR'] or len(qso['NOTES']) > 0):
+            qline = self.showQSO(qso)
+            elist = []
+            if (qcount):
+                elist.append('QSO LINE {}:'.format(qcount))
+                addTab = '\t '
+            else:
+                addTab = ''
+                
+            elist.append('{} {}'.format(addTab, qline))
+            if (qso['DUPE'] > 0):
+                elist.append('{}DUPE of QSO {}'.format(\
+                                                addTab,
+                                                qso['DUPE']))
+                                                
+            if (len(qso['NOTES'])>0):
+                for eline in qso['NOTES']:
+                    elist.append('{} {}'.format(addTab, eline))
+        return elist
        
 if __name__ == '__main__':
    args = get_args()

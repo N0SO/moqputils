@@ -12,14 +12,19 @@ Update History:
 -          list in various ways. Default is by DATETIME in ascending
 -          order. 
 """
-import os
+import sys, os
 from moqputils.moqpqsoutils import MOQPQSOUtils
 
 
 
 class MOQPLogFile(MOQPQSOUtils):
+    """
     QSOTAGS = ['FREQ', 'MODE', 'DATETIME', 'MYCALL',
                'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 'URQTH', 'NOTES']
+    """
+    QSOTAGS = ['FREQ', 'MODE', 'DATETIME', 'MYCALL',
+               'MYREPORT', 'MYQTH', 'URCALL', 'URREPORT', 
+               'URQTH', 'DUPE', 'ERROR', 'NOTES', 'QID']
 
     def __init__(self, logFile=None):
         self.initLog()
@@ -110,7 +115,6 @@ class MOQPLogFile(MOQPQSOUtils):
     
        if (logList):
            log = self.getLogdictData(logText)
-           #print(log)
            dictqsoList = self.buildQSOList(log['QSOLIST'])
            log['QSOLIST'] = dictqsoList
            if (Persist):
@@ -150,24 +154,57 @@ class MOQPLogFile(MOQPQSOUtils):
            newList = None
            if qsodictList == None:
                   qsodictList = self.QSOLIST
-           newList = sorted(qsodictList, 
+           """
+           This can fail because the log file QSO data is not
+           formatted properly. Catch error and return without
+           crashing.
+           """       
+           try:       
+               newList = sorted(qsodictList, 
                             key=lambda i: i[sortKey],
                             reverse = sortLtoS)
+           except: # Catch everything
+               e = sys.exc_info()[0]
+               print( "error data: {}".format(e) )
+    
            return newList       
-           
+    """
+    buildQSOList - Build a list of qsos as dictionary objects
+                   using the MOQP QSOTAGS list as the index keys.
+         qsolist - A list with each entry represnting the text
+                   from an MOQP QSO:
+    QSO: <freq> <mode> <date> <time> <mycall> <myreport> 
+                               <myqth> <urcall> <urreport> <urqth>
+    
+    Returns a list of dictionary indexed with keys from QSOLIST[]    
+    """       
     def buildQSOList(self, qsolist):
        qsodictList = None
        if (qsolist and isinstance(qsolist, list)):
            qsodictList = []
+           qcount = 0
            for qso in qsolist:
+               qcount += 1
                #Split off the 'QSO:' text
                tagpos = qso.find('QSO:')
                tqso=self.packLine(qso[tagpos+4:])
                #print(tqso)
                dictqso = self.getQSOdict(tqso)
+               dictqso['QID'] = qcount
+               dictqso['DUPE'] = 0
                qsodictList.append(dictqso)               
        return qsodictList
     
+    """
+    showQSO - Converts a qso dictionary object back into text that
+              may be printed or displayed.
+              
+        qso - The QSO dict() object
+        
+        Returns textqso as a string:
+    QSO: <freq> <mode> <date_time> <mycall> <myreport> <myqth>
+                                   <urcal> <urreport> <urqth>
+    """
     def showQSO(self, qso):
       textqso = ('QSO: {} {} {} {} {} {} {} {} {}'.format(\
                      qso['FREQ'],
@@ -181,6 +218,15 @@ class MOQPLogFile(MOQPQSOUtils):
                      qso['URQTH']))
       return textqso     
 
+    """
+    showQSOList - Converts a list of qso dict objects to text
+                  by calling showQSO for each element in the list.
+                  
+        qsolist - The list of dict() qso objects to convert. If 
+                  None or omitted, the class object self.QSOLIST
+                  will be used as input.
+        returns a list of strings, string for each QSO line.
+    """
     def showQSOList(self, qsolist=None):
       if qsolist == None:
         qsolist = self.QSOLIST
@@ -189,6 +235,17 @@ class MOQPLogFile(MOQPQSOUtils):
         textqsolist += '{}\n'.format(self.showQSO(qso))
       return textqsolist
 
+    """
+    showHeader - Converts a cabrillo file log header from dict()
+                 format to a single string containing the log header
+                 with each line separated by the '\n' character.
+                  
+        header  - The dict() indexed log header to convert. If 
+                  None or omitted, the class object self.HEADER
+                  will be used as input.
+        returns the log header as a single string containing the 
+        log header text with each line separated by the '\n' character.
+    """
     def showHeader(self, header = None, tagList = None):
       if header == None:
         #Use oject HEADER
@@ -203,3 +260,16 @@ class MOQPLogFile(MOQPQSOUtils):
         
       return textheader
       
+    """
+    getValidQSOs - return a list of valid QSOs.
+    """
+    def getValidQSOs(self, qsolist=None, witherrors=False):
+        return_list = None
+        if (qsolist == None): qsolist = self.QSOLIST
+        if (qsolist):
+            return_list = []
+            for q in qsolist:
+                if( (q['ERROR'] == witherrors) ):
+                    return_list.append(q)
+            if (len(return_list) == 0): return_list = None
+        return return_list

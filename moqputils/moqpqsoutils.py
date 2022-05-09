@@ -47,12 +47,10 @@ class MOQPQSOUtils(QSOUtils):
        return qso
 
     def getQSOdict(self, qsodata):
-       #qutils = QSOUtils()
        qelements = 10
        qso = None
        qso_errors = []
        q_errors = []
-       #qso_data = dict()
        temp = qsodata.replace(':','')
        qsoparts = temp.split(' ')
        qsolen = len(qsoparts)
@@ -83,7 +81,7 @@ class MOQPQSOUtils(QSOUtils):
        q_errors, q_valid = self.qso_valid(qso)
        #print(qsodata, qso_elements_parsed, qsolen, qso)
        if ( (qso_elements_parsed != qelements) or len(q_errors) ):
-          qso_errors.append(qsodata)
+          #qso_errors.append(qsodata)
           if (qso_elements_parsed != qelements):
              qso_errors.append(\
               '\tQSO has %d elements, it should have %d.'\
@@ -175,6 +173,7 @@ class MOQPQSOUtils(QSOUtils):
       summary['VHF'] = 0
       summary['DG'] = 0
       summary['DUPES'] = 0
+      summary['INVALID'] = 0
 
       for thisqso in data:
          if (thisqso['ERROR'] == False):
@@ -204,7 +203,9 @@ class MOQPQSOUtils(QSOUtils):
                  badmodeline += (' %s'%(thisqso[tag]))
              print('UNDEFINED MODE: %s -- QSO data = %s'%(mode, badmodeline))
          else:
-           summary['DUPES'] += 1
+           summary['INVALID'] += 1
+           if thisqso['DUPE'] > 0:
+              summary['DUPES'] += 1
       return  summary
 
     def qso_valid(self, qso):
