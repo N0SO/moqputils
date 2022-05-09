@@ -117,11 +117,16 @@ class MOQPLogcheck(MOQPCategory):
           if (log):
              call = log['HEADER']['CALLSIGN']
              dupecount = log['QSOSUM']['DUPES']
-             errorcount = len(log['ERRORS'])
+             #print('MOQPLogCheck.processOneFile: qsosummary = \n{}\n\nHeader status=\n{}'.format(log['QSOSUM'], log['HEADERSTAT']))
+             #errorcount = len(log['ERRORS'])
              #print("errorcount = %d, DUPE count = %d, PATH = %s"%(errorcount, dupecount, acceptedMovePath))
-             if (errorcount == dupecount): logAccepted = True
+             #if ( (errorcount == dupecount) and (): logAccepted = True
+             if ( log['HEADERSTAT']['STAT'] and
+                   (log['QSOSUM']['QSOS'] > 0) and
+                   (log['QSOSUM']['INVALID'] == log['QSOSUM']['DUPES']) ):
+                logAccepted = True
              csvdata = self.exportcsv(log, headers)
-             
+             print('{} Log accepted = {}'.format(call, logAccepted))
              #print ('csvdata = ',csvdata)
              
              if (csvdata == None):

@@ -52,10 +52,11 @@ class MOQPLogFile(MOQPQSOUtils):
        rawlog = self.readFile(logpath, linesplit = False)
        #print(isinstance(rawlog,str),'\n',rawlog)
        if (self.IsThisACabFile(rawlog.strip())):
-          if (Persist):
-             self.RAWLOG = rawlog
+           pass
        else:
           rawlog = None
+       if (Persist):
+          self.RAWLOG = rawlog
        return rawlog
        
     """

@@ -340,6 +340,68 @@ class MOQPQSOUtils(QSOUtils):
                 if (log):
                     log['RAWTEXT'] = logtext
         return log
+ 
+ 
+    """
+    headerReview - Review the log header for completeness
+    Returns a dict() object with the results:
+        results['STAT'] - Boolean, True if valid header, False if not.
+        results['ERRORS' - A list of header errors or warnings. 
+    """
+    def headerReview(self, header):
+        errors =[]
+        goodHeader = True
+        result = None
+        if ('START-OF-LOG' in header):
+            if (self.packLine(header['CONTEST']) in CONTEST):
+                pass
+            else:
+                errors.append('CONTEST: %s tag INVALID'% \
+                            (header['CONTEST']))
+                goodKey = False
+            
+            tag = self.packLine(header['LOCATION'])
+            if (\
+                (tag in INSTATE) or
+                (tag in US) or
+                (tag in CANADA) or
+                (tag in DX) ):
+                pass
+            else:
+                errors.append('LOCATION: %s tag INVALID'% \
+                            (header['LOCATION']))
+                goodKey = False
+            if (\
+                (header['CATEGORY-STATION']) and
+                (header['CATEGORY-OPERATOR']) and
+                (header['CATEGORY-POWER']) and
+                (header['CATEGORY-MODE']) ):
+                pass
+            else:
+                #Missing some CATEHORY data
+                errors.append(\
+                    'CATEGORY-xxx: tags may be incomplete')
+                goodKey = False
+            if (header['CALLSIGN'] == ''):
+                 errors.append('CALLSIGN: %s tag INVALID'% \
+                            (header['CALLSIGN']))
+                 goodHeader = False
+            #if (if re.search(regexstg, header['EMAIL']):
+            if (self.emailCheck(header['EMAIL'])):
+                pass
+            else:
+                errors.append('EMAIL: %s tag INVALID'% \
+                            (header['EMAIL']))
+                goodHeader = False
+        else:
+            #Not a CAB Header object
+            errors.append('No valid CAB Header')
+            goodHeader = False
+
+        result = { 'STAT' : goodHeader,
+                   'ERRORS' : errors }
+        return result
+
 
 
 if __name__ == '__main__':

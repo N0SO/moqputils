@@ -446,60 +446,7 @@ class MOQPCategory(MOQPLogFile):
             for item in target:
                destination.append(item)
         return destination
-
-    def headerReview(self, header):
-        errors =[]
-        goodHeader = True
-        if ('START-OF-LOG' in header):
-            if (self.packLine(header['CONTEST']) in CONTEST):
-                pass
-            else:
-                errors.append('CONTEST: %s tag INVALID'% \
-                            (header['CONTEST']))
-                goodKey = False
-            
-            tag = self.packLine(header['LOCATION'])
-            if (\
-                (tag in INSTATE) or
-                (tag in US) or
-                (tag in CANADA) or
-                (tag in DX) ):
-                pass
-            else:
-                errors.append('LOCATION: %s tag INVALID'% \
-                            (header['LOCATION']))
-                goodKey = False
-            if (\
-                (header['CATEGORY-STATION']) and
-                (header['CATEGORY-OPERATOR']) and
-                (header['CATEGORY-POWER']) and
-                (header['CATEGORY-MODE']) ):
-                pass
-            else:
-                #Missing some CATEHORY data
-                errors.append(\
-                    'CATEGORY-xxx: tags may be incomplete')
-                goodKey = False
-            if (header['CALLSIGN'] == ''):
-                 errors.append('CALLSIGN: %s tag INVALID'% \
-                            (header['CALLSIGN']))
-                 goodHeader = False
-            #if (if re.search(regexstg, header['EMAIL']):
-            if (self.emailCheck(header['EMAIL'])):
-                pass
-            else:
-                errors.append('EMAIL: %s tag INVALID'% \
-                            (header['EMAIL']))
-                goodHeader = False
-        else:
-            #Not a CAB Header object
-            errors.append('No valid CAB Header')
-            goodHeader = False
-
-        result = { 'STAT' : goodHeader,
-                   'ERRORS' : errors }
-        return result
-
+    
     """
     This method processes a single file passed in filename
     If the cabbonus parameter is present it will us used to
@@ -512,7 +459,7 @@ class MOQPCategory(MOQPLogFile):
         errors = []
         log = self.buildLog(fileName)
         if ( log ):
-            headerResult = self.headerReview(log['HEADER'])
+            headerStatus = self.headerReview(log['HEADER'])
             #result['HEADERSTAT'] = headerResult['STAT']
 
             """
@@ -555,7 +502,9 @@ class MOQPCategory(MOQPLogFile):
                         Missouri = True
                       
                 qsosummary = self.sumQSOList(log['QSOLIST'])
-            else: # No valid QSOs
+            else: # Not a valid log file
+                headerStatus['STAT'] = False
+                headerStatus['ERRORS'] = ['Unable to process Cabrillo log header.']
                 print('No valid QSOs for {}'.format(fileName))
                 # Set things that got skipped because no valid qsos.
                 Bonus = BonusAward()
@@ -573,6 +522,8 @@ class MOQPCategory(MOQPLogFile):
                 ShowMe = Missouri = False
          
             log['QSOSUM'] = qsosummary
+            
+            log['HEADERSTAT']= headerStatus
 
             log['BONUS'] = {   'W0MA': Bonus.Award['W0MA']['INLOG'],
                                'K0GQ':Bonus.Award['K0GQ']['INLOG'],
@@ -591,14 +542,15 @@ class MOQPCategory(MOQPLogFile):
             for qso in log['QSOLIST']:
                 if (qso['ERROR'] or len(qso['NOTES']) > 0):
                     qline = self.showQSO(qso)
-                    qerrors = self.buildQSOerrSum(qso, qcount)                          
+                    qerrors = self.buildQSOerrSum(qso, qso['QID'])                          
                     if (qerrors):
                         lerrors = self.errorCopy(qerrors, lerrors)
                 qcount += 1
             # Add any log header errors
-            if (headerResult['STAT'] == False):
-                lerrors.append('LOG HEADER ERRORS: ')
-                for l in headerResult['ERRORS']:
+            if ( (headerStatus['STAT'] == False) or 
+                        (len(headerStatus['ERRORS']) > 0) ):
+                lerrors.append('LOG HEADER WARNINGS/ERRORS: ')
+                for l in headerStatus['ERRORS']:
                     lerrors.append('\t {}'.format(l))
             log['ERRORS'] = lerrors
         return log

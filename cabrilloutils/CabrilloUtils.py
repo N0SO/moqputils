@@ -171,6 +171,7 @@ class CabrilloUtils():
         eol = False
         callsign = False
         qsol = False
+        plainText = False
         if(data):
             plainText=self.IsplainText(data)
             #plainText=data.isprintable()
