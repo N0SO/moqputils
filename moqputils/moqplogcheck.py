@@ -126,7 +126,7 @@ class MOQPLogcheck(MOQPCategory):
                    (log['QSOSUM']['INVALID'] == log['QSOSUM']['DUPES']) ):
                 logAccepted = True
              csvdata = self.exportcsv(log, headers)
-             print('{} Log accepted = {}'.format(call, logAccepted))
+             print('{} Log accepted = \t{}'.format(call, logAccepted))
              #print ('csvdata = ',csvdata)
              
              if (csvdata == None):

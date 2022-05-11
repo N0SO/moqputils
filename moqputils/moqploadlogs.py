@@ -97,6 +97,7 @@ class MOQPLoadLogs(MOQPLogcheck):
                         (call, testID))
                         return sucsess
                 #else:
+                #print(log['HEADER'])
                 newLogID = mydb.write_header(log['HEADER'], cabBonus)
                 if (newLogID):
                         #print('New log ID = %d for %s -- writing QSOS...'%(newLogID, call))

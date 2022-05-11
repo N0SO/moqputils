@@ -358,19 +358,19 @@ class MOQPQSOUtils(QSOUtils):
             else:
                 errors.append('CONTEST: %s tag INVALID'% \
                             (header['CONTEST']))
-                goodKey = False
+                goodHeader = False
             
             tag = self.packLine(header['LOCATION'])
-            if (\
-                (tag in INSTATE) or
+            if ((len(tag) > 0) and
+                ((tag in INSTATE) or
                 (tag in US) or
                 (tag in CANADA) or
-                (tag in DX) ):
+                (tag in DX)) ):
                 pass
             else:
                 errors.append('LOCATION: %s tag INVALID'% \
                             (header['LOCATION']))
-                goodKey = False
+                goodHeader = False
             if (\
                 (header['CATEGORY-STATION']) and
                 (header['CATEGORY-OPERATOR']) and
@@ -381,7 +381,7 @@ class MOQPQSOUtils(QSOUtils):
                 #Missing some CATEHORY data
                 errors.append(\
                     'CATEGORY-xxx: tags may be incomplete')
-                goodKey = False
+                goodHeader = False
             if (header['CALLSIGN'] == ''):
                  errors.append('CALLSIGN: %s tag INVALID'% \
                             (header['CALLSIGN']))
