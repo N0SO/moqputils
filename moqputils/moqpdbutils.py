@@ -414,9 +414,9 @@ class MOQPDBUtils():
         header['ADDRESS-COUNTRY'] = \
           qutil.trimAndEscape(header['ADDRESS-COUNTRY'], 25)
         
-        if(type(header['NOTES']) is list):
+        if(type(header['ERRORS']) is list):
             qu = QSOUtils()
-            header['NOTES'] = qu.packNote(header['NOTES'])
+            header['ERRORS'] = qu.packNote(header['ERRORS'])
 
         query = """INSERT INTO LOGHEADER(START,
                       CALLSIGN,
@@ -482,7 +482,7 @@ class MOQPDBUtils():
                   header['SOAPBOX'],
                   header['END-OF-LOG'],
                   cabBonus,
-                  header['NOTES'] ]     
+                  header['ERRORS'] ]     
         logID = self.write_pquery(query, values)
         return logID
     

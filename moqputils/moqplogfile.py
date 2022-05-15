@@ -164,8 +164,8 @@ class MOQPLogFile(MOQPQSOUtils):
                newList = sorted(qsodictList, 
                             key=lambda i: i[sortKey],
                             reverse = sortLtoS)
-           except: # Catch everything
-               e = sys.exc_info()[0]
+           except Exception as e: # Catch everything
+               #e = sys.exc_info()[0]
                print( "error data: {}".format(e) )
     
            return newList       
