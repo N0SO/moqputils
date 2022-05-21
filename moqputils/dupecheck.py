@@ -13,6 +13,13 @@ Update History:
 - V0.1.1
 - Added code to make sure oldest QSO is kept and newer
 - qso is marked as DUPE regardless of order in log.
+* Tue May 17 2022  Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.2
+- Added code to use the ['QID'] key/field to mark DUPES.
+- The previous version was marking the correct DUPE with
+- the wrong DUPE ID, making it difficult for a human to
+- confirm the DUPE. This was only on the MOQPCategory-
+- updates branch and was never a problem in the Master.
 """
 
 from cabrilloutils.qsoutils import QSOUtils
@@ -62,7 +69,8 @@ class DUPECheck(QSOUtils):
           for q in range(qcount): 
              if (q > 0): #Skip first QSO
                  if newlist[q]['ERROR'] == False: #Skip invalid QSOs
-                    for t in range(qcount-1):
+                    #for t in range(qcount-1):
+                    for t in range(q-1):
                          if (t != q) and (newlist[t]['ERROR'] == False):
                              dupe = self.compareqsos(newlist[q], 
                                                  newlist[t])
@@ -74,7 +82,8 @@ class DUPECheck(QSOUtils):
                                  else:
                                      dupeOf = t
                                      dupeIs = q
-                                 newlist[dupeOf]['DUPE'] = dupeIs+1
+                                 newlist[dupeOf]['DUPE'] = newlist[dupeIs]['QID']
                                  #newlist[dupeOf]['NOTES'] = 'DUPE of QSO %d'%(dupeIs+1)
                                  newlist[dupeOf]['ERROR'] = True
+                                 #print('QSO {} DUPE of qso {}:\n{}\n{}'.format(newlist[dupeOf]['QID'],newlist[dupeIs]['QID'], newlist[t], newlist[q]))
        return newlist

@@ -13,6 +13,8 @@ Update History:
 - inhereting from it instead of the more generic QSOUtils.
 - Added call to qthDXSet() to allow the mass number of logs
 - that logged DX entities using their DX prefix instead of DX
+* Fri May 20 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Fix for Addressing Issue #32
 """
 
 from datetime import timedelta
@@ -80,8 +82,10 @@ class MOQPQSOValidator(MOQPQSOUtils):
         urcall = self.stripCallsign(qso['URCALL'])
         urlogid = self.db.CallinLogDB(urcall)
         urqsos = self.db.read_pquery(\
-            'SELECT ID,URCALL FROM QSOS WHERE LOGID=%s',
-                                                [urlogid])
+            """SELECT ID,URCALL 
+               FROM QSOS 
+               WHERE LOGID=%s AND URCALL LIKE %s""",
+                                    [urlogid, mycall])
         #print(urqsos)
         inTheirLog = False
         for urq in urqsos:
@@ -108,7 +112,7 @@ class MOQPQSOValidator(MOQPQSOUtils):
                                                         %(urcall)
                 query =\
                      'UPDATE QSOS SET QSL=0, VALID=0, NOQSOS=1, '+\
-                     'NOTE=%s WHERE ID=%s'
+                     'NOLOG=0, NOTE=%s WHERE ID=%s'
             else:
                 qso['NOTE'] = 'No log received from %s.'\
                                                         %(urcall)

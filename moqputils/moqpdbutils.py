@@ -21,6 +21,11 @@ Update History:
 - V0.1.5 - Added:
 - More tweaks to support date / time as a datetime object.
 - More tweaks to support consolidated log processing code
+* Sun May 15 2022 Mike Heitmmann, N0SO <n0so@arrl.net>
+- V0.1.6 
+- Fix for Issue #20.
+
+
 """
 
 import MySQLdb
@@ -42,7 +47,7 @@ class MOQPDBUtils():
                        user = None, 
                        passwd = None, 
                        database = None):
-       self.VERSION = '0.1.4' 
+       self.VERSION = '0.1.6' 
        if (host):
            #print('Attempting connection to: %s as:%s pw:%s db:%s'%(host, user, passwd, database))
            self.mydb = self.connectDB(host, 
@@ -559,15 +564,9 @@ class MOQPDBUtils():
 
     def write_qsolist(self, logID, qsolist):
         success = False
-        #qcount = 0
         qidlist = []
-        #oqidlist = []
 
         for qso in qsolist:
-            if (qso['DUPE'] > 0):
-                di = qso['DUPE']
-                if (di >= 1):
-                    qso['DUPE'] = qidlist[di-1]
             qID = self.write_qsodata(logID, qso)
             if (qID):
                 qidlist.append(qID)
@@ -575,10 +574,25 @@ class MOQPDBUtils():
                 #oqidlist.append(qso['DUPE'])
                 #qcount += 1
             else:
-                print('Error writing QSO data!')
+                print('Error writing QSO data!\n{}'.format(qso))
                 success = False
                 break
-        #print(oqidlist, qidlist)
+
+        """
+        Update DUPES  to referance database QSO ID instead of
+        log file  QSO entry numbers.
+        """
+        maxQID = len(qidlist)
+        for qid in qidlist:
+                udupe = self.read_pquery(
+                """SELECT DUPE FROM QSOS WHERE LOGID=%s AND ID=%s""",
+                                                [logID,qid ])
+                if (udupe[0]['DUPE'] > 0):
+                    t=self.write_pquery("""
+                                        UPDATE QSOS 
+                                        SET DUPE = %s
+                                        WHERE ID = %s""",
+                                        [qidlist[udupe[0]['DUPE'] - 1], qid])
         return success
         
     def get_log_parts(self, call):
