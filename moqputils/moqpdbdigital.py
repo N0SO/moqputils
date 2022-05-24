@@ -34,6 +34,12 @@ Update History:
 -     repeating the previous operations.
    2. Now deletes old tables and re-creates them with 
       fresh reults each time.  
+* Mon May 23 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0 - Changes for 2022
+-          Fix for issue #35
+-          Code now queries for digital only contacts with
+-          W0MA and K0GQ to use for adding bonus points for
+-          those stations.
 """
 
 from moqputils.moqpdbcategory import *
@@ -42,7 +48,7 @@ from moqputils.bonusaward import BonusAward
 from moqputils.moqpdefs import DIGIMODES
 from moqputils.moqpmults import *
 
-VERSION = '0.1.1' 
+VERSION = '1.0.0' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\t' + \
@@ -62,6 +68,8 @@ class MOQPDBDigital(MOQPDBCategory):
           'LOGID int NOT NULL, '+\
           'QSOS int NULL, '+\
           'MULTS int NULL, '+\
+          'W0MABONUS int NULL, '+\
+          'K0GQBONUS int NULL, '+\
           'SCORE int NULL, '+\
           'PRIMARY KEY (ID));'
         mydb.write_query(dquery) # Delete old digital tables  
@@ -69,11 +77,13 @@ class MOQPDBDigital(MOQPDBCategory):
         for entry in digidata:
             digid = mydb.write_pquery(\
                'INSERT INTO DIGITAL '+\
-               '(LOGID, QSOS, MULTS, SCORE) '+\
-               'VALUES (%s, %s, %s, %s)',
+               '(LOGID, QSOS, MULTS, W0MABONUS, K0GQBONUS, SCORE) '+\
+               'VALUES (%s, %s, %s, %s, %s, %s)',
                [ entry['LOGID'], 
                  entry['QSOS'],
                  entry['MULTS'],
+                 entry['W0MABONUS'],
+                 entry['K0GQBONUS'],
                  entry['SCORE'] ])
             #print('Writing %d\n'%(digid))
 
@@ -112,7 +122,18 @@ class MOQPDBDigital(MOQPDBCategory):
               digimults = MOQPMults(qsoList)
               entry['MULTS'] = digimults.sumMults()
               if (entry['MULTS'] == 0): entry['MULTS']=1
-              entry['SCORE'] = ((len(qsoList) * 2) * entry['MULTS']) + nextEnt['CABBONUS'] + nextEnt['W0MABONUS'] + nextEnt['K0GQBONUS']
+              entry['W0MABONUS'] = 0
+              entry['K0GQBONUS'] = 0
+              bonus = BonusAward(qsoList)
+              if (bonus.Award['W0MA']['INLOG']):
+                  entry['W0MABONUS']=100
+              if (bonus.Award['K0GQ']['INLOG']):
+                  entry['K0GQBONUS']=100
+              entry['SCORE'] = ((len(qsoList) * 2)\
+                                 * entry['MULTS']) + \
+                                 nextEnt['CABBONUS'] + \
+                                 entry['W0MABONUS'] + \
+                                 entry['K0GQBONUS']
               digresult.append(entry)
            #print(len(qsoList), nextEnt['RYQSO'], entry['MULTS'])
            #print(nextEnt)

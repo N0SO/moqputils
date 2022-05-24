@@ -265,7 +265,7 @@ class MOQPHtmlReport(MOQPDBCatReport):
         return htmlList
         
     def displayDoc(self, htmlDoc):
-       PAGETITLE = '2021 Missouri QSO Party Scores by Category'
+       PAGETITLE = '2022 Missouri QSO Party Scores by Category'
        STYLESHEET = './styles.css'
        WRAPPER = """<html>
           <head>

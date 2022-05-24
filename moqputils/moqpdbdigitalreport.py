@@ -118,7 +118,7 @@ class MOQPDBDigitalReport():
            query += 'AND LOGHEADER.CALLSIGN="%s" '%(call)
 
        query += 'JOIN SUMMARY ON DIGITAL.LOGID = SUMMARY.LOGID '+\
-                'ORDER BY LOCATION ASC, SCORE DESC;'
+                'ORDER BY SCORE DESC;'
 
        digList = mydb.read_query(query)
        return digList
