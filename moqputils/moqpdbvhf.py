@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-moqpdbcategory  - Same features as moqpdbcategory, except read only
+moqpdbvhf       - Same features as moqpdbcategory, except read only
                   VHF QSOs for the compare
 
                   The main dfference from the moqpcategory class 
@@ -40,6 +40,8 @@ Update History:
 -    6. Remove all report generation code. Use 
 =       moqpdbvhfreports class to display results.
 - Lots of 'extra' code was removed.      
+* Tue May 24 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0 -  Updated code to fix issue #34.
 """
 
 from moqputils.moqpdbcategory import *
@@ -70,21 +72,26 @@ class MOQPDBVhf(MOQPDBCategory):
           'PHQSO int NULL, '+\
           'RYQSO int NULL, '+\
           'MULTS int NULL, '+\
+          'W0MABONUS int  NULL, ' +\
+          'K0GQBONUS int NULL, ' +\
           'SCORE int NULL, '+\
           'PRIMARY KEY (ID));'
         mydb.write_query(dquery) # Delete old digital tables  
         mydb.write_query(dquery1) # Delete old digital tables  
         for entry in vdata:
             digid = mydb.write_pquery(\
-               'INSERT INTO VHF '+\
-               '(LOGID, QSOS, CWQSO, PHQSO, RYQSO, MULTS, SCORE) '+\
-               'VALUES (%s, %s, %s, %s, %s, %s, %s)',
+             """INSERT INTO VHF 
+                (LOGID, QSOS, CWQSO, PHQSO, RYQSO, 
+                 MULTS, W0MABONUS, K0GQBONUS, SCORE) 
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                [ entry['LOGID'], 
                  entry['QSOS'],
                  entry['CWQSO'],
                  entry['PHQSO'],
                  entry['RYQSO'],
                  entry['MULTS'],
+                 entry['W0MABONUS'],
+                 entry['K0GQBONUS'],
                  entry['SCORE'] ])
             #print('Writing %d\n'%(digid))
 
@@ -108,6 +115,8 @@ class MOQPDBVhf(MOQPDBCategory):
                     'PHQSO': 0,
                     'RYQSO': 0,
                     'MULTS': 0,
+                    'W0MABONUS': 0,
+                    'K0GQBONUS': 0,
                     'SCORE': 0 } 
 
            qsoList = mydb.read_query(qsoqry)
@@ -122,6 +131,11 @@ class MOQPDBVhf(MOQPDBCategory):
               vhfmults = MOQPMults(qsoList)
               entry['MULTS'] = vhfmults.sumMults()
               if (entry['MULTS'] == 0): entry['MULTS']=1
+              bonus = BonusAward(qsoList)
+              if (bonus.Award['W0MA']['INLOG']):
+                  entry['W0MABONUS']=100
+              if (bonus.Award['K0GQ']['INLOG']):
+                  entry['K0GQBONUS']=100
               entry['SCORE'] = ((((entry['CWQSO'] +
                                    entry['RYQSO']) * 2) +\
                                    entry['PHQSO']) *\

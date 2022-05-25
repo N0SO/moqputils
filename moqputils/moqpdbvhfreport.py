@@ -38,6 +38,9 @@ Update History:
 -    6. Remove all report generation code. Use 
 =       moqpdbvhfreports class to display results.
 - Lots of 'extra' code was removed.      
+* Tue May 24 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0 - Fix for issue #34 - get W0MA/K0GQ BONUS
+-          info from VHF table, notn SUMMARY table..
 """
 
 from moqputils.moqpdbutils import *
@@ -45,7 +48,7 @@ from moqputils.configs.moqpdbconfig import *
 from htmlutils.htmldoc import htmlDoc
 
 
-VERSION = '0.1.0'
+VERSION = '1.0.0'
 #Column headers
 COLUMNHEADERS = \
      'RANKING\tCALLSIGN\tOPS\tLOCATION\tSCORE\t'+\
@@ -140,7 +143,6 @@ class MOQPDBVhfReport():
        cquery = 'SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, '+\
                 'LOGHEADER.OPERATORS, LOGHEADER.LOCATION, ' +\
                 'VHF.*, '+\
-                'SUMMARY.W0MABONUS, SUMMARY.K0GQBONUS, '+\
                 'SUMMARY.CABBONUS '+\
                 'FROM VHF JOIN LOGHEADER ON '+\
                 'LOGHEADER.ID=VHF.LOGID '
