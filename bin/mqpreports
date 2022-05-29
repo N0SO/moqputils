@@ -29,12 +29,15 @@ Update History:
 * Thu Sep 01 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.2.1
 - Adding code for mqpdevpath.py script 
+* Fri May 27 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.2.2 - Added -t <html> <csv> to hf, vhf, digital and club scores 
+-          report and to the most counties report.
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.1.3'
+VERSION = '0.2.2'
 ARGS = None
 
 # If the development module source paths exist, 
@@ -121,6 +124,14 @@ class get_args():
                                    default=None,
             help="""Compute QSO error statistics for the callsign
                     specified.""")
+        parser.add_argument('-t', '--reportType',
+                                   default = 'csv',
+            help="""Set report type for output. Only valid if more than
+                    one report output type is avaible. Options are: 
+                    csv (Comma Separated Variables) for printing or
+                    for import to a spreadsheet, or 
+                    html for web page use.
+                    default value is csv""")
 
 
         args = parser.parse_args()
@@ -131,22 +142,29 @@ if __name__ == '__main__':
    args = get_args()
 
    #print (args.args)
-   
+
+   if (args.args.reportType):
+       reportType = args.args.reportType.lower()
+   else:
+       reportType='csv'   
    if (args.args.callsign):
-       if ((args.args.callsign == 'club') or \
-           (args.args.callsign == 'club-update') ):
-           from moqputils.moqpdbclubreport import MOQPDBClubReport
-           app = MOQPDBClubReport(args.args.callsign)
-       elif (args.args.callsign == 'HTML'):
-           #from moqputils.moqphtmlreport import MOQPHtmlReport
-           from moqputils.moqpdbcatreport import MOQPHtmlReport
-           app = MOQPHtmlReport('HTML')   
-       elif (args.args.callsign == 'club-html'):
-           from moqputils.moqpdbclubreport import HTML_ClubReport
-           app = HTML_ClubReport(args.args.callsign)
+       args.args.callsign =args.args.callsign.upper()
+       if ((args.args.callsign == 'CLUB') or \
+           (args.args.callsign == 'CLUB-UPDATE') ):
+           if ('csv' in reportType):
+               print('running club report')
+               from moqputils.moqpdbclubreport import MOQPDBClubReport
+               app = MOQPDBClubReport(args.args.callsign)
+           if ('html' in reportType):    
+               from moqputils.moqpdbclubreport import HTML_ClubReport
+               app = HTML_ClubReport(args.args.callsign)
        else:
-           from moqputils.moqpdbcatreport import MOQPDBCatReport
-           app = MOQPDBCatReport(args.args.callsign)
+           if ('csv' in reportType):
+               from moqputils.moqpdbcatreport import MOQPDBCatReport
+               app = MOQPDBCatReport(args.args.callsign)
+           elif ('html' in reportType):
+               from moqputils.moqpdbcatreport import MOQPHtmlReport
+               app = MOQPHtmlReport('HTML')   
    elif (args.args.cntyline):
        from moqputils.countylineops import CountyLineOps
        app = CountyLineOps(args.args.cntyline,
@@ -158,35 +176,39 @@ if __name__ == '__main__':
        from moqputils.moqpdbcountycount import *
        app = MOQPDBCountyCountRpt(args.args.logreport)
    elif (args.args.digireport):
-       if (args.args.digireport == 'HTML'):
+       if ('html' in reportType):
            from moqputils.moqpdbdigitalreport import HTML_DigitalRpt
            app = HTML_DigitalRpt(args.args.digireport)
        else:
            from moqputils.moqpdbdigitalreport import MOQPDBDigitalReport
            app = MOQPDBDigitalReport(args.args.digireport)
    elif (args.args.vhfreport):
-       if (args.args.vhfreport == 'HTML'):
+       if ('html' in reportType):
            from moqputils.moqpdbvhfreport import HTML_VHFRpt
            app = HTML_VHFRpt(args.args.vhfreport)
        else:
            from moqputils.moqpdbvhfreport import MOQPDBVhfReport
            app = MOQPDBVhfReport(args.args.vhfreport)
    elif (args.args.mostcounties):
+       if ('html' in reportType):
+           args.args.mostcounties='html'
        from moqputils.moqpdbcountyrpt import MostCounties
        app = MostCounties(args.args.mostcounties)
    elif (args.args.showme):
        if (args.args.showme.lower() == 'showme'):
-           from moqputils.moqpdbcertificates import SHOWMEReport
-           app = SHOWMEReport(args.args.showme)
-       elif (args.args.showme.lower() == 'showme-html'):
-           from moqputils.moqpdbcertificates import HTMLShowMe
-           app = HTMLShowMe(args.args.showme)
+           if ('csv' in reportType):
+               from moqputils.moqpdbcertificates import SHOWMEReport
+               app = SHOWMEReport(args.args.showme)
+           elif ('html' in reportType):
+               from moqputils.moqpdbcertificates import HTMLShowMe
+               app = HTMLShowMe(args.args.showme)
        elif (args.args.showme.lower() == 'missouri'):
-           from moqputils.moqpdbcertificates import MISSOURIReport
-           app = MISSOURIReport(args.args.showme)
-       elif (args.args.showme.lower() == 'missouri-html'):
-           from moqputils.moqpdbcertificates import HTMLMORpt
-           app = HTMLMORpt(args.args.showme)
+           if ('csv' in reportType):
+               from moqputils.moqpdbcertificates import MISSOURIReport
+               app = MISSOURIReport(args.args.showme)
+           elif ('html' in reportType):
+               from moqputils.moqpdbcertificates import HTMLMORpt
+               app = HTMLMORpt(args.args.showme)
    elif (args.args.deletelog):
        from moqputils.deletelog import deleteLog
        app = deleteLog(args.args.deletelog)

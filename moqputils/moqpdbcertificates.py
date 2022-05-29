@@ -371,7 +371,7 @@ class HTMLShowMe(SHOWMEReport):
 
            from htmlutils.htmldoc import htmlDoc   
            d = htmlDoc()
-           d.openHead('2021 Missouri QSO Party Showme Report',
+           d.openHead('{} Missouri QSO Party Showme Report'.format(YEAR),
                   './styles.css')
            d.closeHead()
            d.openBody()
@@ -379,7 +379,7 @@ class HTMLShowMe(SHOWMEReport):
                     tagType='comment') 
                          
            d.add_unformated_text(\
-             """<h2 align='center'>2021 Missouri QSO Party SHOWME Report</h2>""")
+             """<h2 align='center'>{} Missouri QSO Party SHOWME Report</h2>""".format(YEAR))
            d.addTablefromDict(dictList=showmeList, 
                           HeaderList=LABELS1,
                           caption='SHOWME Status By Call',
@@ -456,7 +456,7 @@ class HTMLMORpt(MISSOURIReport):
 
            from htmlutils.htmldoc import htmlDoc   
            d = htmlDoc()
-           d.openHead('2021 Missouri QSO Party MISSOURI Report',
+           d.openHead('{} Missouri QSO Party MISSOURI Report'.format(YEAR),
                   './styles.css')
            d.closeHead()
            d.openBody()
@@ -464,7 +464,7 @@ class HTMLMORpt(MISSOURIReport):
                     tagType='comment') 
                          
            d.add_unformated_text(\
-             """<h2 align='center'>2021 Missouri QSO Party MISSOURI Report</h2>""")
+             """<h2 align='center'>{} Missouri QSO Party MISSOURI Report</h2>""".format(YEAR))
            d.addTablefromDict(dictList=showmeList, 
                           HeaderList=LABELS2,
                           caption='MISSOURI Status By Call',

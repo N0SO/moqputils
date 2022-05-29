@@ -42,6 +42,8 @@ Update History:
 - Lots of 'extra' code was removed.      
 * Tue May 24 2022 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.0 -  Updated code to fix issue #34.
+* Wed May 25 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.1 -  Updated code to fix issue #34 (missed two lines).
 """
 
 from moqputils.moqpdbcategory import *
@@ -141,8 +143,8 @@ class MOQPDBVhf(MOQPDBCategory):
                                    entry['PHQSO']) *\
                                    entry['MULTS']) +\
                                    nextEnt['CABBONUS'] +\
-                                   nextEnt['W0MABONUS'] +\
-                                   nextEnt['K0GQBONUS']
+                                   entry['W0MABONUS'] +\
+                                   entry['K0GQBONUS']
               Vresult.append(entry)
        self.saveResults(mydb, Vresult)
        print('%d Stations with VHF+ scores summarized database.'%(len(Vresult)))

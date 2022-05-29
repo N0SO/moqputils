@@ -137,7 +137,7 @@ class HTMLPlaques(CATEGORYPlaques):
        if (tsvdata):
            from htmlutils.htmldoc import htmlDoc   
            d = htmlDoc()
-           d.openHead('2021 Missouri QSO Party First Place Plaques',
+           d.openHead('{} Missouri QSO Party First Place Plaques'.format(YEAR),
                   './styles.css')
            d.closeHead()
            d.openBody()
@@ -145,11 +145,11 @@ class HTMLPlaques(CATEGORYPlaques):
                     tagType='comment') 
                          
            d.add_unformated_text(\
-             """<h2 align='center'>2021 Missouri QSO Party First Place Plaques</h2>""")
+             """<h2 align='center'>{} Missouri QSO Party First Place Plaques</h2>""".format(YEAR))
            tsvlist=d.tsvlines2list(tsvdata)
            d.addTable(tdata=tsvlist, 
                           header=True,
-                          caption='2021 Missouri QSO Party First Place Plaque Winners')
+                          caption='{} Missouri QSO Party First Place Plaque Winners'.format(YEAR))
            d.closeBody()
            d.closeDoc()
 

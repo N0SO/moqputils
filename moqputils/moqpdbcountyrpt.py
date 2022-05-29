@@ -15,6 +15,9 @@ Update History:
 - saving the county abbreviation and date/time. This was
 - added to resolve a tie situation in the Most Counties Worked
 - Award.
+* Fri May 27 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.0 - Added code to use YEAR parameter set in moqpdefs.py in
+-          titles so they don't have to be updated every year.
 """
 
 from cabrilloutils.contestmults import *
@@ -307,7 +310,7 @@ class MostCounties():
         html.headerend()
         html.bodystart()
         html.doc += """
-        <h1>2021 Missouri QSO Party Most Counties Worked</h1>
+        <h1 align='center'>{} Missouri QSO Party Most Counties Worked</h1>
         <p> 
         <table>
         <caption>MOST COUNTIES</caption>
@@ -321,7 +324,7 @@ class MostCounties():
         <th><strong>COUNTY NAMES</strong></th>
         <th><strong>LAST COUNTY WORKED /TIME</strong></th>
         </tr>
-        """       
+        """.format(YEAR)  
         if (data):
            rank = 0
            for ent in data:

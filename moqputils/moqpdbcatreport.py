@@ -25,13 +25,16 @@ Update History:
 -      Location.
 * Sun Sep 05 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 - Updates for 2021 and new devpath.py
+* Fri May 27 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Added code to use YEAR parameter set in moqpdefs.py in
+-          titles so they don't have to be updated every year.
 """
 
 from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
 
 
-VERSION = '0.1.0' 
+VERSION = '0.1.1' 
 
 COLUMNHEADERS = \
      'CALLSIGN\tOPS\tLOCATION\tMOQP CATEGORY\t'+\
@@ -265,7 +268,8 @@ class MOQPHtmlReport(MOQPDBCatReport):
         return htmlList
         
     def displayDoc(self, htmlDoc):
-       PAGETITLE = '2022 Missouri QSO Party Scores by Category'
+       PAGETITLE = '{} Missouri QSO Party Scores by Category'\
+                         .format(YEAR)
        STYLESHEET = './styles.css'
        WRAPPER = """<html>
           <head>

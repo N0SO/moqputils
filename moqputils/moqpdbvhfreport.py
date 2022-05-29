@@ -40,7 +40,10 @@ Update History:
 - Lots of 'extra' code was removed.      
 * Tue May 24 2022 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.0 - Fix for issue #34 - get W0MA/K0GQ BONUS
--          info from VHF table, notn SUMMARY table..
+-          info from VHF table, not SUMMARY table..
+* Fri May 27 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.1 - Added code to use YEAR parameter set in moqpdefs.py in
+-          titles so they don't have to be updated every year.
 """
 
 from moqputils.moqpdbutils import *
@@ -48,7 +51,7 @@ from moqputils.configs.moqpdbconfig import *
 from htmlutils.htmldoc import htmlDoc
 
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 #Column headers
 COLUMNHEADERS = \
      'RANKING\tCALLSIGN\tOPS\tLOCATION\tSCORE\t'+\
@@ -191,7 +194,7 @@ class HTML_VHFRpt(MOQPDBVhfReport):
 
     def appMain(self, callsign):
        d = htmlDoc()
-       d.openHead('2021 Missouri QSO Party VHF ONLY Scores',
+       d.openHead('{} Missouri QSO Party VHF ONLY Scores'.format(YEAR),
                   './styles.css')
        d.closeHead()
        d.openBody()
@@ -199,7 +202,7 @@ class HTML_VHFRpt(MOQPDBVhfReport):
                     tagType='comment') 
                          
        d.add_unformated_text(\
-             """<h2 align='center'>2021 Missouri QSO Party VHF ONLY Scores</h2>""")
+             """<h2 align='center'>{} Missouri QSO Party VHF ONLY Scores</h2>""".format(YEAR))
 
        modictList = self.fetchVHF(callsign,ftype='mo')
        rankeddictList = self.addRankingField(modictList,
