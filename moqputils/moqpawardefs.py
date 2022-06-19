@@ -3,7 +3,7 @@ STATELIST = [  ["ALABAMA","'AL','ALABAMA'"],
                ["ALASKA","'AK','ALASKA'"],
                ["ARIZONA","'AZ','ARIZONA'"],
                ["ARKANSAS","'AR','ARKANSAS'"],
-               ["CALIFORNIA", "'CA','EB','LAX','ORG','SBA','SCV','SDG','SF','SJV','SV','PAC'"],
+               ["CALIFORNIA","'CA','EB','LAX','ORG','SBA','SCV','SDG','SF','SJV','SV','PAC'"],
                ["COLORADO","'CO','COLORADO'"],
                ["CONNECTICUT","'CT','CONNECTICUT'"],
                ["DELAWARE","'DE','DELAWARE'"],
@@ -37,7 +37,7 @@ STATELIST = [  ["ALABAMA","'AL','ALABAMA'"],
                ["OKLAHOMA","'OK','OKLAHOMA'"],
                ["OREGON","'OR','OREGON'"],
                ["MAINE","'ME','MAINE'"],
-               ["PENNSYLVANIA", "'PA','EPA','WPA','PENNSYLVANIA'"],
+               ["PENNSYLVANIA","'PA','EPA','WPA','PENNSYLVANIA'"],
                ["RHODE ISLAND","'RI','RHODE ISLAND'"],
                ["SOUTH CAROLINA","'SC','SOUTH CAROLINA'"],
                ["SOUTH DAKOTA","'SD','SOUTH DAKOTA'"],
@@ -101,11 +101,22 @@ PLAQUELIST = [ ["MISSOURI FIXED MULTI-OP","'MISSOURI FIXED MULTI-OP'"],
                       "'MISSOURI ROOKIE', 'ROOKIE'"],
     ["MISSOURI SCHOOL CLUB", 
                        "'MISSOURI SCHOOL CLUB'"],
-    ["MISSOURI CLUB", "'MISSOURI CLUB'"],
     ["HIGHEST DIGITAL","'HIGHEST DIGITAL', "+\
                        "'MISSOURI HIGHEST DIGITAL'"],
     ["HIGHEST NUMBER OF COUNTIES",
                         "'HIGHEST NUMBER OF COUNTIES'"] ]
+
+ADDITIONALFIRST = [\
+    'MISSOURI EXPEDITION MULTI-OP',
+    'MISSOURI EXPEDITION SINGLE-OP HIGH POWER',
+    'MISSOURI EXPEDITION SINGLE-OP LOW POWER',
+    'MISSOURI EXPEDITION SINGLE-OP QRP POWER',
+    'US MULTI-OP',
+    'CANADA',
+    'MISSOURI CLUB',
+    'NON-MISSOURI HIGHEST DIGITAL',
+    'MISSOURI VHF',
+    'NON-MISSOURI VHF' ]
 
 AWARDLIST = [\
     'MISSOURI FIXED MULTI-OP',
@@ -120,20 +131,25 @@ AWARDLIST = [\
     'MISSOURI MOBILE MULTI-OP LOW POWER',
     'MISSOURI MOBILE SINGLE-OP LOW POWER MIXED',
     'MISSOURI MOBILE SINGLE-OP LOW POWER CW',
-    'MISSOURI MOBILE SINGLE-OP LOW POWER Phone',
+    'MISSOURI MOBILE SINGLE-OP LOW POWER PHONE',
     'US SINGLE-OP HIGH POWER',
     'US SINGLE-OP LOW POWER',
     'US SINGLE-OP QRP POWER',
     'US MULTI-OP',
     'CANADA',
     'DX',
-    'MISSOURI ROOKIE',
-    'MISSOURI SCHOOL CLUB',
-    'MISSOURI CLUB',
-    'MISSOURI HIGHEST DIGITAL',
-    'NON-MISSOURI HIGHEST DIGITAL',
-    'MISSOURI VHF',
-    'NON-MISSOURI-VHF',
-    'HIGHEST NUMBER OF COUNTIES' ]
+    'CHECKLOG']
 
+if __name__ == '__main__':
+    """ For testing only """
+    print("\nSTATELIST len = {}".format(len(STATELIST)))
+    for state in STATELIST:
+        print('{}\n\t{}'.format(state[0], state[1]))
 
+    print('\nAWARDLIST len = {}'.format(len(AWARDLIST)))
+    for award in AWARDLIST:
+        print('{}'.format(award))
+
+    print('\nPLAQUELIST len = {}'.format(len(PLAQUELIST)))
+    for plaque in PLAQUELIST:
+        print('{}\n\t{}'.format(plaque[0], plaque[1]))

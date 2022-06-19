@@ -28,13 +28,20 @@ Update History:
 * Fri May 27 2022 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.1 - Added code to use YEAR parameter set in moqpdefs.py in
 -          titles so they don't have to be updated every year.
+* Sat Jun 18 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0 - Relase and..
+-          Added code to use htmlDoc class for html reports.
+-          Added code to order score categories by what is
+-          defined in moqpawardefs.py AWARDLIST. This was done
+-          for both CSV/TSV and HTML reports.
 """
 
 from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
+from moqputils.moqpawardefs import AWARDLIST
 
 
-VERSION = '0.1.1' 
+VERSION = '1.0.0' 
 
 COLUMNHEADERS = \
      'CALLSIGN\tOPS\tLOCATION\tMOQP CATEGORY\t'+\
@@ -177,6 +184,53 @@ class MOQPDBCatReport():
                 if (csvdata): 
                     csvList.append(csvdata)
         return csvList
+
+    def processOneCat(self, mydb, cati):
+        csvList = []
+        cat=cati.strip()
+        csvList.append(cat)
+        sumdata = mydb.read_query(\
+              """SELECT * from SUMMARY 
+                 WHERE MOQPCAT='{}'
+                 ORDER BY SCORE DESC, LOCATION ASC""".format(cat))
+        if (sumdata):
+            csvList.append(COLUMNHEADERS)
+            for thisStation in sumdata:
+                #print('ID=%s'%(thisStation['ID']))
+                thisreport = self.parseReport(mydb, thisStation)
+                csvdata = self.exportcsvsumdata(thisreport, False)
+                if (csvdata): 
+                    csvList.append(csvdata)
+        else:
+            csvList.append('NO ENTRY')
+            
+        return csvList
+
+    def processCatSums(self, mydb, catlist=AWARDLIST):
+        csvList = []
+        reportList = [] 
+        for cati in catlist:
+           cat=cati.strip()
+
+           csvList.append(cat)
+           sumdata = mydb.read_query(\
+              """SELECT * from SUMMARY 
+                 WHERE MOQPCAT='{}'
+                 ORDER BY SCORE DESC, LOCATION ASC""".format(cat))
+           if (sumdata):
+                csvList.append(COLUMNHEADERS)
+                for thisStation in sumdata:
+                    #print('ID=%s'%(thisStation['ID']))
+                    thisreport = self.parseReport(mydb, thisStation)
+                    reportList.append(thisreport)
+                    csvdata = self.exportcsvsumdata(thisreport, False)
+                    if (csvdata): 
+                        csvList.append(csvdata)
+           else:
+               csvList.append('NO ENTRY')
+            
+        return csvList
+            
     
     def showReport(self, csvdata):
       if (csvdata):
@@ -187,8 +241,10 @@ class MOQPDBCatReport():
        csvdata = 'No Data.'
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
-       if (callsign == 'allcalls'):
+       if (callsign == 'ALLCALLS'):
            csvdata=self.processSums(mydb)
+       elif (callsign == 'ALLCATS'):
+           csvdata=self.processCatSums(mydb)
        else:
            csvdata = self.processOneSum(mydb, callsign)
            #print(csvdata)
@@ -198,100 +254,79 @@ class MOQPHtmlReport(MOQPDBCatReport):
 
     def __init__(self, callsign):
         if (callsign):
-            self.appMain(callsign)
-            
-    def makeCell(self, cdata):
-        return '<td>%s</td>'%(cdata)
-            
-    def formatStationData(self, ranking, stationData):
-        retData = '<tr>\n'
-        if ranking<3:
-            retData += self.makeCell(ranking)
-        else:
-            retData += '<td></td>'
-        retData +='\n'
-        retData += '</td>\n'
-        retData += self.makeCell(stationData['CALLSIGN']) + '\n'
-        retData += self.makeCell(stationData['OPERATORS']) + '\n'
-        retData += self.makeCell(stationData['CWQSO']) + '\n'
-        retData += self.makeCell(stationData['PHQSO']) + '\n'
-        retData += self.makeCell(stationData['RYQSO']) + '\n'
-        retData += self.makeCell(stationData['MULTS']) + '\n'
-        retData += self.makeCell(stationData['W0MABONUS']) + '\n'
-        retData += self.makeCell(stationData['K0GQBONUS']) + '\n'
-        retData += self.makeCell(stationData['CABBONUS']) + '\n'
-        retData += self.makeCell(stationData['SCORE']) + '\n'
-        return retData
+            self.appCat(callsign)
 
-    def processCat(self, mydb, catName):
-        stationList = []
-        sumdata = mydb.read_pquery(\
-           'SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, '+\
-           'LOGHEADER.OPERATORS, SUMMARY.* '+\
-           'FROM LOGHEADER INNER JOIN SUMMARY ON '+\
-           'LOGHEADER.ID=SUMMARY.LOGID '+\
-           'WHERE SUMMARY.MOQPCAT=%s ' +\
-           'ORDER BY SCORE DESC, LOCATION ASC',
-              [catName])
-
-        stationList.append(\
-                '<P>\n<table>' +\
-                ('<caption><h2><strong>%s</strong></h2></caption>'%(catName)) +\
-                '<tbody>\n' +\
-                HEADERLINE)
-
-        rank = 0
-        for station in sumdata:
-            rank += 1
-            thiStation = self.formatStationData(rank, station)
-            stationList.append(thiStation)
-        stationList.append('</tbody>\n</table>\n</P>\n')
-
-        return stationList   
-            
-    def processSums(self, mydb):
-        htmlList=[]
-        reportList = []
-        sumdata = mydb.read_query('SELECT DISTINCT MOQPCAT '+\
-              'FROM SUMMARY ORDER BY MOQPCAT ASC')
-        #sumdata = mydb.read_query('SELECT * FROM SUMMARY '+\
-        #      'ORDER BY MOQPCAT ASC, SCORE DESC, LOCATION ASC')
-        #print ('sumdata = %s'%(sumdata))
-        if (sumdata):
-            htmlList = []
-            for thisCat in sumdata:
-                category = {'NAME': thisCat['MOQPCAT'],
-                            'STATIONS': []}
-                category['STATIONS'] = \
-                    self.processCat(mydb, thisCat['MOQPCAT'])
-                htmlList.append(category)
-        return htmlList
-        
-    def displayDoc(self, htmlDoc):
-       PAGETITLE = '{} Missouri QSO Party Scores by Category'\
-                         .format(YEAR)
-       STYLESHEET = './styles.css'
-       WRAPPER = """<html>
-          <head>
-          <title>%s</title>
- 	      <link href="%s" rel="stylesheet" type="text/css" />
-          </head>
-          <body>
-          <H2 align="center">%s</H2>"""
-          
-       wholePage = WRAPPER % (PAGETITLE, 
-                               STYLESHEET,
-                               PAGETITLE)
-       for htmlCat in htmlDoc:
-           for station in htmlCat['STATIONS']:
-               wholePage += station
-       wholePage += '</body></html>'
-       print(wholePage)
-            
-    def appMain(self, callsign):
-       htmldata = '<p>No Data.</p>'
+    def appCat(self, callsign, catList=AWARDLIST):
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
-       if (callsign == 'HTML'):
-           htmldata=self.processSums(mydb)
-       self.displayDoc(htmldata)
+
+       from htmlutils.htmldoc import htmlDoc   
+       d = htmlDoc()
+       d.openHead('{} Missouri QSO Party Scores by Category'.format(YEAR),
+                  './styles.css')
+       d.closeHead()
+       d.openBody()
+       d.addTimeTag(prefix='Report Generated On ', 
+                    tagType='comment') 
+                         
+       d.add_unformated_text(\
+             """<h2 align='center'>{} Missouri QSO Party Scores by Category</h2>
+""".format(YEAR))
+
+       for cati in catList:
+           cat=cati.strip()
+
+           sumdata = mydb.read_pquery(\
+            """SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN,
+               LOGHEADER.OPERATORS, SUMMARY.*
+               FROM LOGHEADER INNER JOIN SUMMARY ON 
+               LOGHEADER.ID=SUMMARY.LOGID
+               WHERE SUMMARY.MOQPCAT=%s
+               ORDER BY SCORE DESC, LOCATION ASC""",
+              [cat])
+
+           tableData=['RANK\tCALLSIGN\tOPERATORS\tSCORE\t'+\
+                        'CW QSOs\tPH QSOs\tRY QSOs\tMULTS\t'+\
+                        'W0MA BONUS\tK0GQ BONUS\tCAB BONUS\t']
+           rank = 0
+           for station in sumdata:
+               rank += 1
+               if (rank < 3):
+                   tableData.append(\
+                    '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'\
+                    .format(rank,
+                        station['CALLSIGN'],
+                        station['OPERATORS'],
+                        station['SCORE'],
+                        station['CWQSO'],
+                        station['PHQSO'],
+                        station['RYQSO'],
+                        station['MULTS'],
+                        station['W0MABONUS'],
+                        station['K0GQBONUS'],
+                        station['CABBONUS']))
+               else:
+                   tableData.append(\
+                    '\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'\
+                    .format(\
+                        station['CALLSIGN'],
+                        station['OPERATORS'],
+                        station['SCORE'],
+                        station['CWQSO'],
+                        station['PHQSO'],
+                        station['RYQSO'],
+                        station['MULTS'],
+                        station['W0MABONUS'],
+                        station['K0GQBONUS'],
+                        station['CABBONUS']))
+
+           d.addTable(tdata=d.tsvlines2list(tableData),
+                  header=True,
+                  caption='<h3>{}</h3>'.format(cat))
+
+       d.closeBody()
+       d.closeDoc()
+
+       d.showDoc()
+       d.saveAndView('scoresbycat.html')
+

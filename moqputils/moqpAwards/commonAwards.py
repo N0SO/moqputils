@@ -25,7 +25,7 @@ class commonAwards():
        
 
     def processHeader(self, mydb, place, cat, sumitem):
-       tsvdata = '%s\t%s AWARD\t'%(place, cat)
+       tsvdata = '%s\t%s\t'%(place, cat)
        if (sumitem):
            if 'CLUB' in cat:
                tsvdata += '%s'%(sumitem['NAME'])

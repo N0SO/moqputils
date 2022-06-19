@@ -164,7 +164,7 @@ if __name__ == '__main__':
                app = MOQPDBCatReport(args.args.callsign)
            elif ('html' in reportType):
                from moqputils.moqpdbcatreport import MOQPHtmlReport
-               app = MOQPHtmlReport('HTML')   
+               app = MOQPHtmlReport(args.args.callsign)   
    elif (args.args.cntyline):
        from moqputils.countylineops import CountyLineOps
        app = CountyLineOps(args.args.cntyline,

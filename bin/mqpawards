@@ -84,7 +84,7 @@ class get_args():
                     html for web page use.
                     default value is csv""")
         args = parser.parse_args()
-        print(args)
+        #print(args)
         return args
 
 if __name__ == '__main__':

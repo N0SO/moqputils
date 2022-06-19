@@ -15,6 +15,7 @@ class CATEGORYPlaques(commonAwards):
        sumlist = None
        cat = cati[0].upper()
        catlist = cati[1].upper()
+       #print(cat, catlist)
        if cat in 'MISSOURI ROOKIE':
            sumlist = mydb.read_query(\
            """SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN,
@@ -71,8 +72,46 @@ class CATEGORYPlaques(commonAwards):
               "LOGHEADER.EMAIL, DIGITAL.* "+\
               "FROM LOGHEADER INNER JOIN DIGITAL ON "+\
               "LOGHEADER.ID=DIGITAL.LOGID "+\
-              "WHERE QSOS > 49 "+\
+              "WHERE (QSOS > 49) AND (LOGHEADER.LOCATION='MO') "+\
               "ORDER BY (SCORE) DESC")
+       elif cat in 'NON-MISSOURI HIGHEST DIGITAL':
+           sumlist = mydb.read_query(\
+             "SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, "+\
+              "LOGHEADER.CALLSIGN, LOGHEADER.OPERATORS, "+\
+              "LOGHEADER.NAME, LOGHEADER.ADDRESS, "+\
+              "LOGHEADER.CITY, LOGHEADER.STATEPROV ,"+\
+              "LOGHEADER.ZIPCODE, LOGHEADER.COUNTRY, "+\
+              "LOGHEADER.EMAIL, DIGITAL.* "+\
+              "FROM LOGHEADER INNER JOIN DIGITAL ON "+\
+              "LOGHEADER.ID=DIGITAL.LOGID "+\
+              "WHERE (LOGHEADER.LOCATION<>'MO') "+\
+              "ORDER BY (SCORE) DESC")
+       elif cat in 'MISSOURI VHF':
+           sumlist = mydb.read_query(\
+             "SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, "+\
+              "LOGHEADER.CALLSIGN, LOGHEADER.OPERATORS, "+\
+              "LOGHEADER.NAME, LOGHEADER.ADDRESS, "+\
+              "LOGHEADER.CITY, LOGHEADER.STATEPROV ,"+\
+              "LOGHEADER.ZIPCODE, LOGHEADER.COUNTRY, "+\
+              "LOGHEADER.EMAIL, VHF.* "+\
+              "FROM LOGHEADER INNER JOIN VHF ON "+\
+              "LOGHEADER.ID=VHF.LOGID "+\
+              "WHERE LOGHEADER.LOCATION='MO' "+\
+              "ORDER BY (SCORE) DESC")
+           #print('MISSOURI VHF Selections = {}'.format(sumlist))
+       elif cat in 'NON-MISSOURI VHF':
+           sumlist = mydb.read_query(\
+             "SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN, "+\
+              "LOGHEADER.CALLSIGN, LOGHEADER.OPERATORS, "+\
+              "LOGHEADER.NAME, LOGHEADER.ADDRESS, "+\
+              "LOGHEADER.CITY, LOGHEADER.STATEPROV ,"+\
+              "LOGHEADER.ZIPCODE, LOGHEADER.COUNTRY, "+\
+              "LOGHEADER.EMAIL, VHF.* "+\
+              "FROM LOGHEADER INNER JOIN VHF ON "+\
+              "LOGHEADER.ID=VHF.LOGID "+\
+              "WHERE LOGHEADER.LOCATION <> 'MO' "+\
+              "ORDER BY (SCORE) DESC")
+           #print('NON-MISSOURI VHF Selections = {}'.format(sumlist))
        elif cat in 'HIGHEST NUMBER OF COUNTIES':
            sumlist = mydb.read_query(\
             """SELECT LOGHEADER.CALLSIGN,
@@ -104,15 +143,15 @@ class CATEGORYPlaques(commonAwards):
        tsvdata = None
        sumlist = None
        schoolclub = False
-       if cati in PLAQUELIST:
-           sumlist = self.get_awardquery(mydb, cati)
+       
+       sumlist = self.get_awardquery(mydb, cati)
 
        if (sumlist):
            sumlist = sumlist[0]
        tsvdata = ''
        #if (len(sumlist)>0):
        tsvdata = self.processHeader(mydb, 
-                                    "FIRST PLACE PLAQUE", 
+                                    "FIRST PLACE", 
                                     cati[0], 
                                     sumlist)
 
@@ -124,37 +163,64 @@ class CATEGORYPlaques(commonAwards):
     def appMain(self, placement):
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
-       self.AwardList=['AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
+       self.AwardList=['FIRST PLACE PLAQUES','AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
        for CAT in PLAQUELIST:
            #print(CAT)
            tsvdata = self.processOne(mydb, CAT, placement)
+           self.AwardList.append(tsvdata)
+       self.AwardList.append('ADDITIONAL FIRST PLACE CERTIFICATES')
+       self.AwardList.append('AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS')
+       #print('now certs...')
+       for CAT in ADDITIONALFIRST:
+           #print(CAT)
+           CATi=[CAT, "'{}'".format(CAT)]
+           #print(CATi)
+           tsvdata = self.processOne(mydb, CATi, placement)
            self.AwardList.append(tsvdata)
        self.AwardDisplay(self.AwardList) 
        
 class HTMLPlaques(CATEGORYPlaques):
 
-    def AwardDisplay(self, tsvdata): 
-       if (tsvdata):
-           from htmlutils.htmldoc import htmlDoc   
-           d = htmlDoc()
-           d.openHead('{} Missouri QSO Party First Place Plaques'.format(YEAR),
+    def appMain(self, placement):
+       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+       mydb.setCursorDict()
+       self.AwardList=['AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
+       for CAT in PLAQUELIST:
+           #print(CAT)
+           tsvdata = self.processOne(mydb, CAT, placement)
+           self.AwardList.append(tsvdata)
+
+       from htmlutils.htmldoc import htmlDoc   
+       d = htmlDoc()
+       d.openHead('{} Missouri QSO Party First Place Awards'.format(YEAR),
                   './styles.css')
-           d.closeHead()
-           d.openBody()
-           d.addTimeTag(prefix='Report Generated On ', 
+       d.closeHead()
+       d.openBody()
+       d.addTimeTag(prefix='Report Generated On ', 
                     tagType='comment') 
                          
-           d.add_unformated_text(\
+       d.add_unformated_text(\
              """<h2 align='center'>{} Missouri QSO Party First Place Plaques</h2>""".format(YEAR))
-           tsvlist=d.tsvlines2list(tsvdata)
-           d.addTable(tdata=tsvlist, 
-                          header=True,
-                          caption='{} Missouri QSO Party First Place Plaque Winners'.format(YEAR))
-           d.closeBody()
-           d.closeDoc()
+       d.addTable(tdata=d.tsvlines2list(self.AwardList), 
+                  header=True,
+                  caption='Plaque recipients will also recieve certificates.')
 
-           d.showDoc()
-           d.saveAndView('plaquerpt.html')
-           
-               
-       
+       self.AwardList=['AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
+       for CAT in ADDITIONALFIRST:
+           #print(CAT)
+           CATi=[CAT, "'{}'".format(CAT)]
+           #print(CATi)
+           tsvdata = self.processOne(mydb, CATi, placement)
+           self.AwardList.append(tsvdata)
+
+       d.add_unformated_text(\
+             """<h2 align='center'>{} Missouri QSO Party Additional First Place Certificates</h2>""".format(YEAR))
+       d.addTable(tdata=d.tsvlines2list(self.AwardList), 
+                  header=True,
+                  caption='Certificates Only, No Plaques')
+
+       d.closeBody()
+       d.closeDoc()
+
+       d.showDoc()
+       d.saveAndView('plaquerpt.html')
