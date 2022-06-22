@@ -11,7 +11,7 @@ whereami = os.path.split( os.path.realpath(__file__) )
 pathsplit = os.path.split(whereami[0])
 #print("here I am :", whereami, pathsplit)
 
-DEVMODPATH = [pathsplit[0]]
+DEVMODPATH = [pathsplit[0],'/home/pi/Projects']
 #print('Using DEVMODPATH=',DEVMODPATH)
 os.chdir(pathsplit[0])
 
