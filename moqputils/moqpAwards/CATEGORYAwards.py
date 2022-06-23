@@ -3,6 +3,10 @@ from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
 from moqputils.moqpawardefs import *
 from moqputils.moqpAwards.commonAwards import commonAwards
+
+CATLABELHEADER =   'RANK\tAWARD\tSTATION\tOPERATORS\t'+ \
+                   'NAME\tADDRESS\tCITY\tSTATE\tZIP\t'+ \
+                   'COUNTRY\tEMAIL'
        
 class CATEGORYAwards(commonAwards):
            
@@ -168,20 +172,12 @@ class CATEGORYAwards(commonAwards):
 
 class CATEGORYLabels(CATEGORYAwards):
 
-    def processHeader(self, mydb, place, cat, sumitem):
-       tsvdata = ("%s\t%s AWARD\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t"%( \
-                               place,cat,
-                               sumitem['CALLSIGN'],
-                               sumitem['OPERATORS'],
-                               sumitem['NAME'],
-                               sumitem['ADDRESS'],
-                               sumitem['CITY'],
-                               sumitem['STATEPROV'],
-                               sumitem['ZIPCODE'],
-                               sumitem['COUNTRY'],                               
-                               sumitem['EMAIL']))
-       return tsvdata
-
+    def processAll(self, mydb, placement):
+        labeldata = self.Labels_processAll(mydb, 
+                                            CATLABELHEADER, 
+                                            AWARDLIST)
+        return labeldata
+        
 class HTMLAwards(CATEGORYAwards):
 
      def AwardDisplay(self, tsvdata): 
