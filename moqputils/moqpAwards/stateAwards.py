@@ -7,7 +7,7 @@ from moqputils.moqpAwards.commonAwards import commonAwards
 class STATEAwards(commonAwards):
     
     def __init__(self, place = None, extra = None):
-        #print("Running STATEAwards...")
+        #print("Running STATEAwards __init__...")
         if (place):
             self.appMain(place)
 
@@ -118,3 +118,27 @@ class HTMLSTATEAwards(STATEAwards):
 
            d.showDoc()
            d.saveAndView('states%s.html'%(thisPlace))
+class STATELabels(STATEAwards):
+
+    def ShowAward(self, mydb, place, state, sdata):
+
+        tsvdata = '%s\t%s\t'%(place,state)
+        if (sdata):     
+            tsvdata += '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d'%(\
+                               sdata['CALLSIGN'],
+                               sdata['OPERATORS'],
+                               sdata['NAME'],
+                               sdata['ADDRESS'],
+                               sdata['CITY'],
+                               sdata['STATEPROV'],
+                               sdata['ZIPCODE'],
+                               sdata['COUNTRY'],                               
+                               sdata['EMAIL'],
+                               sdata['SCORE'])
+        else:
+            tsvdata += 'NO ENTRY'
+        return tsvdata
+
+    def appMain(self, place=None):
+        STATEAwards.appMain(self, '1')
+        STATEAwards.appMain(self, '2')
