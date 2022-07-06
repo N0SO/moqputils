@@ -1,4 +1,8 @@
 #!/usr/bin/python3
+CATLABELHEADER =   'RANK\tAWARD\tSTATION\tOPERATORS\t'+ \
+                   'NAME\tADDRESS\tCITY\tSTATE\tZIP\t'+ \
+                   'COUNTRY\tEMAIL'
+
 STATELIST = [  ["ALABAMA","'AL','ALABAMA'"],
                ["ALASKA","'AK','ALASKA'"],
                ["ARIZONA","'AZ','ARIZONA'"],

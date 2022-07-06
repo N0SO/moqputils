@@ -44,6 +44,8 @@ Update History:
 * Fri May 27 2022 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.1 - Added code to use YEAR parameter set in moqpdefs.py in
 -          titles so they don't have to be updated every year.
+* Mon Jul 04 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.1 - Changed RY QSOs to DIG QSOs in HTML reports
 """
 
 from moqputils.moqpdbutils import *
@@ -55,7 +57,7 @@ VERSION = '1.0.1'
 #Column headers
 COLUMNHEADERS = \
      'RANKING\tCALLSIGN\tOPS\tLOCATION\tSCORE\t'+\
-     'QSOs\tCW QSOs\tPH QSOs\tRY QSOs\tMULTS\t'+\
+     'QSOs\tCW QSOs\tPH QSOs\tDIG QSOs\tMULTS\t'+\
      'CABFILE BONUS\tW0MA BONUS\tK0GQ BONUS'
 
 #Column headers for HTML reports
@@ -68,7 +70,7 @@ HEADERLINE = [
     'QSOs',
     'CW QSOs',
     'PH QSOs',
-    'RY QSOs',
+    'DIG QSOs',
     'MULTS',
     'CABRILLO BONUS',
     'W0MA BONUS',

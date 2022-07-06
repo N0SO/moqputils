@@ -39,17 +39,20 @@ class STATEAwards(commonAwards):
             tsvdata += 'NO ENTRY'
         return tsvdata
 
-
-    def getState(self,mydb, place, STATE, NAMELIST):
-       CATLIST = mydb.read_query(\
+    def getStateQuery(self, mydb, NAMELIST):
+        CATLIST = mydb.read_query(\
                 """SELECT LOGHEADER.*,
                    SUMMARY.*
                    FROM LOGHEADER INNER JOIN SUMMARY ON
                    LOGHEADER.ID=SUMMARY.LOGID
                    WHERE LOGHEADER.LOCATION IN
-                   (""" + NAMELIST+ """)
+                   (""" + NAMELIST + """)
                    ORDER BY SCORE DESC
                    LIMIT 5""")
+        return CATLIST
+
+    def getState(self,mydb, place, STATE, NAMELIST):
+       CATLIST = self.getStateQuery(mydb, NAMELIST)
        #if (len(CATLIST)>1):
        placestg, catdata = self.setPlacement(place, CATLIST)
        #print(placestg,catdata)
@@ -99,7 +102,7 @@ class HTMLSTATEAwards(STATEAwards):
                thisPlace='FIRST'
            elif ('SECOND PLACE' in awards[0]):
                thisPlace='SECOND'
-           titleStr = '2021 Missouri QSO Party  State / Province %s PLACE Awards'%(thisPlace)
+           titleStr = '{} Missouri QSO Party  State / Province {} PLACE Awards'.format(YEAR, thisPlace)
            d.openHead(titleStr, './styles.css')
            d.closeHead()
            d.openBody()
@@ -118,6 +121,7 @@ class HTMLSTATEAwards(STATEAwards):
 
            d.showDoc()
            d.saveAndView('states%s.html'%(thisPlace))
+           
 class STATELabels(STATEAwards):
 
     def ShowAward(self, mydb, place, state, sdata):
@@ -130,15 +134,26 @@ class STATELabels(STATEAwards):
                                sdata['NAME'],
                                sdata['ADDRESS'],
                                sdata['CITY'],
-                               sdata['STATEPROV'],
-                               sdata['ZIPCODE'],
-                               sdata['COUNTRY'],                               
+                               sdata['STATEPROV'],                  
                                sdata['EMAIL'],
+                               sdata['ZIPCODE'],
+                               sdata['COUNTRY'],             
                                sdata['SCORE'])
         else:
             tsvdata += 'NO ENTRY'
         return tsvdata
+        
+    def states(self, mydb, place):
+        awards = [CATLABELHEADER]
+        labeldata = self.Labels_processAll(mydb, 
+                                            CATLABELHEADER, 
+                                            STATELIST)
+        return labeldata
+        
+    def get_awardquery(self, mydb, cat):
+        sumlist = STATEAwards.getStateQuery(self, mydb, cat)
+        return sumlist
 
     def appMain(self, place=None):
         STATEAwards.appMain(self, '1')
-        STATEAwards.appMain(self, '2')
+        #STATEAwards.appMain(self, '2')

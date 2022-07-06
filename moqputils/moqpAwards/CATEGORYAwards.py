@@ -3,10 +3,6 @@ from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
 from moqputils.moqpawardefs import *
 from moqputils.moqpAwards.commonAwards import commonAwards
-
-CATLABELHEADER =   'RANK\tAWARD\tSTATION\tOPERATORS\t'+ \
-                   'NAME\tADDRESS\tCITY\tSTATE\tZIP\t'+ \
-                   'COUNTRY\tEMAIL'
        
 class CATEGORYAwards(commonAwards):
            
@@ -195,7 +191,7 @@ class HTMLAwards(CATEGORYAwards):
                fileAdd=0
            subStg += ' Place Certificate'
            d = htmlDoc()
-           d.openHead('2021 Missouri QSO Party %s Awards'%(subStg),
+           d.openHead('{} Missouri QSO Party {} Awards'.format(YEAR, subStg),
                   './styles.css')
            d.closeHead()
            d.openBody()
@@ -203,11 +199,11 @@ class HTMLAwards(CATEGORYAwards):
                     tagType='comment') 
                          
            d.add_unformated_text(\
-             """<h2 align='center'>2021 Missouri QSO Party %s Winners</h2>"""%(subStg))
+             """<h2 align='center'>{} Missouri QSO Party {} Winners</h2>""".format(YEAR, subStg))
            tdata=d.tsvlines2list(tsvdata)
            d.addTable(tdata, 
                           header=True,
-                          caption='2021 Missouri QSO Party %s Winners'%(subStg))
+                          caption='Certificates Only, No Plaques')
            d.closeBody()
            d.closeDoc()
 

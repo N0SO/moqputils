@@ -85,7 +85,8 @@ if __name__ == '__main__':
        from moqputils.moqpAwards.CATEGORYAwards import CATEGORYLabels
        app = CATEGORYLabels(1)
    elif (args.args.showme):
-       from moqputils.moqplabels import SHOWMELabels
+       #from moqputils.moqplabels import SHOWMELabels
+       from moqputils.moqpAwards.SHOWMEAwards import SHOWMELabels
        app = SHOWMELabels('SHOWME')
    elif (args.args.missouri):
        from moqputils.moqplabels import SHOWMELabels

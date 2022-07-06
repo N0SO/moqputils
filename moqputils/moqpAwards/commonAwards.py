@@ -39,7 +39,6 @@ class commonAwards():
        return tsvdata
 
     def processLabel(self, place, cat, sumitem):
-       #tsvdata = ("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s"%( \
        tsvdata = ("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(\
                                place,cat,
                                sumitem['CALLSIGN'],
@@ -80,65 +79,100 @@ class commonAwards():
                             tsvdata.append(tsvline)
             
                         if (len(sumlist[place]['OPERATORS']) > 0):
+                            tempData=sumlist[place]
                             ops = sumlist[place]['OPERATORS'].split(' ')
                             if  len(ops)>1:
                                 for op in ops:
+                                    tempData = sumlist[place]
                                     try:
                                         opdata = qrz.callsign(op.strip())
                                         qrzdata=True
                                     except:
                                         qrzdata=False
-                                        sumlist[place]['NAME']=\
+                                        tempData['NAME']=\
                                            'NO QRZ FOR {} - {}'.format(op,len(op))
                                    
                                     if qrzdata:
                                         #print(opdata)
-                                        if ('fname' in opdata) and ('name' in opdata):
-                                       
-                                            sumlist[place]['NAME']=('{} {}, {}'.format(\
-                                                             opdata['fname'].upper(),
-                                                             opdata['name'].upper(),
-                                                             op.upper()))
-                                        elif ('attn' in opdata) and ('name' in opdata):
-                                            sumlist[place]['NAME']=('{} ATTN {}'.format(\
-                                                             opdata['name'].upper(),
-                                                             opdata['att1'].upper()))
-                                        elif ('name' in opdata):
-                                            sumlist[place]['NAME']=('{}'.format(\
-                                                             opdata['name'].upper()))
-                                        else:
-                                            sumlist[place]['NAME']=('***NO NAME FOR {} ***'.format(\
-                                                             op.upper()))
-                                        if('addr1' in opdata):   
-                                            sumlist[place]['ADDRESS']=opdata['addr1'].upper()
-                                        else:
-                                            sumlist[place]['ADDRESS']=''
-                                        if ('addr2' in opdata):    
-                                            sumlist[place]['CITY'] = opdata['addr2'].upper()
-                                        else:
-                                            sumlist[place]['CITY'] = ''
-                                        if('state' in opdata):
-                                            sumlist[place]['STATEPROV'] = opdata['state'].upper()
-                                        else:
-                                            sumlist[place]['STATEPROV'] = ''
-                                        if ('zip' in opdata):
-                                            sumlist[place]['ZIPCODE'] = opdata['zip'].upper()
-                                        else:
-                                            sumlist[place]['ZIPCODE'] = ''
-                                        if ('country' in opdata):    
-                                            sumlist[place]['COUNTRY'] = opdata['country'].upper()
-                                        else:
-                                            sumlist[place]['COUNTRY'] = ''
-                                        if ('email' in opdata):
-                                            sumlist[place]['EMAIL'] = opdata['email'].upper()                       
-                                        else:                        
-                                            sumlist[place]['EMAIL'] = ''                       
+                                        tempData = self.swapData(\
+                                               sumlist[place], 
+                                               op, 
+                                               opdata)
                                     tsvline = self.processLabel(placestg, 
-                                                    cat, sumlist[place])
+                                                    cat, tempData)
                                     if (tsvline):
                                         tsvdata.append(tsvline)
         return tsvdata 
 
+    def swapData(self, oldData, op, opdata):
+        if ('fname' in opdata) and ('name' in opdata):
+            oldData['NAME']=('{} {}, {}'.format(\
+                             opdata['fname'].upper(),
+                             opdata['name'].upper(),
+                             op.upper()))
+        elif ('attn' in opdata) and ('name' in opdata):
+            oldData['NAME']=('{} ATTN {}'.format(\
+                             opdata['name'].upper(),
+                             opdata['att1'].upper()))
+        elif ('name' in opdata):
+            oldData['NAME']=('{}'.format(\
+                             opdata['name'].upper()))
+        else:
+            oldData['NAME']=('***NO NAME FOR {} ***'.format(\
+                             op.upper()))
+        if('addr1' in opdata):   
+            oldData['ADDRESS']=opdata['addr1'].upper()
+        else:
+            oldData['ADDRESS']=''
+        if ('addr2' in opdata):    
+            oldData['CITY'] = opdata['addr2'].upper()
+        else:
+            oldData['CITY'] = ''
+        if('state' in opdata):
+            oldData['STATEPROV'] = opdata['state'].upper()
+        else:
+            oldData['STATEPROV'] = ''
+        if ('zip' in opdata):
+            oldData['ZIPCODE'] = opdata['zip'].upper()
+        else:
+            oldData['ZIPCODE'] = ''
+        if ('country' in opdata):    
+            oldData['COUNTRY'] = opdata['country'].upper()
+        else:
+            oldData['COUNTRY'] = ''
+        if ('email' in opdata):
+            oldData['EMAIL'] = opdata['email'].upper()                       
+
+        return oldData
+
+    def export_to_csv(self, dblist, award):
+        from qrzutils.qrz.qrzlookup import QRZLookup
+        qrz=QRZLookup('./moqputils/configs/qrzsettings.cfg')
+        tsvlines =['CALL\tOPERATORS\tNAME\tE-MAIL\tFILE\t'+\
+                    'S\tH\tO\tW\tM\tE']
+        for station in dblist:
+            tsvlines.append(self.processLabel(station))
+            if (len(station['OPERATORS']) > 0):
+                tempData=station
+                ops = station['OPERATORS'].split(' ')
+                if  len(ops)>1:
+                    for op in ops:
+                        try:
+                            opdata = qrz.callsign(op.strip())
+                            qrzdata=True
+                        except:
+                            qrzdata=False
+                            tempData['NAME']=\
+                               'NO QRZ FOR {} - {}'.format(op,len(op))
+                       
+                        if qrzdata:
+                            #print(opdata)
+                            tempData = self.swapData(\
+                                   station, 
+                                   op, 
+                                   opdata)
+                        tsvlines.append(self.processLabel(tempData, op))
+        return tsvlines            
 
 
     def appMain(self, callsign, extra=None):
