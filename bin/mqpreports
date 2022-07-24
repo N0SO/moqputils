@@ -173,12 +173,13 @@ if __name__ == '__main__':
        from moqputils.logreport import LogReport
        app = LogReport(args.args.logreport)
    elif (args.args.countiesworked):
-       if ('html' in reportType):
-           from moqputils.moqpdbcountycount import HTML_CountyCntRpt
-           app = HTML_CountyCntRpt(args.args.countiesworked)
-       else:
-           from moqputils.moqpdbcountycount import MOQPDBCountyCountRpt
-           app = MOQPDBCountyCountRpt(args.args.countiesworked)
+        from countycounts.countycount import*
+        if ('html' in reportType):
+            #from moqputils.moqpdbcountycount import HTML_CountyCntRpt
+            app = HTML_CountyCntRpt(args.args.countiesworked)
+        else:
+            #from moqputils.moqpdbcountycount import MOQPDBCountyCountRpt
+            app = MOQPDBCountyCountRpt(args.args.countiesworked)
    elif (args.args.digireport):
        if ('html' in reportType):
            from moqputils.moqpdbdigitalreport import HTML_DigitalRpt
