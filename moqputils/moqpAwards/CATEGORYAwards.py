@@ -168,20 +168,12 @@ class CATEGORYAwards(commonAwards):
 
 class CATEGORYLabels(CATEGORYAwards):
 
-    def processHeader(self, mydb, place, cat, sumitem):
-       tsvdata = ("%s\t%s AWARD\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t"%( \
-                               place,cat,
-                               sumitem['CALLSIGN'],
-                               sumitem['OPERATORS'],
-                               sumitem['NAME'],
-                               sumitem['ADDRESS'],
-                               sumitem['CITY'],
-                               sumitem['STATEPROV'],
-                               sumitem['ZIPCODE'],
-                               sumitem['COUNTRY'],                               
-                               sumitem['EMAIL']))
-       return tsvdata
-
+    def processAll(self, mydb, placement):
+        labeldata = self.Labels_processAll(mydb, 
+                                            CATLABELHEADER, 
+                                            AWARDLIST)
+        return labeldata
+        
 class HTMLAwards(CATEGORYAwards):
 
      def AwardDisplay(self, tsvdata): 
@@ -199,7 +191,7 @@ class HTMLAwards(CATEGORYAwards):
                fileAdd=0
            subStg += ' Place Certificate'
            d = htmlDoc()
-           d.openHead('2021 Missouri QSO Party %s Awards'%(subStg),
+           d.openHead('{} Missouri QSO Party {} Awards'.format(YEAR, subStg),
                   './styles.css')
            d.closeHead()
            d.openBody()
@@ -207,11 +199,11 @@ class HTMLAwards(CATEGORYAwards):
                     tagType='comment') 
                          
            d.add_unformated_text(\
-             """<h2 align='center'>2021 Missouri QSO Party %s Winners</h2>"""%(subStg))
+             """<h2 align='center'>{} Missouri QSO Party {} Winners</h2>""".format(YEAR, subStg))
            tdata=d.tsvlines2list(tsvdata)
            d.addTable(tdata, 
                           header=True,
-                          caption='2021 Missouri QSO Party %s Winners'%(subStg))
+                          caption='Certificates Only, No Plaques')
            d.closeBody()
            d.closeDoc()
 

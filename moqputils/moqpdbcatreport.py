@@ -34,6 +34,8 @@ Update History:
 -          Added code to order score categories by what is
 -          defined in moqpawardefs.py AWARDLIST. This was done
 -          for both CSV/TSV and HTML reports.
+* Mon Jul 04 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.1 - Changed RY QSOs to DIG QSOs in HTML reports
 """
 
 from moqputils.moqpdbutils import *
@@ -41,7 +43,7 @@ from moqputils.configs.moqpdbconfig import *
 from moqputils.moqpawardefs import AWARDLIST
 
 
-VERSION = '1.0.0' 
+VERSION = '1.0.1' 
 
 COLUMNHEADERS = \
      'CALLSIGN\tOPS\tLOCATION\tMOQP CATEGORY\t'+\
@@ -286,7 +288,7 @@ class MOQPHtmlReport(MOQPDBCatReport):
               [cat])
 
            tableData=['RANK\tCALLSIGN\tOPERATORS\tSCORE\t'+\
-                        'CW QSOs\tPH QSOs\tRY QSOs\tMULTS\t'+\
+                        'CW QSOs\tPH QSOs\tDIG QSOs\tMULTS\t'+\
                         'W0MA BONUS\tK0GQ BONUS\tCAB BONUS\t']
            rank = 0
            for station in sumdata:
