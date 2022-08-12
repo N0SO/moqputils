@@ -130,9 +130,11 @@ class htmlDoc():
         if (tagType):
             tagType=tagType.lower()
             if(tagType=='comment'):
+                now = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
                 fmtstg='<!-- %s%s UTC -->\n'
         else:
-            fmtstg='<p>%s %s UTC</p>\n'
+            now = datetime.datetime.utcnow().strftime("%Y%m%d %H:%M:%S")
+            fmtstg='<p align="center">%s %s UTC</p>\n'
         ctext = fmtstg % (prefix, now)
         retVal = self.add_unformated_text(ctext, document)
         return retVal
