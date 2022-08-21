@@ -85,12 +85,11 @@ if __name__ == '__main__':
        from moqputils.moqpAwards.CATEGORYAwards import CATEGORYLabels
        app = CATEGORYLabels(1)
    elif (args.args.showme):
-       #from moqputils.moqplabels import SHOWMELabels
        from moqputils.moqpAwards.SHOWMEAwards import SHOWMELabels
        app = SHOWMELabels('SHOWME')
    elif (args.args.missouri):
-       from moqputils.moqplabels import SHOWMELabels
-       app = SHOWMELabels('MISSOURI')
+       from moqputils.moqpAwards.SHOWMEAwards import MOLabels
+       app = MOLabels('MISSOURI')
    elif (args.args.provstate):
        from moqputils.moqpAwards.stateAwards import STATELabels
        print("Calling STATELabels...")

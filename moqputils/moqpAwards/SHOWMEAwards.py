@@ -94,6 +94,42 @@ class MOAwards(SHOWMEAwards):
        csvlist = self.export_to_csv(dblist, 'MISSOURI')
        self.AwardDisplay(csvlist) 
 
+class MOLabels(MOAwards):
+    def export_to_csv(self, dblist, award):
+        tsvlines = commonAwards.export_to_csv(self, dblist, award)
+        return tsvlines            
+
+    def processLabel(self, sumitem, op=None):
+        if op:
+            op = ('-{}.pdf'.format(op))
+        else:
+            op = '.pdf'
+            
+        tsvdata = ("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(\
+                               sumitem['CALLSIGN'],
+                               sumitem['OPERATORS'],
+                               sumitem['NAME'],
+                               sumitem['ADDRESS'],
+                               sumitem['CITY'],
+                               sumitem['STATEPROV'],
+                               sumitem['ZIPCODE'],
+                               sumitem['COUNTRY'],                               
+                               sumitem['EMAIL'],
+                               sumitem['CALLSIGN']+op,
+                               sumitem['M'],
+                               sumitem['I_1'],
+                               sumitem['S_1'],
+                               sumitem['S_2'],
+                               sumitem['O'],
+                               sumitem['U'],
+                               sumitem['R'],
+                               sumitem['I_2'],
+                               sumitem['WC']))
+        return tsvdata
+
+
+
+
 LABELS1 = ['STATION',
            'OPERATORS']
 

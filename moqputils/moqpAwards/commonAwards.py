@@ -148,8 +148,13 @@ class commonAwards():
     def export_to_csv(self, dblist, award):
         from qrzutils.qrz.qrzlookup import QRZLookup
         qrz=QRZLookup('./moqputils/configs/qrzsettings.cfg')
-        tsvlines =['CALL\tOPERATORS\tNAME\tE-MAIL\tFILE\t'+\
+        if award=='SHOWME':
+            tsvlines =['CALL\tOPERATORS\tNAME\tE-MAIL\tFILE\t'+\
                     'S\tH\tO\tW\tM\tE']
+        elif award=='MISSOURI':
+            tsvlines =['CALL\tOPERATORS\tNAME\tE-MAIL\tFILE\t'+\
+                    'M\tI\tS\tS\tO\tU\tR\tI']
+            
         for station in dblist:
             tsvlines.append(self.processLabel(station))
             if (len(station['OPERATORS']) > 0):
