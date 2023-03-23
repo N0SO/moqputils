@@ -12,17 +12,18 @@ class SHOWMEAwards(commonAwards):
             self.appMain(showme)
 
     def getdbData(self, db):
-       dbData = db.read_query(\
+        dbData = db.read_query(\
              """SELECT LOGHEADER.CALLSIGN, LOGHEADER.OPERATORS,
               LOGHEADER.NAME, LOGHEADER.ADDRESS,
               LOGHEADER.CITY, LOGHEADER.STATEPROV,
               LOGHEADER.ZIPCODE, LOGHEADER.COUNTRY,
-              LOGHEADER.EMAIL, SHOWME.QUALIFY
+              LOGHEADER.EMAIL, SHOWME.*
               FROM LOGHEADER INNER JOIN SHOWME ON
               LOGHEADER.ID=SHOWME.LOGID
               WHERE QUALIFY > 0
               ORDER BY (CALLSIGN)""")
-       return dbData
+        #print(dbData)
+        return dbData
 
     def export_to_csv(self, dblist, award):
         csvlist = []
@@ -39,6 +40,38 @@ class SHOWMEAwards(commonAwards):
        csvlist = self.export_to_csv(dblist, 'SHOWME')
        self.AwardDisplay(csvlist) 
 
+class SHOWMELabels(SHOWMEAwards):
+    def export_to_csv(self, dblist, award):
+        tsvlines = commonAwards.export_to_csv(self, dblist, award)
+        return tsvlines            
+
+    def processLabel(self, sumitem, op=None):
+        if op:
+            op = ('-{}.pdf'.format(op))
+        else:
+            op = '.pdf'
+            
+        tsvdata = ("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(\
+                               sumitem['CALLSIGN'],
+                               sumitem['OPERATORS'],
+                               sumitem['NAME'],
+                               sumitem['ADDRESS'],
+                               sumitem['CITY'],
+                               sumitem['STATEPROV'],
+                               sumitem['ZIPCODE'],
+                               sumitem['COUNTRY'],                               
+                               sumitem['EMAIL'],
+                               sumitem['CALLSIGN']+op,
+                               sumitem['S'],
+                               sumitem['H'],
+                               sumitem['O'],
+                               sumitem['W'],
+                               sumitem['M'],
+                               sumitem['E'],
+                               sumitem['WC']))
+        return tsvdata
+
+
 class MOAwards(SHOWMEAwards):
     
     def getdbData(self, db):
@@ -47,7 +80,7 @@ class MOAwards(SHOWMEAwards):
               LOGHEADER.NAME, LOGHEADER.ADDRESS,
               LOGHEADER.CITY, LOGHEADER.STATEPROV,
               LOGHEADER.ZIPCODE, LOGHEADER.COUNTRY,
-              LOGHEADER.EMAIL, MISSOURI.QUALIFY
+              LOGHEADER.EMAIL, MISSOURI.*
               FROM LOGHEADER INNER JOIN MISSOURI ON
               LOGHEADER.ID=MISSOURI.LOGID
               WHERE QUALIFY > 0
@@ -60,6 +93,42 @@ class MOAwards(SHOWMEAwards):
        dblist = self.getdbData(mydb)
        csvlist = self.export_to_csv(dblist, 'MISSOURI')
        self.AwardDisplay(csvlist) 
+
+class MOLabels(MOAwards):
+    def export_to_csv(self, dblist, award):
+        tsvlines = commonAwards.export_to_csv(self, dblist, award)
+        return tsvlines            
+
+    def processLabel(self, sumitem, op=None):
+        if op:
+            op = ('-{}.pdf'.format(op))
+        else:
+            op = '.pdf'
+            
+        tsvdata = ("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(\
+                               sumitem['CALLSIGN'],
+                               sumitem['OPERATORS'],
+                               sumitem['NAME'],
+                               sumitem['ADDRESS'],
+                               sumitem['CITY'],
+                               sumitem['STATEPROV'],
+                               sumitem['ZIPCODE'],
+                               sumitem['COUNTRY'],                               
+                               sumitem['EMAIL'],
+                               sumitem['CALLSIGN']+op,
+                               sumitem['M'],
+                               sumitem['I_1'],
+                               sumitem['S_1'],
+                               sumitem['S_2'],
+                               sumitem['O'],
+                               sumitem['U'],
+                               sumitem['R'],
+                               sumitem['I_2'],
+                               sumitem['WC']))
+        return tsvdata
+
+
+
 
 LABELS1 = ['STATION',
            'OPERATORS']
@@ -78,7 +147,7 @@ class HTMLShowMeAwards(SHOWMEAwards):
 
            from htmlutils.htmldoc import htmlDoc   
            d = htmlDoc()
-           d.openHead('2021 Missouri QSO Party Showme Awards',
+           d.openHead('{} Missouri QSO Party Showme Awards'.format(YEAR),
                   './styles.css')
            d.closeHead()
            d.openBody()
@@ -86,10 +155,10 @@ class HTMLShowMeAwards(SHOWMEAwards):
                     tagType='comment') 
                          
            d.add_unformated_text(\
-             """<h2 align='center'>2021 Missouri QSO Party SHOWME Awards</h2>""")
+             """<h2 align='center'>{} Missouri QSO Party SHOWME Awards</h2>""".format(YEAR))
            d.addTablefromDict(dictList=showmeList, 
                           HeaderList=LABELS1,
-                          caption='SHOWME Award Winners',
+                          caption='Download your certificate with the e-mail link provided',
                           dictIndexList=KEYS1)
            d.closeBody()
            d.closeDoc()
@@ -108,7 +177,7 @@ class HTMLMoAwards(MOAwards):
 
            from htmlutils.htmldoc import htmlDoc   
            d = htmlDoc()
-           d.openHead('2021 Missouri QSO Party Missouri Awards',
+           d.openHead('{} Missouri QSO Party Missouri Awards'.format(YEAR),
                   './styles.css')
            d.closeHead()
            d.openBody()
@@ -116,10 +185,10 @@ class HTMLMoAwards(MOAwards):
                     tagType='comment') 
                          
            d.add_unformated_text(\
-             """<h2 align='center'>2021 Missouri QSO Party MISSOURI Awards</h2>""")
+             """<h2 align='center'>{} Missouri QSO Party MISSOURI Awards</h2>""".format(YEAR))
            d.addTablefromDict(dictList=showmeList, 
                           HeaderList=LABELS1,
-                          caption='MISSOURI Award Winners',
+                          caption='Download your certificate with the e-mail link provided',
                           dictIndexList=KEYS1)
            d.closeBody()
            d.closeDoc()

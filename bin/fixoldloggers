@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+"""
+fixoldloggers   - Utility to remove the sequence / serial number
+                  fields from MOQP file created with old versions
+                  of writelog
+                
+Update History:
+* Wed Apr 27 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+-V0.0.1 - Just getting started
+"""
+DESCRIPTION = \
+"""fixoldloggers  - remove the sequence / serial number
+   fields from MOQP log file created with old versions of logging 
+   software such as writelog V11.
+"""
+
+EPILOG = \
+"""
+Running with no parameters will launch the GUI version.
+"""
+
+import os, sys, argparse
+
+# If the development module source paths exist, 
+# add them to the python path
+whereami = os.path.split( os.path.realpath(__file__) )
+if os.path.exists(whereami[0] + '/mqpdevpath.py'):
+    from mqpdevpath import *
+
+from moqputils.fixoldloggers import fixOldLoggers
+
+VERSION = '0.0.1'
+
+class get_args():
+    def __init__(self):
+        if __name__ == '__main__':
+            self.args = self.getargs()
+            
+    def getargs(self):
+        parser = argparse.ArgumentParser(\
+                               description = DESCRIPTION,
+                                           epilog = EPILOG)
+        parser.add_argument('-v', '--version', 
+                                  action='version', 
+                                  version = VERSION,
+            help="""Display version number and stop.""")
+        parser.add_argument('-i', '--inputfile',
+                                   default=None,
+            help="""The file containing the log data 
+                    with sequence numbers in each QSO.""")
+
+        args = parser.parse_args()
+        #print(args)
+        return args
+        
+        
+if __name__ == '__main__':
+   args = get_args()
+   if (args.args.inputfile):
+       logobj = fixOldLoggers(args.args.inputfile)
+       """
+       print('RAWLOG = {}\n\nHEADER={}\n\nQSOLIST={}\n\nFIXEDLOG={}'.format(\
+                  logobj.RAWLOG,
+                  logobj.HEADER, 
+                  logobj.QSOLIST, 
+                  logobj.FIXEDLOG))
+       """
+       for line in logobj.FIXEDLOG:
+           print(line)		  

@@ -1,0 +1,8 @@
+#/bin/bash
+#Make a copy of this file and rename as setpath
+#Change the path below to match your systems development base path
+BASEPATH='/Projects/moqputils'
+cd
+DEVPATH=$PWD$BASEPATH
+PATH=$DEVPATH/'bin:'$PATH
+export PATH

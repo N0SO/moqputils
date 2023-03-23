@@ -47,12 +47,10 @@ class MOQPQSOUtils(QSOUtils):
        return qso
 
     def getQSOdict(self, qsodata):
-       #qutils = QSOUtils()
        qelements = 10
        qso = None
        qso_errors = []
        q_errors = []
-       #qso_data = dict()
        temp = qsodata.replace(':','')
        qsoparts = temp.split(' ')
        qsolen = len(qsoparts)
@@ -83,7 +81,7 @@ class MOQPQSOUtils(QSOUtils):
        q_errors, q_valid = self.qso_valid(qso)
        #print(qsodata, qso_elements_parsed, qsolen, qso)
        if ( (qso_elements_parsed != qelements) or len(q_errors) ):
-          qso_errors.append(qsodata)
+          #qso_errors.append(qsodata)
           if (qso_elements_parsed != qelements):
              qso_errors.append(\
               '\tQSO has %d elements, it should have %d.'\
@@ -175,6 +173,7 @@ class MOQPQSOUtils(QSOUtils):
       summary['VHF'] = 0
       summary['DG'] = 0
       summary['DUPES'] = 0
+      summary['INVALID'] = 0
 
       for thisqso in data:
          if (thisqso['ERROR'] == False):
@@ -204,7 +203,9 @@ class MOQPQSOUtils(QSOUtils):
                  badmodeline += (' %s'%(thisqso[tag]))
              print('UNDEFINED MODE: %s -- QSO data = %s'%(mode, badmodeline))
          else:
-           summary['DUPES'] += 1
+           summary['INVALID'] += 1
+           if thisqso['DUPE'] > 0:
+              summary['DUPES'] += 1
       return  summary
 
     def qso_valid(self, qso):
@@ -331,13 +332,76 @@ class MOQPQSOUtils(QSOUtils):
     def getMOQPLog(self, fileName):
         logtext = None
         log = None
-        logtext = self.readFile(fileName)
+        logtext = self.readFile(fileName, linesplit=False)
         if (self.IsThisACabFile(logtext)):
             if (logtext):
+                logtext = logtext.splitlines()
                 log = self.getQSOdata(logtext)
                 if (log):
                     log['RAWTEXT'] = logtext
         return log
+ 
+ 
+    """
+    headerReview - Review the log header for completeness
+    Returns a dict() object with the results:
+        results['STAT'] - Boolean, True if valid header, False if not.
+        results['ERRORS' - A list of header errors or warnings. 
+    """
+    def headerReview(self, header):
+        errors =[]
+        goodHeader = True
+        result = None
+        if ('START-OF-LOG' in header):
+            if (self.packLine(header['CONTEST']) in CONTEST):
+                pass
+            else:
+                errors.append('CONTEST: %s tag INVALID'% \
+                            (header['CONTEST']))
+                goodHeader = False
+            
+            tag = self.packLine(header['LOCATION'])
+            if ((len(tag) > 0) and
+                ((tag in INSTATE) or
+                (tag in US) or
+                (tag in CANADA) or
+                (tag in DX)) ):
+                pass
+            else:
+                errors.append('LOCATION: %s tag INVALID'% \
+                            (header['LOCATION']))
+                goodHeader = False
+            if (\
+                (header['CATEGORY-STATION']) and
+                (header['CATEGORY-OPERATOR']) and
+                (header['CATEGORY-POWER']) and
+                (header['CATEGORY-MODE']) ):
+                pass
+            else:
+                #Missing some CATEHORY data
+                errors.append(\
+                    'CATEGORY-xxx: tags may be incomplete')
+                goodHeader = False
+            if (header['CALLSIGN'] == ''):
+                 errors.append('CALLSIGN: %s tag INVALID'% \
+                            (header['CALLSIGN']))
+                 goodHeader = False
+            #if (if re.search(regexstg, header['EMAIL']):
+            if (self.emailCheck(header['EMAIL'])):
+                pass
+            else:
+                errors.append('EMAIL: %s tag INVALID'% \
+                            (header['EMAIL']))
+                goodHeader = False
+        else:
+            #Not a CAB Header object
+            errors.append('No valid CAB Header')
+            goodHeader = False
+
+        result = { 'STAT' : goodHeader,
+                   'ERRORS' : errors }
+        return result
+
 
 
 if __name__ == '__main__':

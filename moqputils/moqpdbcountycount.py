@@ -17,7 +17,11 @@ VERSION = '0.0.1'
 
 COUNTYLIST = ['shared/multlists/Countylist.csv']
 
-COLUMNHEADERS = 'COUNTY (ABREV)\tQSO COUNT'
+COLUMNHEADERS = 'COUNTY (ABREV)\tQSO COUNT\tCW\tPH\tDIG'
+
+PHONEMODES = 'PH SSB LSB USB FM DV'
+DIGIMODES = 'RY RTY RTTY FSK AFSK PSK PSK31 PSK64 DIGU DIGL DG FT8'
+
 
 class MOQPDBCountyCount(ContestMults):
     def __init__(self, callsign=None):
@@ -59,23 +63,131 @@ class MOQPDBCountyCountRpt():
        self.appMain()
 
     def processAll(self, mydb):
-        ctys=MOQPDBCountyCount()
+        ctys_cw=MOQPDBCountyCount()
+        ctys_ph=MOQPDBCountyCount()
+        ctys_di=MOQPDBCountyCount()
+        stats=[]
         query = "SELECT * FROM `QSOS` WHERE 1"
         qsolist = mydb.read_query(query)
         print("Total number of valid QSOS: %d"%(len(qsolist)))
         for qso in qsolist:
-            ctys.setMult(qso['URQTH'])
+            if ('CW' in qso['MODE']):
+                ctys_cw.setMult(qso['URQTH'])
+            elif (qso['MODE'] in PHONEMODES):
+                ctys_ph.setMult(qso['URQTH'])
+            elif (qso['MODE'] in DIGIMODES):
+                ctys_di.setMult(qso['URQTH'])
+        counties = list(ctys_cw.getMultList())
+        for county in counties:
+            Name='{} ({})'.format(\
+                            ctys_cw.mults[county]['FULLNAME'],
+                            county)
+            CW=ctys_cw.mults[county]['COUNT']
+            PH=ctys_ph.mults[county]['COUNT']
+            DI=ctys_di.mults[county]['COUNT']
+            Total = CW + PH + DI
+            
+            cstat = countyStats(Name, CW, PH, DI, Total)
+            stats.append(cstat)
+            
+        ctys = {'CW':ctys_cw,
+                'PH':ctys_ph,
+                'DI':ctys_di,
+                'STATS':stats}     
         return ctys
-    
-    def appMain(self):
-       csvdata = 'No Data.'
-       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-       mydb.setCursorDict()
-       countyData = self.processAll(mydb)
-       counties = list(countyData.getMultList())
-       print('%s'%(COLUMNHEADERS))
-       for county in counties:
-           print('%s (%s)\t%d'%(countyData.mults[county]['FULLNAME'], 
-                               county,
-                               countyData.mults[county]['COUNT']))
 
+    def makeTSV(self, countyData):
+        tsvData = [COLUMNHEADERS]
+        counties = list(countyData['CW'].getMultList())
+        for county in counties:
+           qsototal = countyData['CW'].mults[county]['COUNT'] +\
+                      countyData['PH'].mults[county]['COUNT'] +\
+                      countyData['DI'].mults[county]['COUNT']
+           tsvData.append('{} ({})\t{}\t{}\t{}\t{}'.format(\
+                            countyData['CW'].mults[county]['FULLNAME'], 
+                            county,
+                            qsototal,
+                            countyData['CW'].mults[county]['COUNT'],
+                            countyData['PH'].mults[county]['COUNT'],
+                            countyData['DI'].mults[county]['COUNT']))
+        return tsvData
+ 
+    def altmakeTSV(self, statData):
+        tsvData=[COLUMNHEADERS]
+        newData = sorted(statData, key=lambda countyStats: countyStats.Total, reverse=True)
+        for county in newData:
+            tsvData.append(county.makeTSV()) 
+        return tsvData
+        
+    def altdisplayTSV(self, statData):
+        newData = sorted(statData, key=lambda countyStats: countyStats.Total, reverse=True)
+        print(COLUMNHEADERS)
+        for county in newData:
+            print(county.makeTSV())       
+ 
+    def displayTSV(self, tsvData):
+        for line in tsvData:
+            print(line)
+
+    def appMain(self):
+        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+        mydb.setCursorDict()
+        countyData = self.processAll(mydb)
+        tsvData = self.altmakeTSV(countyData['STATS'])
+        self.displayTSV(tsvData)
+
+class HTML_CountyCntRpt(MOQPDBCountyCountRpt):
+
+    def displayTSV(self, tsvData):
+
+        from htmlutils.htmldoc import htmlDoc
+        d = htmlDoc()
+        d.openHead('{} Missouri QSO Party QSOs per County'.format(YEAR),
+                        './styles.css')
+        d.closeHead()
+        d.openBody()
+        d.addTimeTag(prefix='Report Generated On ', 
+                            tagType='comment') 
+
+        d.add_unformated_text(\
+                """<h2 align='center'>{} Missouri QSO Party QSOs per County</h2>
+                """.format(YEAR))
+            
+        d.addTable(tdata=d.tsvlines2list(tsvData),
+                  header=True,
+                  caption='<h3>Missouri County QSOs</h3>')
+        d.closeBody()
+        d.closeDoc()
+
+        d.showDoc()
+        d.saveAndView('countyqsocounts.html')
+
+class countyStats():
+    def __init__(self, Name='', CW=0, PH=0, DI=0, Total=0):
+        self.Name = Name
+        self.CW = CW
+        self.PH = PH
+        self.DI = DI
+        self.Total = Total
+    
+    def __repr__(self):
+        return repr((self.Name, self.CW, Self.PH, self.DI, self.Total))
+    
+    def qsosum(self):
+        self.Total = self.CW + self.PH + self.DI
+        return self.Total
+        
+    def __dofmt(self, fmt):
+        return (fmt.format(self.Name, 
+                            self.Total,
+                            self.CW, 
+                            self.PH, 
+                            self.DI))
+ 
+    def makeTSV(self):
+        fmt = '{}\t{}\t{}\t{}\t{}'
+        return(self.__dofmt(fmt))
+
+        
+    
+  

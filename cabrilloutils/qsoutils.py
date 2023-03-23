@@ -22,6 +22,11 @@ Update History:
 * Wed Feb 24 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.1
 - Put self.VERSION inside class QSOUtils
+* Mon May 16 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.2
+- Added Three timestring formats to allow time with seconds
+- to accomodate soem logging programs and logs converted from
+- ADIF format that don't truncate the seconds from the time string.
 """
 from datetime import datetime
 from datetime import date
@@ -44,7 +49,7 @@ class QSOUtils(CabrilloUtils):
         Remove characters SQL statements don't like, and trim
         strings to the maxLen characters
         """
-        badchars = '\"\''
+        badchars = '\"\'\`\t'
         if (len(unsafeString) > maxLen):
             workString = unsafeString[:maxLen-1]
         else:
@@ -62,7 +67,10 @@ class QSOUtils(CabrilloUtils):
         packedNote = ''
         for i in note:
             #print("Note = ",i)
-            packedNote += self.trimAndEscape(i, 67) +'; '
+            if isinstance(i, list):
+              packedNote += self.packNote(i)
+            else:
+              packedNote += self.trimAndEscape(i, 67) +'; '
         return packedNote
 
     def qthSet(self, qth):
@@ -161,7 +169,8 @@ class QSOUtils(CabrilloUtils):
                    '%m-%d-%y', 
                    '%m/%d/%y']
                    
-       timefmts = ['%H%M', '%H:%M', '%H %M']
+       timefmts = ['%H%M', '%H:%M', '%H %M', 
+                   '%H%M%S', '%H:%M:%S', '%H %M %S']
        logtimeobj = None
 
        logtime = self.padtime(ltime)

@@ -73,15 +73,18 @@ class MOQPLoadLogs(MOQPLogcheck):
 
     def loadToDB(self, log, errorsOK, updateOK):
         sucsess = False
+        #print(log)
+        #exit()
         call = log['HEADER']['CALLSIGN']
         dupecount = log['QSOSUM']['DUPES']
-        errorcount = len(log['ERRORS'])
+        #errorcount = len(log['ERRORS'])
+        errorcount = log['QSOSUM']['INVALID']
         cabBonus = log['BONUS']['CABRILLO']
         if (cabBonus):
             print('Applying CABRILLO Bonus to %s'%(call))
-        if ( errorsOK or 
-                    (errorcount == 0) or \
-                    (errorcount == dupecount) ):
+        if ( errorsOK or log['HEADERSTAT']['STAT'] and  \
+                    ( (errorcount == 0) or \
+                      (errorcount == dupecount) ) ):
             """ Errors allowed from command line options OR
                 no errors exist OR errors are only DUPES. Load
                 this log.""" 
@@ -97,6 +100,7 @@ class MOQPLoadLogs(MOQPLogcheck):
                         (call, testID))
                         return sucsess
                 #else:
+                #print(log['HEADER'])
                 newLogID = mydb.write_header(log['HEADER'], cabBonus)
                 if (newLogID):
                         #print('New log ID = %d for %s -- writing QSOS...'%(newLogID, call))

@@ -37,6 +37,11 @@ Update History:
 - Made csv2cab inherit from CabrilloUtils.
 - Make module CSVtoCAB with classes csv2CAB and ui.
 - Added csv2cab script that will do both command line and GUI.
+* Sun Apr 02 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V2.0.0 - Updated to use new developmet module pathing methods.
+-          Also added code to remove all the  QSO column header
+-          lines and the extra QSO: ,,,,, lines present in our
+-          MOQP_log.xls(x) spreadsheet.
 """
 import datetime
 import argparse
@@ -61,25 +66,38 @@ class csv2CAB(CabrilloUtils):
    def readcsvcabFile(self, csvfileName):
       """Read CSV file and return data. If this file is
          not a CABRILLO format file, return None"""
-      #cab = CabrilloUtils()
+
       csvdata = self.readFile(csvfileName)
-      
       if (csvdata):
-         if (self.IsThisACabFile(csvdata) == False):
-            csvdata = None
-      
+         lc = 0
+         for line in csvdata:
+            lc += 1
+            #print('cab2csv_db_4: line=', line, lc)
+            if (self.IsplainText(line) == False):
+               for c in line:
+                  #print('cab2csv_db_5: c=', c, lc)
+                  if (not(c in string.printable)):
+                     print(string.printable)
+                     print("I don't line character %s in line %d "%(c, lc))
+                     csvdata = None
+               break
+      else:
+          print('File %s is empty or does not exist.'%(csvfileName))
       return csvdata
       
-      
-   def processLine(self, line):
+   def processLine(self, iline):
       newline = None
-      for tag in self.CABRILLOTAGS:                 #Skip any line without a CAB tab
-         if (tag in line):
-            newline = r""
-            newline = self.packLine(line)
-            if newline == 'QSO:':                  #Skip blank QSO: lines
-               newline = None
-            break
+      cabparts =  iline.split(':',1)
+      if(len(cabparts)>1):
+         line = cabparts[1].replace(',',' ')           #Replace commas
+         #for tag in self.CABRILLOTAGS:                 #Skip any line without a CAB tab
+         if (cabparts[0] in self.CABRILLOTAGS):
+               newline = r""
+               newline = cabparts[0] +':'+ self.packLine(line)
+               if newline == 'QSO:':                  #Skip blank QSO: lines
+                  newline = None
+                  #break
+      #print('newline = ',newline)
       return newline
          
    def processcsvData(self, csvdata):
@@ -101,11 +119,15 @@ class csv2CAB(CabrilloUtils):
       cabdata = r""
       csvdata = self.readcsvcabFile(csvfilename)
 
+      #print('csv2cab_db_1: csvdata = %s'%(csvdata))
+
       if (csvdata == None):
          print('File %s is not a Cabrillo Format File.'%(csvfilename))
       else:
          cabdata = self.processcsvData(csvdata)
-      
+         print(cabdata)
+  
+         print('Writing .log file %s.log ...'%(csvfilename))      
          cabfile = basename(csvfilename) + ".log"
          with open(cabfile,'w') as f:
             f.write(cabdata)

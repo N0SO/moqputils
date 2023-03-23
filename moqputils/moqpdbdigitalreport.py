@@ -23,6 +23,11 @@ Update History:
 - V0.0.1 - Start tracking revs
 * Thu Dec 09 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 - Refactored for efficiency.
+* Fri May 27 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 - Added code to use YEAR parameter set in moqpdefs.py in
+-          titles so they don't have to be updated every year.
+* Mon Jul 04 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.2 - Changed RY QSOs to DIG QSOs in HTML reports
 """
 
 from moqputils.moqpdbutils import *
@@ -30,7 +35,7 @@ from moqputils.configs.moqpdbconfig import *
 from htmlutils.htmldoc import *
 
 
-VERSION = '0.1.0'
+VERSION = '0.1.2'
 
 #Column headers for printed/csv reports
 COLUMNHEADERS = \
@@ -45,7 +50,7 @@ HEADERLINE = [
     'OPERATORS',
     'LOCATION',
     'SCORE',
-    'RY QSOs',
+    'DIG QSOs',
     'MULTS',
     'CABRILLO BONUS',
     'W0MA BONUS',
@@ -118,7 +123,7 @@ class MOQPDBDigitalReport():
            query += 'AND LOGHEADER.CALLSIGN="%s" '%(call)
 
        query += 'JOIN SUMMARY ON DIGITAL.LOGID = SUMMARY.LOGID '+\
-                'ORDER BY LOCATION ASC, SCORE DESC;'
+                'ORDER BY SCORE DESC;'
 
        digList = mydb.read_query(query)
        return digList
@@ -158,7 +163,7 @@ class HTML_DigitalRpt(MOQPDBDigitalReport):
 
     def appMain(self, callsign):
        d = htmlDoc()
-       d.openHead('2021 Missouri QSO Party Digital Scores',
+       d.openHead('{} Missouri QSO Party Digital Scores'.format(YEAR),
                   './styles.css')
        d.closeHead()
        d.openBody()
@@ -166,7 +171,7 @@ class HTML_DigitalRpt(MOQPDBDigitalReport):
                     tagType='comment') 
                          
        d.add_unformated_text(\
-             """<h2 align='center'>2021 Missouri QSO Party DIGITAL ONLY Scores</h2>""")
+             """<h2 align='center'>{} Missouri QSO Party DIGITAL ONLY Scores</h2>""".format(YEAR))
 
        modictList = self.fetchDigital(callsign,ftype='mo')
        rankeddictList = self.addRankingField(modictList,

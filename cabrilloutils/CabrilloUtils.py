@@ -44,7 +44,19 @@ Update History:
 - During testing with files submitted for 2021, some non-cab files passed
 - the IsThisACabFile() check because the strings being tested for were
 - detectable in a binary file types like xls, csv and pdf. 
-
+* Mon April 25 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.2
+- Modified readFile() method to allow specifying to read and return
+- a file as a list of lines, or as a single string containing the 
+- entire file (readlines() vs read())
+* Tue May 03 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.3
+- Added changes to fix Issues #16 (missed when issue was closed) and
+- Issue #43. Method getLogdictData was modified to ignore and skip
+- any line that does not start with a tag [<TAGNAME>:] defined in
+- CABRILLO tags - This will prevent crashing due to an undefined
+- Cabrillo tag.
+-
 """
 
 import re, string
@@ -106,7 +118,7 @@ class CabrilloUtils():
                     'CATEGORY-TRANSMITTER', 'CATEGORY-OVERLAY']
 
     def __init__(self):
-        self.VERSION = '1.0.12'
+        self.VERSION = '1.0.2'
         pass
 
     def __version__(self):
@@ -115,12 +127,23 @@ class CabrilloUtils():
     def getVersion(self):
        return self.VERSION
        
-    def readFile(self, filename):
-        """Read and return the entire file"""
+    def readFile(self, filename, linesplit=True):
+        """Read and return the entire file
+           linesplit = True:
+             returns data as a list of lines.
+           linesplit = False:
+             return data as a single screen.
+        """
         data = None
         try:
             with open(filename, 'r') as thisfile:
-                data = thisfile.readlines()
+                if(linesplit):
+                    """Return file as list of lines"""
+                    data = thisfile.readlines()
+                else:
+                    """return entire file as a single string
+                    usefile if you want to validate as text only file"""
+                    data = thisfile.read()
         except:
             data = None
         return data
@@ -133,12 +156,13 @@ class CabrilloUtils():
             return False
 
     def IsplainText(self, data):
-        #if (data.isprintable()):
-        plainText=True
-        for c in data:
-            if not((c in string.printable)):
-                plainText= False
-                break
+        plainText = False
+        if (data != None):
+            plainText=True
+            for c in data:
+                if not((c in string.printable)):
+                    plainText = False
+                    break
         return plainText
 
     def IsThisACabFile(self, data):
@@ -147,6 +171,7 @@ class CabrilloUtils():
         eol = False
         callsign = False
         qsol = False
+        plainText = False
         if(data):
             plainText=self.IsplainText(data)
             #plainText=data.isprintable()
@@ -301,7 +326,11 @@ class CabrilloUtils():
                     qsolist.append(newline)
               else:
                  if (len(tagsplit) > 1):
-                    header[tagsplit[0]] += self.packLine(tagsplit[1])
+                    if(tagsplit[0] in self.CABRILLOTAGS):
+                        header[tagsplit[0]] += \
+                                 self.packLine(tagsplit[1])
+                                 
+                                 
           logdict['HEADER'] = header
           logdict['QSOLIST'] = qsolist
        else:
@@ -475,6 +504,7 @@ class CabrilloUtils():
        return emailValid
 
 if __name__ == '__main__':
+   import sys
    app=CabrilloUtils()
    """
    logdata = app.getLogFile('../testfiles/W0QBX.LOG')
@@ -487,6 +517,13 @@ if __name__ == '__main__':
                                              header['NAME'],
                                              header['OPERATORS']))"""
    
-   
+    
    print ('Classname: %s Version: %s'%(app.__class__.__name__,
-                                       app.__version__()))
+                                      app.__version__()))
+   if (len(sys.argv) >= 2):                                   
+       testString = sys.argv[1].strip().upper()
+       if testString in app.CABRILLOTAGS:
+           print("I'm in! {}".format(testString))
+       else:
+           print('{} Not present!'.format(testString))
+       

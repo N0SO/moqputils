@@ -13,9 +13,10 @@ Update History:
 
 from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
-
+from moqputils.moqpawardefs import AWARDLIST 
+from qrzutils.qrz.qrzlookup import QRZLookup
 VERSION = '0.1.0'
-
+"""
 AWARDLIST = ['MISSOURI FIXED MULTI-OP',
     'MISSOURI FIXED SINGLE-OP HIGH POWER',
     'MISSOURI FIXED SINGLE-OP LOW POWER',
@@ -43,7 +44,7 @@ AWARDLIST = ['MISSOURI FIXED MULTI-OP',
     'Missouri VHF',
     'Non-Missouri VHF',
     'Highest Number of Counties' ]
-
+"""
 SHOWMEHEADERS =    'AWARD\tSTATION\tOPERATORS\t'+ \
                    'NAME\tADDRESS\tCITY\tSTATE\tZIP\t'+ \
                    'COUNTRY\tEMAIL'
@@ -119,6 +120,7 @@ STATELIST = [  ["ALABAMA","'AL','ALABAMA'"],
 class GENLabels():
     def __init__(self):
         self.AwardList = []
+        self.qrz=QRZLookup('./moqputils/configs/qrzsettings.cfg')
         self.appMain()
         
     def appMain(self, AWARD):
@@ -166,20 +168,81 @@ class SHOWMELabels(GENLabels):
            
 class CATEGORYLabels(GENLabels):
            
+    def makeTSV(self, place, cat, logheader):
+       tsvdata = ("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t"%( \
+                               place,cat,
+                               logheader['CALLSIGN'],
+                               logheader['OPERATORS'],
+                               logheader['NAME'],
+                               logheader['ADDRESS'],
+                               logheader['CITY'],
+                               logheader['STATEPROV'],
+                               logheader['ZIPCODE'],
+                               logheader['COUNTRY'],
+                               logheader['EMAIL']))
+
+       return tsvdata
+
     def processHeader(self, mydb, place, cat, logid):
        logheader = mydb.read_pquery(\
                    "SELECT * from LOGHEADER WHERE ID=%s",[logid])
-       tsvdata = ("%s\t%s AWARD\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t"%( \
-                               place,cat,
-                               logheader[0]['CALLSIGN'],
-                               logheader[0]['OPERATORS'],
-                               logheader[0]['NAME'],
-                               logheader[0]['ADDRESS'],
-                               logheader[0]['CITY'],
-                               logheader[0]['STATEPROV'],
-                               logheader[0]['ZIPCODE'],
-                               logheader[0]['COUNTRY'],                               
-                               logheader[0]['EMAIL']))
+
+       tsvdata = self.makeTSV(place, cat, logheader[0])
+       if (len(logheader[0]['OPERATORS']) > 0):
+           ops = logheader[0]['OPERATORS'].split(' ')
+           if  len(ops)>1:
+               for op in ops:
+                   try:
+                       opdata = self.qrz.callsign(op.strip())
+                       qrzdata=True
+                   except:
+                       qrzdata=False
+                       logheader[0]['NAME']='NO QRZ FOR {} - {}'.format(op,len(op))
+                       
+                   if qrzdata:
+                       #print(opdata)
+                       if ('fname' in opdata) and ('name' in opdata):
+                           
+                           logheader[0]['NAME']=('{} {}, {}'.format(\
+                                                 opdata['fname'].upper(),
+                                                 opdata['name'].upper(),
+                                                 op.upper()))
+                       elif ('attn' in opdata) and ('name' in opdata):
+                           logheader[0]['NAME']=('{} ATTN {}'.format(\
+                                                 opdata['name'].upper(),
+                                                 opdata['att1'].upper()))
+                       elif ('name' in opdata):
+                           logheader[0]['NAME']=('{}'.format(\
+                                                 opdata['name'].upper()))
+                       else:
+                           logheader[0]['NAME']=('***NO NAME FOR {} ***'.format(\
+                                                 op.upper()))
+                       if('addr1' in opdata):   
+                           logheader[0]['ADDRESS']=opdata['addr1'].upper()
+                       else:
+                           logheader[0]['ADDRESS']=''
+                       if ('addr2' in opdata):    
+                           logheader[0]['CITY'] = opdata['addr2'].upper()
+                       else:
+                           logheader[0]['CITY'] = ''
+                       if('state' in opdata):
+                           logheader[0]['STATEPROV'] = opdata['state'].upper()
+                       else:
+                           logheader[0]['STATEPROV'] = ''
+                       if ('zip' in opdata):
+                           logheader[0]['ZIPCODE'] = opdata['zip'].upper()
+                       else:
+                           logheader[0]['ZIPCODE'] = ''
+                       if ('country' in opdata):    
+                           logheader[0]['COUNTRY'] = opdata['country'].upper()
+                       else:
+                           logheader[0]['COUNTRY'] = ''
+                       if ('email' in opdata):
+                           logheader[0]['EMAIL'] = opdata['email'].upper()                       
+                       else:                        
+                           logheader[0]['EMAIL'] = ''                       
+                   
+                   tsvdata += '\n'+ self.makeTSV(place, cat, logheader[0])
        return tsvdata
     
            
@@ -200,6 +263,7 @@ class CATEGORYLabels(GENLabels):
                                          "FIRST PLACE", 
                                          cat, 
                                          sumlist[0]['LOGID']) )
+
            if (len(sumlist) >1):
                tsvdata.append(self.processHeader(mydb, 
                                          "SECOND PLACE", 
