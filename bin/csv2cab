@@ -85,7 +85,7 @@ class theApp():
             from cabrilloutils.csv2cab import csv2CAB
             app = csv2CAB(args.inputfile)
         else:
-            from ui_csv2cab import gui_csv2cab
+            from cabrilloutils.ui_csv2cab import gui_csv2cab
             app=gui_csv2cab()
 """
 Main program - run stand-alone if not included as part of a larger application

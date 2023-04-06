@@ -458,6 +458,7 @@ class MOQPCategory(MOQPLogFile):
         result = dict()
         errors = []
         log = self.buildLog(fileName)
+        #print('checkLog: log dir={}'.format(dir(log)))
         if ( log ):
             headerStatus = self.headerReview(log['HEADER'])
             #result['HEADERSTAT'] = headerResult['STAT']
