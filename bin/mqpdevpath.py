@@ -19,3 +19,5 @@ for mypath in DEVMODPATH:
         if ( os.path.exists(mypath) and \
           (os.path.isfile(mypath) == False) ):
             sys.path.insert(0, mypath)
+
+print('python path = {}'.format(sys.path))
