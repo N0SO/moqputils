@@ -24,6 +24,26 @@ MODES3 = ['CW', 'RY', 'DG', 'DIG', 'DIGI', 'RTTY',
 MODES = ['PH', 'SSB', 'USB', 'LSB', 'FM', 'DV',
          'CW', 'RY', 'DG', 'DIG', 'DIGI', 'RTTY',
          'FT8', 'FT4', 'MIXED']
+         
+CTMODE = ['CW', 'PHONE', 'MIXED', 'DIGITAL', 'CW+DIGITAL',
+          'PHONE+DIGITAL',
+          'MIXED+DIGITAL']
+         
+CTOPERATOR = ['SINGLE-OP', 'MULTI-OP', 'CHECKLOG']
+
+CTSTATION = [\
+              'FIXED',
+              'MOBILE',
+              'EXPEDITION',
+              'UNLIMITED',
+              'MOBILE-UNLIMITED',
+              'SCHOOL',
+              'DISTRIBUTED'\
+              ]
+
+CTPOWER = ['LOW', 'HIGH', 'QRP']
+
+
 
 OVERLAY = 'ROOKIE'
 
