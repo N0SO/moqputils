@@ -25,7 +25,7 @@ MODES = ['PH', 'SSB', 'USB', 'LSB', 'FM', 'DV',
          'CW', 'RY', 'DG', 'DIG', 'DIGI', 'RTTY',
          'FT8', 'FT4', 'MIXED']
          
-CTMODE = ['CW', 'PHONE', 'MIXED', 'DIGITAL', 'CW+DIGITAL',
+CTMODE = ['CW', 'PHONE', 'SSB', 'MIXED', 'DIGITAL', 'CW+DIGITAL',
           'PHONE+DIGITAL',
           'MIXED+DIGITAL']
          
@@ -54,8 +54,10 @@ US = \
 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD CA HI'
 
 DX = 'DX DK2 DL3 DL8 DM3 EA4 F5 F8 HA8 JE2 JO7 LY5 OK1 OK4 OL2 '+\
-     'ON4 OM2 OT6 '+\
-     'HA9 RZ1 SM3 UA3 WP4'
+     'ON4 OM2 OT6 IZ4 YV5 '+\
+     'HA9 RZ1 SM3 UA3 WP4 '+\
+     '9A3 VP8 F4 PA3 '+\
+     'ZF2 '
 
 MOCOUNTY = [ 'ADR', 'AND', 'ATC', 'AUD', 'BAR', 'BTN', 'BAT',
              'BEN', 'BOL', 'BOO', 'BUC', 'BTR', 'CWL', 'CAL',
