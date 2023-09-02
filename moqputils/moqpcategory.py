@@ -51,6 +51,9 @@ Update History:
 * Thu May 05 2022 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.0
 - Incorporated new MOQPLogFile class to hold the logfile.
+* Fri Jun 02 2023 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.1
+- Added PHONE to the list of modes to check for in _moqpcatmode_().
 
        
 """
@@ -62,7 +65,7 @@ from moqputils.moqpmults import *
 from moqputils.moqpdefs import *
 import os, re
 
-VERSION = '1.0.0' 
+VERSION = '1.0.1' 
 FILELIST = './'
 ARGS = None
 
@@ -238,7 +241,7 @@ class MOQPCategory(MOQPLogFile):
     def _moqpcatmode_(self, log):
        moqpcatstg = ''
        compstring = log['HEADER']['CATEGORY-MODE'].strip()
-       if (compstring == 'PH' \
+       if (compstring == 'PH' or compstring == 'PHONE' \
                      or compstring == 'SSB'):
           moqpcatstg = 'PHONE'
        elif (compstring == 'CW'):
@@ -334,8 +337,10 @@ class MOQPCategory(MOQPLogFile):
        if (log['QSOSUM']['VHF'] > 0):
            moqpcatdict['VHF'] = 'VHF'
           
-       if (log['HEADER']['CATEGORY-OVERLAY'].upper().strip() == 'ROOKIE'):
-           moqpcatdict['ROOKIE'] = 'ROOKIE'                         
+       if (log['HEADER']['CATEGORY-OVERLAY']):
+           if (log['HEADER']['CATEGORY-OVERLAY'].upper().strip() \
+               == 'ROOKIE'):
+               moqpcatdict['ROOKIE'] = 'ROOKIE'                         
        moqpcatdict['MOQPCAT'] = self.determineMOQPCatstg(moqpcatdict)
        #print(moqpcatdict)         
        return moqpcatdict

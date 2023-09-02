@@ -20,4 +20,4 @@ for mypath in DEVMODPATH:
           (os.path.isfile(mypath) == False) ):
             sys.path.insert(0, mypath)
 
-print('python path = {}'.format(sys.path))
+#print('python path = {}'.format(sys.path))

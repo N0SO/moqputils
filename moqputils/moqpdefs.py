@@ -18,7 +18,7 @@ CANADA = 'MAR NL QC ONE ONN ONS GTA MB SK AB BC NT NB PE'
 STATIONS = ['FIXED', 'MOBILE','PORTABLE', 'ROVER','EXPEDITION',
             'HQ','SCHOOL']
 DIGIMODES = ['RY', 'DG', 'DIG', 'DIGI', 'RTTY', 'FT8', 'FT4']
-MODES2 = ['PH', 'SSB', 'USB', 'LSB', 'FM', 'DV']
+MODES2 = ['PH', 'PHONE', 'SSB', 'USB', 'LSB', 'FM', 'DV']
 MODES3 = ['CW', 'RY', 'DG', 'DIG', 'DIGI', 'RTTY',
           'FT8', 'FT4']
 MODES = ['PH', 'SSB', 'USB', 'LSB', 'FM', 'DV',
@@ -55,8 +55,8 @@ US = \
 
 DX = 'DX DK2 DL3 DL8 DM3 EA4 F5 F8 HA8 JE2 JO7 LY5 OK1 OK4 OL2 '+\
      'ON4 OM2 OT6 IZ4 YV5 '+\
-     'HA9 RZ1 SM3 UA3 WP4 '+\
-     '9A3 VP8 F4 PA3 '+\
+     'HA9 HB9 RZ1 SM3 UA3 WP4 '+\
+     '9A3 VP8 F4 PA3 G0 '+\
      'ZF2 '
 
 MOCOUNTY = [ 'ADR', 'AND', 'ATC', 'AUD', 'BAR', 'BTN', 'BAT',
