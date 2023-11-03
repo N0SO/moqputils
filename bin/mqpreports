@@ -83,15 +83,18 @@ class get_args():
                     determine how many county lines to check for.
                     May be 2,3 or 4.""")
         parser.add_argument('-c', '--callsign', default=None,
-            help="CALLSIGN in MOQP database to summarize. "+ \
-                 "Entering 'allcalls' will run the report "+ \
-                 "on all calls in the database. Entering "+ \
-                 "'club' will run the report on calls that "+ \
-                 " put a club name in the CABRILLO CLUB field."+\
-                 "Entering club-summary will display exclude "+\
-                 "the individual club member station scores. "+\
-                 "Entering club-update will update the club "+\
-                 "scores from the station scores in the database.")
+            help="""CALLSIGN in MOQP database to summarize.
+                 Entering 'allcalls' will run the report
+                 on all calls in the database. Entering 'club' 
+                 will run a full report on calls that
+                 put a club name in the CABRILLO CLUB field (useful
+                 for determining club category winner). Entering 
+                 'club-summary' will display summary with a list of 
+                 individual club member station calls, but station
+                 scores excluded (useful for web page status reports). 
+                 Entering 'club-update' will update the club 
+                 scores from the station scores in the database and 
+                 then run the full report.""")
         parser.add_argument('-d', '--digireport', default=None,
             help="CALLSIGN in MOQP database to summarize. "+ \
                  "Entering 'allcalls' will run the report "+ \
@@ -184,7 +187,7 @@ if __name__ == '__main__':
        from moqputils.logreport import LogReport
        app = LogReport(args.args.logreport)
    elif (args.args.countiesworked):
-        from countycounts.countycount import*
+        from moqputils.moqpdbcountycount import*
         if ('html' in reportType):
             app = HTML_CountyCntRpt(args.args.countiesworked)
         else:

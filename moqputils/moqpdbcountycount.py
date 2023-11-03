@@ -13,7 +13,7 @@ from cabrilloutils.contestmults import *
 from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 
 COUNTYLIST = ['shared/multlists/Countylist.csv']
 
@@ -61,40 +61,40 @@ class MOQPDBCountyCount(ContestMults):
 class MOQPDBCountyCountRpt():
     def __init__(self, validqsos):
        self.appMain()
-
+    
     def processAll(self, mydb):
-        ctys_cw=MOQPDBCountyCount()
-        ctys_ph=MOQPDBCountyCount()
-        ctys_di=MOQPDBCountyCount()
-        stats=[]
-        query = "SELECT * FROM `QSOS` WHERE 1"
-        qsolist = mydb.read_query(query)
-        print("Total number of valid QSOS: %d"%(len(qsolist)))
-        for qso in qsolist:
-            if ('CW' in qso['MODE']):
-                ctys_cw.setMult(qso['URQTH'])
-            elif (qso['MODE'] in PHONEMODES):
-                ctys_ph.setMult(qso['URQTH'])
-            elif (qso['MODE'] in DIGIMODES):
-                ctys_di.setMult(qso['URQTH'])
-        counties = list(ctys_cw.getMultList())
-        for county in counties:
-            Name='{} ({})'.format(\
-                            ctys_cw.mults[county]['FULLNAME'],
-                            county)
-            CW=ctys_cw.mults[county]['COUNT']
-            PH=ctys_ph.mults[county]['COUNT']
-            DI=ctys_di.mults[county]['COUNT']
-            Total = CW + PH + DI
+        Total = 0
+        statList =[]
+        query = "SELECT * FROM `mocounties`"
+        cntylist = mydb.read_query(query)
+        for cnty in cntylist:
+            result = self.processOne(mydb, cnty['code'])
+            result.CntyID = cnty['ID']
+            result.Name = cnty['name']
+            result.Code = cnty['code']
+            Total += result.qsosum()
+            statList.append(result)
             
-            cstat = countyStats(Name, CW, PH, DI, Total)
-            stats.append(cstat)
+        return statList
             
-        ctys = {'CW':ctys_cw,
-                'PH':ctys_ph,
-                'DI':ctys_di,
-                'STATS':stats}     
-        return ctys
+    def processOne(self, mydb, county):
+        countystat = countyStats()
+        querystg = """SELECT * FROM `QSOS` WHERE (VALID=1 and 
+                      (MYQTH='{}' or URQTH='{}'))"""\
+                      .format(county, county)
+        qsolist = mydb.read_query(querystg)
+        
+        if (qsolist):
+            countystat.Total = len(qsolist)
+            for qso in qsolist:
+                if ('CW' in qso['MODE']):
+                    countystat.CW +=1
+                elif (qso['MODE'] in PHONEMODES):
+                    countystat.PH +=1
+                elif (qso['MODE'] in DIGIMODES):
+                    countystat.DI +=1
+            
+        return countystat
 
     def makeTSV(self, countyData):
         tsvData = [COLUMNHEADERS]
@@ -133,7 +133,7 @@ class MOQPDBCountyCountRpt():
         mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
         mydb.setCursorDict()
         countyData = self.processAll(mydb)
-        tsvData = self.altmakeTSV(countyData['STATS'])
+        tsvData = self.altmakeTSV(countyData)
         self.displayTSV(tsvData)
 
 class HTML_CountyCntRpt(MOQPDBCountyCountRpt):
@@ -163,8 +163,11 @@ class HTML_CountyCntRpt(MOQPDBCountyCountRpt):
         d.saveAndView('countyqsocounts.html')
 
 class countyStats():
-    def __init__(self, Name='', CW=0, PH=0, DI=0, Total=0):
+    def __init__(self, Name='', Code = '', CntyID = None, 
+                                CW=0, PH=0, DI=0, Total=0):
         self.Name = Name
+        self.Code = Code
+        self.CID = CntyID
         self.CW = CW
         self.PH = PH
         self.DI = DI
@@ -178,14 +181,15 @@ class countyStats():
         return self.Total
         
     def __dofmt(self, fmt):
-        return (fmt.format(self.Name, 
+        return (fmt.format(self.Name,
+                            self.Code,
                             self.Total,
                             self.CW, 
                             self.PH, 
                             self.DI))
  
     def makeTSV(self):
-        fmt = '{}\t{}\t{}\t{}\t{}'
+        fmt = '{} ({})\t{}\t{}\t{}\t{}'
         return(self.__dofmt(fmt))
 
         
