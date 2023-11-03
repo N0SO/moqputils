@@ -236,3 +236,29 @@ class HTML_ClubReport(MOQPDBClubReport):
        d.showDoc()
        d.saveAndView('clubs.html')
 
+class HTML_ClubAwards(HTML_ClubReport):
+    def makeClubTable(self, db):
+        HEADERLINE = ['CLUB',
+              'LOG COUNT',
+              'STATION CALLSIGNS',
+              'SCORE']
+        clubList = self.fetchClublist(db)
+        #print(clubList)
+        clubTable = [HEADERLINE]
+        for club in clubList:
+            #print(club)
+            stationList = self.fetchStationList(db, club)
+            clubMembers = ''
+            for station in stationList:
+                clubMembers += station['CALLSIGN'] + ' '
+            #print(stationList)
+            row = [club['NAME'],
+                   club['LOGCOUNT'],
+                   clubMembers, 
+                   club['SCORE'] ]
+           
+            clubTable.append(row)
+            #print(row)
+
+        return clubTable               
+    

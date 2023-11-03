@@ -32,12 +32,15 @@ Update History:
 * Fri May 27 2022 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.2.2 - Added -t <html> <csv> to hf, vhf, digital and club scores 
 -          report and to the most counties report.
+* Fri Nov  03 2023 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.2.2 - Added CLUB-SUMMARY to the html club reports to omit the
+-          individual club member scores from the report.
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.2.2'
+VERSION = '0.2.3'
 ARGS = None
 
 # If the development module source paths exist, 
@@ -83,8 +86,12 @@ class get_args():
             help="CALLSIGN in MOQP database to summarize. "+ \
                  "Entering 'allcalls' will run the report "+ \
                  "on all calls in the database. Entering "+ \
-                 "'club' will run the report on calls that"+ \
-                 " put a club name in the CABRILLO CLUB field.")
+                 "'club' will run the report on calls that "+ \
+                 " put a club name in the CABRILLO CLUB field."+\
+                 "Entering club-summary will display exclude "+\
+                 "the individual club member station scores. "+\
+                 "Entering club-update will update the club "+\
+                 "scores from the station scores in the database.")
         parser.add_argument('-d', '--digireport', default=None,
             help="CALLSIGN in MOQP database to summarize. "+ \
                  "Entering 'allcalls' will run the report "+ \
@@ -158,6 +165,10 @@ if __name__ == '__main__':
            if ('html' in reportType):
                from moqputils.moqpdbclubreport import HTML_ClubReport
                app = HTML_ClubReport(args.args.callsign)
+       elif (args.args.callsign == 'CLUB-SUMMARY'):
+           if ('html' in reportType):
+               from moqputils.moqpdbclubreport import HTML_ClubAwards
+               app = HTML_ClubAwards(args.args.callsign)
        else:
            if ('csv' in reportType):
                from moqputils.moqpdbcatreport import MOQPDBCatReport
