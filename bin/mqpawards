@@ -51,7 +51,6 @@ class get_args():
                                   action='version', 
                                   version = VERSION)
         parser.add_argument('-a', '--award',
-                                   action='store_true',
                                    default=None,
             help="Create a list of the 1st place award (plaque) "+\
                   "winners in each MOQPCATEGORY. ")
@@ -100,10 +99,10 @@ if __name__ == '__main__':
        #print('Running plaques')
        if ('csv' in reportType):
            from moqputils.moqpAwards.CATEGORYPlaques import CATEGORYPlaques
-           app = CATEGORYPlaques()
+           app = CATEGORYPlaques(args.args.award)
        elif ('html' in reportType):
            from moqputils.moqpAwards.CATEGORYPlaques import HTMLPlaques
-           app = HTMLPlaques()
+           app = HTMLPlaques(args.args.award)
    elif (args.args.category):
        #print('Running CATEGORY Awards %s %s'%(args.args.category, args.args.reportType))
        if ('csv' in reportType):
