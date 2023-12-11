@@ -73,16 +73,10 @@ class commonAwards():
                         placestg = 'SECOND PLACE'
                     #print('{} {}'.format(placestg, len(sumlist)))
                     if len(sumlist) > place:
-                        tsvline = self.processLabel(placestg, 
-                                                    cat, sumlist[place])
-                        if (tsvline):
-                            tsvdata.append(tsvline)
-            
-                        if (len(sumlist[place]['OPERATORS']) > 0):
-                            tempData=sumlist[place]
-                            ops = sumlist[place]['OPERATORS'].split(' ')
-                            if  len(ops)>1:
-                                for op in ops:
+                        ops = sumlist[place]['OPERATORS'].split(' ')
+                        if (len(ops)>1): #Multi-op
+                            #tempData=sumlist[place]
+                            for op in ops:
                                     tempData = sumlist[place]
                                     try:
                                         opdata = qrz.callsign(op.strip())
@@ -102,6 +96,15 @@ class commonAwards():
                                                     cat, tempData)
                                     if (tsvline):
                                         tsvdata.append(tsvline)
+                        else: #Single-op
+                            if sumlist[place]['OPERATORS'] == \
+                                     sumlist[place]['CALLSIGN']:
+                                #Single-op using own call
+                                sumlist[place]['OPERATORS'] = ''
+                            tsvline = self.processLabel(placestg, 
+                                                    cat, sumlist[place])
+                            if (tsvline):
+                                tsvdata.append(tsvline)
         return tsvdata 
 
     def swapData(self, oldData, op, opdata):
@@ -156,11 +159,10 @@ class commonAwards():
                     'M\tI\tS\tS\tO\tU\tR\tI']
             
         for station in dblist:
-            tsvlines.append(self.processLabel(station))
-            if (len(station['OPERATORS']) > 0):
-                tempData=station
+            if len(station['OPERATORS']) > 0:
                 ops = station['OPERATORS'].split(' ')
-                if  len(ops)>1:
+                if len(ops) > 1: #Multi-op station
+                    tempData = station
                     for op in ops:
                         try:
                             opdata = qrz.callsign(op.strip())
@@ -177,6 +179,11 @@ class commonAwards():
                                    op, 
                                    opdata)
                         tsvlines.append(self.processLabel(tempData, op))
+                    
+                else: #Single-op station
+                    if station['CALLSIGN'] == station['OPERATORS']:
+                        station['OPERATORS'] = ''
+                    tsvlines.append(self.processLabel(station))
         return tsvlines            
 
 

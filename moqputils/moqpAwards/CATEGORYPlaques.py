@@ -144,21 +144,35 @@ class CATEGORYPlaques(commonAwards):
        sumlist = None
        schoolclub = False
        
+       if (placement == '1'):
+              placeStg = 'FIRST PLACE'
+              placeIndex = 0
+       elif (placement == '2'):
+              placeStg = 'SECOND PLACE'
+              placeIndex = 1
+       
        sumlist = self.get_awardquery(mydb, cati)
 
-       if (sumlist):
-           sumlist = sumlist[0]
+       if (len(sumlist) >= placeIndex + 1):
+           sumData = sumlist[placeIndex]
+       else:
+           sumData = dict()
        tsvdata = ''
-       #if (len(sumlist)>0):
        tsvdata = self.processHeader(mydb, 
-                                    "FIRST PLACE", 
+                                    placeStg, 
                                     cati[0], 
-                                    sumlist)
+                                    sumData)
 
-       #if ((sumlist ==None) or (len(sumlist) == 0)):
-       #        tsvdata =['\t%s\tNO ENTRY'%(cati[0])]
-       #print(tsvdata)
        return tsvdata
+
+    def _getAwards(self,mydb):
+        """
+        Read award names from database
+        """
+        awlist = None
+        awlist = mydb.read_query(\
+                 "SELECT * FROM CONTESTCATEGORIES WHERE 1")
+        return awlist
 
     def appMain(self, placement):
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
@@ -189,33 +203,54 @@ class HTMLPlaques(CATEGORYPlaques):
            #print(CAT)
            tsvdata = self.processOne(mydb, CAT, placement)
            self.AwardList.append(tsvdata)
-
+           
+       if (placement == '1'): 
+           """
+           Build 2nd table for additional first place certificates
+           """
+           placeStg = 'First'
+           captionStg = \
+               'First Place Plaques - Plaque recipients will also recieve certificates.'
+           self.AwardList2=\
+              ['AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
+           for CAT in ADDITIONALFIRST:
+               CATi=[CAT, "'{}'".format(CAT)]
+               tsvdata = self.processOne(mydb, CATi, placement)
+               self.AwardList2.append(tsvdata)
+       else:
+           """ Add additional awards to the first table."""
+           placeStg = 'Second'
+           captionStg = 'Certificates Only, No Plaques'
+           for CAT in ADDITIONALFIRST:
+               CATi=[CAT, "'{}'".format(CAT)]
+               tsvdata = self.processOne(mydb, CATi, placement)
+               self.AwardList.append(tsvdata)
+       # Build HTML document
        from htmlutils.htmldoc import htmlDoc   
        d = htmlDoc()
-       d.openHead('{} Missouri QSO Party First Place Awards'.format(YEAR),
-                  './styles.css')
+       if (placement == '1'):
+           d.openHead('{} Missouri QSO Party First Place Awards'\
+                      .format(YEAR),
+                      './styles.css')
+       else:
+           d.openHead('{} Missouri QSO Party Second Place Awards'\
+                      .format(YEAR),
+                      './styles.css')
        d.closeHead()
        d.openBody()
        d.addTimeTag(prefix='Report Generated On ', 
                     tagType='comment') 
                          
        d.add_unformated_text(\
-             """<h2 align='center'>{} Missouri QSO Party First Place Plaques</h2>""".format(YEAR))
+             """<h2 align='center'>{} Missouri QSO Party {} Place Awards</h2>""".format(YEAR,placeStg))
        d.addTable(tdata=d.tsvlines2list(self.AwardList), 
                   header=True,
-                  caption='Plaque recipients will also recieve certificates.')
+                  caption=captionStg)
 
-       self.AwardList=['AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
-       for CAT in ADDITIONALFIRST:
-           #print(CAT)
-           CATi=[CAT, "'{}'".format(CAT)]
-           #print(CATi)
-           tsvdata = self.processOne(mydb, CATi, placement)
-           self.AwardList.append(tsvdata)
-
-       d.add_unformated_text(\
-             """<h2 align='center'>{} Missouri QSO Party Additional First Place Certificates</h2>""".format(YEAR))
-       d.addTable(tdata=d.tsvlines2list(self.AwardList), 
+       if (placement == '1'):
+           d.add_unformated_text(\
+             """<h2 align='center'>{} Missouri QSO Party Additional First Place Awards</h2>""".format(YEAR, placeStg))
+           d.addTable(tdata=d.tsvlines2list(self.AwardList2), 
                   header=True,
                   caption='Certificates Only, No Plaques')
 

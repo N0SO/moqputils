@@ -286,10 +286,12 @@ class MOQPHtmlReport(MOQPDBCatReport):
                WHERE SUMMARY.MOQPCAT=%s
                ORDER BY SCORE DESC, LOCATION ASC""",
               [cat])
-
            tableData=['RANK\tCALLSIGN\tOPERATORS\tSCORE\t'+\
                         'CW QSOs\tPH QSOs\tDIG QSOs\tMULTS\t'+\
-                        'W0MA BONUS\tK0GQ BONUS\tCAB BONUS\t']
+                        'W0MA BONUS\tK0GQ BONUS\tCAB BONUS']
+           if (len(sumdata) == 0): #No data
+               tableData.append('\t\t\t\t\tNO ENTRY\t\t\t\t\t')
+                  
            rank = 0
            for station in sumdata:
                rank += 1
