@@ -35,7 +35,7 @@ Running with no parameters will launch the GUI (eventually).
 TABLESTART = \
 """
 <table>
-<tr><th>STATION</th><th>OPERATORS</th><AWARD DOWNLOAD LINK</th></tr>
+<tr><th>STATION</th><th>OPERATORS</th><th>AWARD DOWNLOAD LINK</th></tr>
 """
 
 TABLEROW = \

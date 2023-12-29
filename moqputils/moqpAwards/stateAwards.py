@@ -31,6 +31,10 @@ class STATEAwards(commonAwards):
 
         tsvdata = "%s\t%s\t"%(place,state)
         if (sdata):
+            if (sdata['OPERATORS'] == sdata['CALLSIGN']):
+                """ Don't display operator if op call matches 
+                station call """
+                sdata['OPERATORS'] = ''
             tsvdata += '%s\t%s\t%s\t'%(\
                                        sdata['NAME'],
                                        sdata['CALLSIGN'],
@@ -46,7 +50,7 @@ class STATEAwards(commonAwards):
                    FROM LOGHEADER INNER JOIN SUMMARY ON
                    LOGHEADER.ID=SUMMARY.LOGID
                    WHERE LOGHEADER.LOCATION IN
-                   (""" + NAMELIST + """)
+                   (""" + NAMELIST + """) AND SUMMARY.MOQPCAT != 'CHECKLOG'
                    ORDER BY SCORE DESC
                    LIMIT 5""")
         return CATLIST
