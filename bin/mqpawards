@@ -20,12 +20,18 @@ Update History:
 - V1.0.0 -Added HTML reports to SHOWME, MISSOURI and
 -         STATE PROVINCE reports and the calls to 
 -         decide whiich one to use.
+* Wed May 15 2024 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.1 -Added table PLAQUESLIST to database and reworked code in
+-         CATEGORYPlaques.py to use it as a source for award names when
+-        -the -a option is selected. Writes output to DB table if -a
+-        -create-table is entered. -a 1 or -a 2 builds award lists from
+-        -the new table (FIRSTPLACE). 
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.1.0'
+VERSION = '1.0.1'
 ARGS = None
 
 whereami = os.path.split( os.path.realpath(__file__) )
@@ -51,15 +57,17 @@ class get_args():
                                   action='version', 
                                   version = VERSION)
         parser.add_argument('-a', '--award',
+                                   choices=['1', '2', 'create-table'],
                                    default=None,
             help="Create a list of the 1st place award (plaque) "+\
                   "winners in each MOQPCATEGORY. ")
         parser.add_argument('-c', '--category',
                                    default=None,
-            help="Create a list of the 1st or 2nd place "+\
-                  "winners in each MOQPCATEGORY. "+\
-                  "mqoawards -c 1 = FIRST PLACE List, "+\
-                  "mqoawards -c 2 = SECOND PLACE List.")
+                                   choices = ['1', '2'],
+            help="""Create a list of the 1st or 2nd place winners in 
+                    each MOQPCATEGORY.
+                    mqoawards -c 1 = FIRST PLACE List,
+                    mqoawards -c 2 = SECOND PLACE List.""")
         parser.add_argument('-s', '--showme', 
                                    action='store_true',
                                    default=None,
@@ -70,11 +78,20 @@ class get_args():
             help="Create a list of the MISSOURI certificate winners.")
         parser.add_argument('-p', '--provstate', 
                                    default=None,
-            help="Create a list of the 1st or 2nd place "+\
-                  "STATE/PROV certificate winners. "+\
-                  "mqoawards -p 1 = FIRST PLACE List, "+\
-                  "mqoawards -p 2 = SECOND PLACE List.")
+                                   choices = ['1', '2', 
+                                              'create-table',
+                                              'update-list'],
+            help="""Display a list of the 1st or 2nd place
+                  STATE/PROV certificate winners.
+                  mqoawards -p 1 = FIRST PLACE List,
+                  mqoawards -p 2 = SECOND PLACE List,
+                  mqpawards -p create-table = create the table that 
+                  holds the state/province results.
+                  mqpawards -p update-list = Update the state / provice
+                  name table from the moqpawardefs.py file. Only needs
+                  to be done if the defs file is updated.""")
         parser.add_argument('-t', '--reportType',
+                                   choices = ['csv', 'html'],
                                    default = 'csv',
             help="""Set report type for output. Only valid if more than
                     one report output type is avaible. Options are: 

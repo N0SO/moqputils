@@ -9,6 +9,9 @@ class CATEGORYPlaques(commonAwards):
     def __init__(self, placement = '1'):
         self.AwardList=[]
         if (placement):
+            if placement.lower() == 'create-table':
+               self._genPlaques()
+               exit()
             self.appMain(placement)
 
     def get_awardquery(self, mydb, cati):
@@ -114,7 +117,7 @@ class CATEGORYPlaques(commonAwards):
            #print('NON-MISSOURI VHF Selections = {}'.format(sumlist))
        elif cat in 'HIGHEST NUMBER OF COUNTIES':
            sumlist = mydb.read_query(\
-            """SELECT LOGHEADER.CALLSIGN,
+            """SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN,
                LOGHEADER.CALLSIGN, LOGHEADER.OPERATORS,
                LOGHEADER.NAME, LOGHEADER.ADDRESS, 
                LOGHEADER.CITY, LOGHEADER.STATEPROV,
@@ -138,7 +141,7 @@ class CATEGORYPlaques(commonAwards):
               "ORDER BY (SCORE) DESC")
        #print(cat, sumlist)
        return sumlist
-
+    """
     def processOne(self, mydb, cati, placement):
        tsvdata = None
        sumlist = None
@@ -164,7 +167,144 @@ class CATEGORYPlaques(commonAwards):
                                     sumData)
 
        return tsvdata
+       """
+    def _genCerts(self, mydb):
+        """
+        Read award names from database
+        """
+        awlist = None
+        awlist = mydb.read_query(\
+                 """SELECT * FROM PLAQUESLIST WHERE 
+                    certificate = 1
+                    and plaque = 0;""")
+        #print(awlist)
+        ptext = ''
+        first = True      
+        for p1 in awlist:
+            cati = [p1['award'],'"{}"'.format(p1['award'])]
+            #print(cati)    
+            sumlist = self.get_awardquery(mydb, cati)
+            """
+            First Place
+            """
+            if p1['plaque'] == 0:
+                if (len(sumlist) >= 1):
+                    sumData = sumlist[0]
+                    #print(sumData)
+                    #print ('{} {}'.format(p['id'], sumData['ID'])) 
+                    awardid = mydb.write_pquery(\
+                       """INSERT INTO FIRSTPLACE (awardid, recipientid, place)
+                                  VALUES (%s, %s, %s)""",
+                                         [p1['id'], sumData['ID'], 1])
+                else: # No recipeint for this award
+                    awardid = mydb.write_pquery(\
+                       """INSERT INTO FIRSTPLACE (awardid, place)
+                                  VALUES (%s, %s)""",
+                                         [p1['id'], 1])
+            """
+            2nd Place
+            """                             
+            if (len(sumlist) >=2 ):
+                sumData = sumlist[1]    
+                awardid = mydb.write_pquery(\
+                   """INSERT INTO FIRSTPLACE (awardid, recipientid, place)
+                                  VALUES (%s, %s, %s)""",
+                                         [p1['id'], sumData['ID'], 2])
+            else: # No recipeint for this award
+                awardid = mydb.write_pquery(\
+                   """INSERT INTO FIRSTPLACE (awardid, place)
+                                  VALUES (%s, %s)""",
+                                         [p1['id'], 2])
+            
+        return True
+           
 
+    def _genPlaques(self, mydb=None):
+        if mydb == None:
+            mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+            mydb.setCursorDict()
+            
+        print('Generating 1st and 2nd place awards table...')
+    
+        dquery ='DROP TABLE IF EXISTS FIRSTPLACE;'
+        query1 = """CREATE TABLE FIRSTPLACE (
+          id int NOT NULL AUTO_INCREMENT,
+          awardid int NULL,
+          recipientid int NULL,
+          place int NULL,
+          PRIMARY KEY (id));"""
+        
+        """
+        Read award names from database
+        """
+        awlist = None
+        awlist = mydb.read_query(\
+                 """SELECT * FROM PLAQUESLIST WHERE plaque = 1""")
+        #print(awlist)
+        if (awlist):
+            result = mydb.read_query("SHOW TABLES LIKE 'PLAQUESLIST'")
+            if (len(result) > 0):
+                mydb.write_query(dquery) #and create new, empty table
+            mydb.write_query(query1)
+            
+        for p in awlist:
+            #print(p)
+            picklist = mydb.read_query(\
+                 """SELECT * FROM PLAQUESLIST 
+                    WHERE included={}""".format(p['id']))
+            ptext = ''
+            first = True      
+            for p1 in picklist:
+                if first:
+                    ptext += ('"{}"'.format(p1['award']))
+                    first = False
+                else:
+                    ptext += (', "{}"'.format(p1['award']))
+                    
+                
+            cati = [p['award']]
+            if ptext:
+                cati.append(ptext)
+            else:
+                cati.append('"{}"'.format(p['award']))
+                
+            #print(cati)    
+            sumlist = self.get_awardquery(mydb, cati)
+            """
+            First Place
+            """
+            if (len(sumlist) >= 1):
+                sumData = sumlist[0]
+                #print(sumData)
+                #print ('{} {}'.format(p['id'], sumData['ID'])) 
+                awardid = mydb.write_pquery(\
+                   """INSERT INTO FIRSTPLACE (awardid, recipientid, place)
+                                  VALUES (%s, %s, %s)""",
+                                         [p['id'], sumData['ID'], 1])
+            else: # No recipeint for this award
+                awardid = mydb.write_pquery(\
+                   """INSERT INTO FIRSTPLACE (awardid, place)
+                                  VALUES (%s, %s)""",
+                                         [p['id'], 1])
+            """
+            2nd Place
+            """                             
+            if (len(sumlist) >=2 ):
+                sumData = sumlist[1]    
+                awardid = mydb.write_pquery(\
+                   """INSERT INTO FIRSTPLACE (awardid, recipientid, place)
+                                  VALUES (%s, %s, %s)""",
+                                         [p['id'], sumData['ID'], 2])
+            else: # No recipeint for this award
+                awardid = mydb.write_pquery(\
+                   """INSERT INTO FIRSTPLACE (awardid, place)
+                                  VALUES (%s, %s)""",
+                                         [p['id'], 2])
+                                         
+        self._genCerts(mydb)
+                                   
+        return True
+        
     def _getAwards(self,mydb):
         """
         Read award names from database
@@ -173,24 +313,126 @@ class CATEGORYPlaques(commonAwards):
         awlist = mydb.read_query(\
                  "SELECT * FROM CONTESTCATEGORIES WHERE 1")
         return awlist
+        
+    def _fixNone(self, s):
+        if s == None:
+            return ''
+        else:
+            return s
+            
+    def _oneLine(self, place, dat):
+        retdat = ''
+        placestg ='oops...'
+        if place =='1':
+            placestg = 'FIRST PLACE'
+        if place =='2':
+            placestg = 'SECOND PLACE'
+        if (dat['recipientid'] == 0) or (dat['recipientid'] == None):
+            name = 'NO ENTRY'
+            call = ''
+            ops = ''
+        else:
+            name = dat['name']
+            call = dat['callsign']
+            if dat['operators'] == dat['callsign']:
+                ops = ''
+            else:
+                ops = dat['operators']            
+            
+        return '{}\t{}\t{}\t{}\t{}'.format(\
+                                       placestg,
+                                       dat['award'],
+                                       name,
+                                       call,
+                                       ops)
+            
+        
+    def _getDBAwardList(self, mydb, placement):
+       if placement == '1':
+           placestg = 'FIRST PLACE'
+           AListq = """SELECT * FROM FIRSTPLACE_VIEW WHERE 
+                    plaque = 1 and
+                    place = 1
+                    order by awardid;"""
+       else:
+           placestg = 'SECOND PLACE'
+           AListq = """SELECT * FROM FIRSTPLACE_VIEW WHERE 
+                    place = 2 and
+                    plaque = 1
+                    order by awardid;"""
+                    
+       DBPLAQUELIST = mydb.read_query(AListq)
+                    
+       self.AwardList=['PLACE\tAWARD\tRECIPIENT\tCALL\tOPERATORS']
+       for plaque in DBPLAQUELIST:
+           self.AwardList.append(self._oneLine(placement, plaque))
+           """
+           self.AwardList.append('{}\t{}\t{}\t{}\t{}'.format(\
+                                  placestg,
+                                  plaque['award'],
+                                  self._fixNone(plaque['name']),
+                                  self._fixNone(plaque['callsign']),
+                                  self._fixNone(plaque['operators'])))
+           """
+       if (placement == '2'):
+           AwardList2 = None
+           DBCERTLIST = mydb.read_query(\
+                 """SELECT * FROM FIRSTPLACE_VIEW WHERE 
+                    plaque = 0 and
+                    place = 2 and
+                    certificate = 1
+                    order by awardid;""")
+           for cert in DBCERTLIST:
+               self.AwardList.append(self._oneLine(placement, cert))
+               """
+               self.AwardList.append('{}\t{}\t{}\t{}\t{}'.\
+                           format(placestg,
+                                  cert['award'],
+                                  self._fixNone(cert['name']),
+                                  self._fixNone(cert['callsign']),
+                                  self._fixNone(cert['operators'])))
+               """
+
+
+       else:
+           """
+           Build 2nd table for additional first place certificates
+           placeStg = 'First'
+           captionStg = \
+               'First Place Plaques - Plaque recipients will also recieve certificates.'
+           """
+           AwardList2=\
+              ['AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
+           DBCERTLIST = mydb.read_query(\
+                 """SELECT * FROM FIRSTPLACE_VIEW WHERE 
+                    plaque = 0 and
+                    place = 1 and
+                    certificate = 1
+                    order by awardid;""")
+                    
+           for cert in DBCERTLIST:
+               AwardList2.append(self._oneLine(placement, cert))
+               """
+               AwardList2.append('{}\t{}\t{}\t{}\t{}'.\
+                           format(placestg,
+                                  cert['award'],
+                                  self._fixNone(cert['name']),
+                                  self._fixNone(cert['callsign']),
+                                  self._fixNone(cert['operators'])))
+               """ 
+       return [self.AwardList, AwardList2]
 
     def appMain(self, placement):
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
-       self.AwardList=['FIRST PLACE PLAQUES','AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
-       for CAT in PLAQUELIST:
-           #print(CAT)
-           tsvdata = self.processOne(mydb, CAT, placement)
-           self.AwardList.append(tsvdata)
-       self.AwardList.append('ADDITIONAL FIRST PLACE CERTIFICATES')
-       self.AwardList.append('AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS')
-       #print('now certs...')
-       for CAT in ADDITIONALFIRST:
-           #print(CAT)
-           CATi=[CAT, "'{}'".format(CAT)]
-           #print(CATi)
-           tsvdata = self.processOne(mydb, CATi, placement)
-           self.AwardList.append(tsvdata)
+ 
+       awards = self._getDBAwardList(mydb, placement)
+ 
+       if placement == '1':
+           self.AwardList.append('ADDITIONAL FIRST PLACE CERTIFICATES')
+           for a in awards[1]:
+               self.AwardList.append(a)
+
        self.AwardDisplay(self.AwardList) 
        
 class HTMLPlaques(CATEGORYPlaques):
@@ -198,33 +440,7 @@ class HTMLPlaques(CATEGORYPlaques):
     def appMain(self, placement):
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
-       self.AwardList=['AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
-       for CAT in PLAQUELIST:
-           #print(CAT)
-           tsvdata = self.processOne(mydb, CAT, placement)
-           self.AwardList.append(tsvdata)
-           
-       if (placement == '1'): 
-           """
-           Build 2nd table for additional first place certificates
-           """
-           placeStg = 'First'
-           captionStg = \
-               'First Place Plaques - Plaque recipients will also recieve certificates.'
-           self.AwardList2=\
-              ['AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
-           for CAT in ADDITIONALFIRST:
-               CATi=[CAT, "'{}'".format(CAT)]
-               tsvdata = self.processOne(mydb, CATi, placement)
-               self.AwardList2.append(tsvdata)
-       else:
-           """ Add additional awards to the first table."""
-           placeStg = 'Second'
-           captionStg = 'Certificates Only, No Plaques'
-           for CAT in ADDITIONALFIRST:
-               CATi=[CAT, "'{}'".format(CAT)]
-               tsvdata = self.processOne(mydb, CATi, placement)
-               self.AwardList.append(tsvdata)
+       awards = self._getDBAwardList(mydb, placement)
        # Build HTML document
        from htmlutils.htmldoc import htmlDoc   
        d = htmlDoc()
@@ -232,10 +448,15 @@ class HTMLPlaques(CATEGORYPlaques):
            d.openHead('{} Missouri QSO Party First Place Awards'\
                       .format(YEAR),
                       './styles.css')
+           placeStg='First'
+           captionStg='First Place Plaques - Plaque recipients will also receive certificates'
        else:
            d.openHead('{} Missouri QSO Party Second Place Awards'\
                       .format(YEAR),
                       './styles.css')
+           placeStg='Second'
+           captionStg='Second Place Certificates - No Plaques'
+
        d.closeHead()
        d.openBody()
        d.addTimeTag(prefix='Report Generated On ', 
@@ -243,14 +464,14 @@ class HTMLPlaques(CATEGORYPlaques):
                          
        d.add_unformated_text(\
              """<h2 align='center'>{} Missouri QSO Party {} Place Awards</h2>""".format(YEAR,placeStg))
-       d.addTable(tdata=d.tsvlines2list(self.AwardList), 
+       d.addTable(tdata=d.tsvlines2list(awards[0]), 
                   header=True,
                   caption=captionStg)
 
        if (placement == '1'):
            d.add_unformated_text(\
              """<h2 align='center'>{} Missouri QSO Party Additional First Place Awards</h2>""".format(YEAR, placeStg))
-           d.addTable(tdata=d.tsvlines2list(self.AwardList2), 
+           d.addTable(tdata=d.tsvlines2list(awards[1]), 
                   header=True,
                   caption='Certificates Only, No Plaques')
 
@@ -258,4 +479,4 @@ class HTMLPlaques(CATEGORYPlaques):
        d.closeDoc()
 
        d.showDoc()
-       d.saveAndView('plaquerpt.html')
+       #d.saveAndView('plaquerpt.html')

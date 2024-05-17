@@ -13,7 +13,7 @@ pathsplit = os.path.split(whereami[0])
 
 DEVMODPATH = [pathsplit[0],'/home/pi/Projects']
 #print('Using DEVMODPATH=',DEVMODPATH)
-os.chdir(pathsplit[0])
+#os.chdir(pathsplit[0])
 
 for mypath in DEVMODPATH:
         if ( os.path.exists(mypath) and \

@@ -176,8 +176,8 @@ class MOQPDBClubReport(MOQPDBCatReport):
        mydb.setCursorDict()
        result = mydb.read_query("SHOW TABLES LIKE 'CLUBS'")
        if (len(result) == 0):
-           callsign = 'club-update'
-       if (callsign == 'club-update'):
+           callsign = 'CLUB-UPDATE'
+       if (callsign == 'CLUB-UPDATE'):
            print(\
             'Updating club database before generating report...')
            self.processAll(mydb)

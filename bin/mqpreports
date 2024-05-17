@@ -159,19 +159,26 @@ if __name__ == '__main__':
        reportType='csv'
    if (args.args.callsign):
        args.args.callsign =args.args.callsign.upper()
+       """
        if ((args.args.callsign == 'CLUB') or \
            (args.args.callsign == 'CLUB-UPDATE') ):
-           if ('csv' in reportType):
-               print('running club report')
-               from moqputils.moqpdbclubreport import MOQPDBClubReport
-               app = MOQPDBClubReport(args.args.callsign)
-           if ('html' in reportType):
-               from moqputils.moqpdbclubreport import HTML_ClubReport
-               app = HTML_ClubReport(args.args.callsign)
-       elif (args.args.callsign == 'CLUB-SUMMARY'):
-           if ('html' in reportType):
-               from moqputils.moqpdbclubreport import HTML_ClubAwards
-               app = HTML_ClubAwards(args.args.callsign)
+       """
+       if ('CLUB' in args.args.callsign):
+           #if (args.args.reportType
+           #print('running club reports...')
+           if ((args.args.callsign == 'CLUB') or \
+                   (args.args.callsign == 'CLUB-UPDATE') ):
+               if ('csv' in reportType): 
+                   #print('MOQPDBClubReport...')
+                   from moqputils.moqpdbclubreport import MOQPDBClubReport
+                   app = MOQPDBClubReport(args.args.callsign)
+               if ('html' in reportType):
+                   from moqputils.moqpdbclubreport import HTML_ClubReport
+                   app = HTML_ClubReport(args.args.callsign)
+           elif (args.args.callsign == 'CLUB-SUMMARY'):
+               if ('html' in reportType):
+                   from moqputils.moqpdbclubreport import HTML_ClubAwards
+                   app = HTML_ClubAwards(args.args.callsign)
        else:
            if ('csv' in reportType):
                from moqputils.moqpdbcatreport import MOQPDBCatReport

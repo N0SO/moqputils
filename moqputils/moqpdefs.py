@@ -38,7 +38,9 @@ CTSTATION = [\
               'UNLIMITED',
               'MOBILE-UNLIMITED',
               'SCHOOL',
-              'DISTRIBUTED'\
+              'DISTRIBUTED',
+              'ROVER',
+              'PORTABLE'\
               ]
 
 CTPOWER = ['LOW', 'HIGH', 'QRP']
@@ -54,10 +56,11 @@ US = \
 'WWA WY AK MI OH WV IL IN WI CO IA KS MN NE ND SD CA HI'
 
 DX = 'DX DK2 DL3 DL8 DM3 EA4 F5 F8 HA8 JE2 JO7 LY5 OK1 OK4 OL2 '+\
-     'ON4 OM2 OT6 IZ4 YV5 '+\
+     'ON4 OM2 OM3 OT6 IZ4 YV5 '+\
      'HA9 HB9 RZ1 SM3 UA3 WP4 '+\
-     '9A3 VP8 F4 PA3 G0 '+\
-     'ZF2 '
+     '9A3 VP8 F4 PA3 G0 LA8 '+\
+     'ZF2 SN3 S51 SN7 SP1 SQ4 SN2 SP8 VP2 HP6 CE4 LU3 LU5 NP3 T10 '+\
+     'RW3 EA3 IZ5 OD2 SP5 PY3 TO60 CT9 AO75 '
 
 MOCOUNTY = [ 'ADR', 'AND', 'ATC', 'AUD', 'BAR', 'BTN', 'BAT',
              'BEN', 'BOL', 'BOO', 'BUC', 'BTR', 'CWL', 'CAL',
