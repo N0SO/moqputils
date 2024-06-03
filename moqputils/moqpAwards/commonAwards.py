@@ -51,10 +51,69 @@ class commonAwards():
                                sumitem['COUNTRY'],                               
                                sumitem['EMAIL']))
        return tsvdata
+       
+    def processOneLine(self, cat):
+        formatStg = \
+             '{} PLACE\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'
+        placestg=''
+        if cat['place']==1:
+            placestg='FIRST'
+        if cat['place']==2:
+            placestg = 'SECOND'
+        
+        tsvdata = (formatStg.format(\
+                      placestg,
+                      cat['award'],
+                      cat['callsign'],
+                      cat['operators'],
+                      cat['name'],
+                      cat['address'],
+                      cat['city'],
+                      cat['state'],
+                      cat['zip'],
+                      cat['country'],
+                      cat['email'],
+                      cat['plaque']))
+        return tsvdata
  
+    def new_processAll(self, HEADERSTG, CATLIST):
+        from qrzutils.qrz.qrzlookup import QRZLookup
+        qrz=QRZLookup('/home/pi/Projects/moqputils/moqputils/configs/qrzsettings.cfg')
+        tsvdata = [HEADERSTG]
+        for cat in CATLIST:
+            #print (cat)
+            ops=[]
+            if cat['operators']!= None:
+                ops = cat['operators'].split(' ')
+            #print('Number of ops={}, {}'.format(len(ops), ops))
+            if (len(ops)>1): #Multi-op
+                for op in ops:
+                    #print('op {} of ops {}'.format(op, ops))
+                    tempData = cat
+                    try:
+                        opdata = qrz.callsign(op.strip())
+                        #print('Op Data for {} = {}'.format(op, opdata))
+                        qrzdata=True
+                    except:
+                        qrzdata=False
+                        tempData['name']=\
+                            'NO QRZ FOR {} - {}'.format(op,len(op))
+                        #print('No QRZ for {}'.format(op))           
+                    if qrzdata:
+                        #print(opdata)
+                        tempData = self.swapData(\
+                                               cat, 
+                                               op, 
+                                               opdata)
+                    tsvdata.append(self.processOneLine(tempData))
+            else: #Single-op
+                tsvdata.append(self.processOneLine(cat))
+        return tsvdata
+
+
     def Labels_processAll(self, mydb, HEADERSTG, CATLST):
         from qrzutils.qrz.qrzlookup import QRZLookup
-        qrz=QRZLookup('./moqputils/configs/qrzsettings.cfg')
+        qrz=QRZLookup('/home/pi/Projects/moqputils/moqputils/configs/qrzsettings.cfg')
         tsvdata = [HEADERSTG]
         for CAT in CATLST: 
             if (isinstance(CAT, list)):
@@ -109,54 +168,56 @@ class commonAwards():
 
     def swapData(self, oldData, op, opdata):
         if ('fname' in opdata) and ('name' in opdata):
-            oldData['NAME']=('{} {}, {}'.format(\
+            oldData['name']=('{} {}, {}'.format(\
                              opdata['fname'].upper(),
                              opdata['name'].upper(),
                              op.upper()))
         elif ('attn' in opdata) and ('name' in opdata):
-            oldData['NAME']=('{} ATTN {}'.format(\
+            oldData['name']=('{} ATTN {}'.format(\
                              opdata['name'].upper(),
                              opdata['att1'].upper()))
         elif ('name' in opdata):
-            oldData['NAME']=('{}'.format(\
+            oldData['name']=('{}'.format(\
                              opdata['name'].upper()))
         else:
-            oldData['NAME']=('***NO NAME FOR {} ***'.format(\
+            oldData['name']=('***NO NAME FOR {} ***'.format(\
                              op.upper()))
         if('addr1' in opdata):   
-            oldData['ADDRESS']=opdata['addr1'].upper()
+            oldData['address']=opdata['addr1'].upper()
         else:
-            oldData['ADDRESS']=''
+            oldData['address']=''
         if ('addr2' in opdata):    
-            oldData['CITY'] = opdata['addr2'].upper()
+            oldData['city'] = opdata['addr2'].upper()
         else:
-            oldData['CITY'] = ''
+            oldData['city'] = ''
         if('state' in opdata):
-            oldData['STATEPROV'] = opdata['state'].upper()
+            oldData['state'] = opdata['state'].upper()
         else:
-            oldData['STATEPROV'] = ''
+            oldData['state'] = ''
         if ('zip' in opdata):
-            oldData['ZIPCODE'] = opdata['zip'].upper()
+            oldData['zip'] = opdata['zip'].upper()
         else:
-            oldData['ZIPCODE'] = ''
+            oldData['zip'] = ''
         if ('country' in opdata):    
-            oldData['COUNTRY'] = opdata['country'].upper()
+            oldData['country'] = opdata['country'].upper()
         else:
             oldData['COUNTRY'] = ''
         if ('email' in opdata):
-            oldData['EMAIL'] = opdata['email'].upper()                       
+            oldData['email'] = opdata['email'].upper()                       
 
         return oldData
 
     def export_to_csv(self, dblist, award):
         from qrzutils.qrz.qrzlookup import QRZLookup
-        qrz=QRZLookup('./moqputils/configs/qrzsettings.cfg')
+        qrz=QRZLookup('/home/pi/Projects/moqputils/moqputils/configs/qrzsettings.cfg')
         if award=='SHOWME':
-            tsvlines =['CALL\tOPERATORS\tNAME\tE-MAIL\tFILE\t'+\
-                    'S\tH\tO\tW\tM\tE']
+            tsvlines =['CALL\tOPERATORS\tNAME\tADDRESS\tCITY\t'+\
+                    'STATE\tZIP\tCOUNTRY\tE-MAIL\tFILE\t'+\
+                    'S\tH\tO\tW\tM\tE\tWC']
         elif award=='MISSOURI':
-            tsvlines =['CALL\tOPERATORS\tNAME\tE-MAIL\tFILE\t'+\
-                    'M\tI\tS\tS\tO\tU\tR\tI']
+            tsvlines =['CALL\tOPERATORS\tNAME\tADDRESS\tCITY\t'+\
+                    'STATE\tZIP\tCOUNTRY\tE-MAIL\tFILE\t'+\
+                    'M\tI\tS\tS\tO\tU\tR\tI\tWC']
             
         for station in dblist:
             if len(station['OPERATORS']) > 0:

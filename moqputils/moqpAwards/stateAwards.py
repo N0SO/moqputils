@@ -284,10 +284,13 @@ class STATELabels(STATEAwards):
         return tsvdata
         
     def states(self, mydb, place):
-        awards = [CATLABELHEADER]
-        labeldata = self.Labels_processAll(mydb, 
-                                            CATLABELHEADER, 
-                                            STATELIST)
+        awards = mydb.read_query("""SELECT * FROM 
+                                  STATEPROVAWARDS_VIEW 
+                                  WHERE 1
+                                  ORDER BY awardid;""")
+
+        labeldata = self.new_processAll(CATLABELHEADER, 
+                                            awards)
         return labeldata
         
     def get_awardquery(self, mydb, cat):
@@ -297,3 +300,101 @@ class STATELabels(STATEAwards):
     def appMain(self, place=None):
         STATEAwards.appMain(self, '1')
         #STATEAwards.appMain(self, '2')
+        
+    def new_processAll(self, HEADERSTG, CATLIST):
+        from qrzutils.qrz.qrzlookup import QRZLookup
+        qrz=QRZLookup('/home/pi/Projects/moqputils/moqputils/configs/qrzsettings.cfg')
+        tsvdata = [HEADERSTG]
+        for cat in CATLIST:
+            #print (cat)
+            ops=[]
+            if cat['ops']!= None:
+                ops = cat['ops'].split(' ')
+            #print('Number of ops={}, {}'.format(len(ops), ops))
+            if (len(ops)>1): #Multi-op
+                for op in ops:
+                    #print('op {} of ops {}'.format(op, ops))
+                    tempData = cat
+                    try:
+                        opdata = qrz.callsign(op.strip())
+                        #print('Op Data for {} = {}'.format(op, opdata))
+                        qrzdata=True
+                    except:
+                        qrzdata=False
+                        tempData['name']=\
+                            'NO QRZ FOR {} - {}'.format(op,len(op))
+                        #print('No QRZ for {}'.format(op))           
+                    if qrzdata:
+                        #print(opdata)
+                        tempData = self.swapData(\
+                                               cat, 
+                                               op, 
+                                               opdata)
+                    tsvdata.append(self.processOneLine(tempData))
+            else: #Single-op
+                tsvdata.append(self.processOneLine(cat))
+        return tsvdata
+
+    def swapData(self, oldData, op, opdata):
+        if ('fname' in opdata) and ('name' in opdata):
+            oldData['name']=('{} {}, {}'.format(\
+                             opdata['fname'].upper(),
+                             opdata['name'].upper(),
+                             op.upper()))
+        elif ('attn' in opdata) and ('name' in opdata):
+            oldData['name']=('{} ATTN {}'.format(\
+                             opdata['name'].upper(),
+                             opdata['att1'].upper()))
+        elif ('name' in opdata):
+            oldData['name']=('{}'.format(\
+                             opdata['name'].upper()))
+        else:
+            oldData['name']=('***NO NAME FOR {} ***'.format(\
+                             op.upper()))
+        if('addr1' in opdata):   
+            oldData['address']=opdata['addr1'].upper()
+        else:
+            oldData['address']=''
+        if ('addr2' in opdata):    
+            oldData['city'] = opdata['addr2'].upper()
+        else:
+            oldData['city'] = ''
+        if('state' in opdata):
+            oldData['state'] = opdata['state'].upper()
+        else:
+            oldData['state'] = ''
+        if ('zip' in opdata):
+            oldData['zip'] = opdata['zip'].upper()
+        else:
+            oldData['zip'] = ''
+        if ('country' in opdata):    
+            oldData['country'] = opdata['country'].upper()
+        else:
+            oldData['COUNTRY'] = ''
+        if ('email' in opdata):
+            oldData['email'] = opdata['email'].upper()                       
+
+        return oldData
+
+    def processOneLine(self, cat):
+        formatStg = '{} PLACE\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'
+        placestg=''
+        if cat['place']==1:
+            placestg='FIRST'
+        if cat['place']==2:
+            placestg = 'SECOND'
+        
+        tsvdata = (formatStg.format(\
+                      placestg,
+                      cat['awardname'],
+                      cat['callsign'],
+                      cat['ops'],
+                      cat['name'],
+                      cat['address'],
+                      cat['city'],
+                      cat['state'],
+                      cat['zip'],
+                      cat['country'],
+                      cat['email']))
+        return tsvdata
+

@@ -41,9 +41,25 @@ class SHOWMEAwards(commonAwards):
        self.AwardDisplay(csvlist) 
 
 class SHOWMELabels(SHOWMEAwards):
-    def export_to_csv(self, dblist, award):
-        tsvlines = commonAwards.export_to_csv(self, dblist, award)
-        return tsvlines            
+  
+    def getdbData(self, db):
+        return db.read_query("""SELECT * FROM SHOWME_VIEW1
+                                  WHERE  QUALIFY=1
+                                  ORDER BY CALLSIGN;""")
+
+
+    def addWC(self, st):
+        """
+        If the WILDCARD station is in the log.
+            substitute WC the first blank letter
+        """
+        for s in('SHOWME'):
+            if st['WC'] != None and st['WC'].strip() != '':
+                if st[s] == None or st[s].strip() == '':
+                    st[s]=st['WC']
+                    break # Stop after WC station is applied.
+        return st
+
 
     def processLabel(self, sumitem, op=None):
         if op:
@@ -51,16 +67,18 @@ class SHOWMELabels(SHOWMEAwards):
         else:
             op = '.pdf'
             
+        sumitem = self.addWC(sumitem)
+            
         tsvdata = ("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(\
                                sumitem['CALLSIGN'],
-                               sumitem['OPERATORS'],
-                               sumitem['NAME'],
-                               sumitem['ADDRESS'],
-                               sumitem['CITY'],
-                               sumitem['STATEPROV'],
-                               sumitem['ZIPCODE'],
-                               sumitem['COUNTRY'],                               
-                               sumitem['EMAIL'],
+                               sumitem['ops'],
+                               sumitem['name'],
+                               sumitem['address'],
+                               sumitem['city'],
+                               sumitem['state'],
+                               sumitem['zip'],
+                               sumitem['country'],                               
+                               sumitem['email'],
                                sumitem['CALLSIGN']+op,
                                sumitem['S'],
                                sumitem['H'],
@@ -70,6 +88,46 @@ class SHOWMELabels(SHOWMEAwards):
                                sumitem['E'],
                                sumitem['WC']))
         return tsvdata
+
+    def export_to_csv(self, dblist, award):
+        from qrzutils.qrz.qrzlookup import QRZLookup
+        qrz=QRZLookup('/home/pi/Projects/moqputils/moqputils/configs/qrzsettings.cfg')
+        if award=='SHOWME':
+            tsvlines =['CALL\tOPERATORS\tNAME\tADDRESS\tCITY\t'+\
+                    'STATE\tZIP\tCOUNTRY\tE-MAIL\tFILE\t'+\
+                    'S\tH\tO\tW\tM\tE\tWC']
+        elif award=='MISSOURI':
+            tsvlines =['CALL\tOPERATORS\tNAME\tADDRESS\tCITY\t'+\
+                    'STATE\tZIP\tCOUNTRY\tE-MAIL\tFILE\t'+\
+                    'M\tI\tS\tS\tO\tU\tR\tI\tWC']
+            
+        for station in dblist:
+            if len(station['ops']) > 0:
+                ops = station['ops'].split(' ')
+                if len(ops) > 1: #Multi-op station
+                    tempData = station
+                    for op in ops:
+                        try:
+                            opdata = qrz.callsign(op.strip())
+                            qrzdata=True
+                        except:
+                            qrzdata=False
+                            tempData['name']=\
+                               'NO QRZ FOR {} - {}'.format(op,len(op))
+                       
+                        if qrzdata:
+                            #print(opdata)
+                            tempData = self.swapData(\
+                                   station, 
+                                   op, 
+                                   opdata)
+                        tsvlines.append(self.processLabel(tempData, op))
+                    
+                else: #Single-op station
+                    if station['CALLSIGN'] == station['ops']:
+                        station['ops'] = ''
+                    tsvlines.append(self.processLabel(station))
+        return tsvlines            
 
 
 class MOAwards(SHOWMEAwards):
@@ -87,6 +145,7 @@ class MOAwards(SHOWMEAwards):
               ORDER BY (CALLSIGN)""")
        return dbData
 
+
     def appMain(self, showme):
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
@@ -95,8 +154,61 @@ class MOAwards(SHOWMEAwards):
        self.AwardDisplay(csvlist) 
 
 class MOLabels(MOAwards):
+    def getdbData(self, db):
+        return db.read_query("""SELECT * FROM MISSOURI_VIEW
+                                  WHERE  QUALIFY=1
+                                  ORDER BY CALLSIGN;""")
+
+    def addWC(self, st):
+        """
+        If the WILDCARD station is in the log.
+            substitute WC the first blank letter
+        """
+        for s in('M','I_1','S_1','S_2','O','U','R','I_2'):
+            if st['WC'] != None and st['WC'].strip() != '':
+                if st[s] == None or st[s].strip() == '':
+                    st[s]=st['WC']
+                    break # Stop after WC station is applied.
+        return st
+
     def export_to_csv(self, dblist, award):
-        tsvlines = commonAwards.export_to_csv(self, dblist, award)
+        from qrzutils.qrz.qrzlookup import QRZLookup
+        qrz=QRZLookup('/home/pi/Projects/moqputils/moqputils/configs/qrzsettings.cfg')
+        if award=='SHOWME':
+            tsvlines =['CALL\tOPERATORS\tNAME\tADDRESS\tCITY\t'+\
+                    'STATE\tZIP\tCOUNTRY\tE-MAIL\tFILE\t'+\
+                    'S\tH\tO\tW\tM\tE\tWC']
+        elif award=='MISSOURI':
+            tsvlines =['CALL\tOPERATORS\tNAME\tADDRESS\tCITY\t'+\
+                    'STATE\tZIP\tCOUNTRY\tE-MAIL\tFILE\t'+\
+                    'M\tI\tS\tS\tO\tU\tR\tI\tWC']
+            
+        for station in dblist:
+            if len(station['ops']) > 0:
+                ops = station['ops'].split(' ')
+                if len(ops) > 1: #Multi-op station
+                    tempData = station
+                    for op in ops:
+                        try:
+                            opdata = qrz.callsign(op.strip())
+                            qrzdata=True
+                        except:
+                            qrzdata=False
+                            tempData['name']=\
+                               'NO QRZ FOR {} - {}'.format(op,len(op))
+                       
+                        if qrzdata:
+                            #print(opdata)
+                            tempData = self.swapData(\
+                                   station, 
+                                   op, 
+                                   opdata)
+                        tsvlines.append(self.processLabel(tempData, op))
+                    
+                else: #Single-op station
+                    if station['CALLSIGN'] == station['ops']:
+                        station['ops'] = ''
+                    tsvlines.append(self.processLabel(station))
         return tsvlines            
 
     def processLabel(self, sumitem, op=None):
@@ -105,16 +217,18 @@ class MOLabels(MOAwards):
         else:
             op = '.pdf'
             
+        sumitem = self.addWC(sumitem)
+        
         tsvdata = ("{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}".format(\
                                sumitem['CALLSIGN'],
-                               sumitem['OPERATORS'],
-                               sumitem['NAME'],
-                               sumitem['ADDRESS'],
-                               sumitem['CITY'],
-                               sumitem['STATEPROV'],
-                               sumitem['ZIPCODE'],
-                               sumitem['COUNTRY'],                               
-                               sumitem['EMAIL'],
+                               sumitem['ops'],
+                               sumitem['name'],
+                               sumitem['address'],
+                               sumitem['city'],
+                               sumitem['state'],
+                               sumitem['zip'],
+                               sumitem['country'],                               
+                               sumitem['email'],
                                sumitem['CALLSIGN']+op,
                                sumitem['M'],
                                sumitem['I_1'],
@@ -164,7 +278,7 @@ class HTMLShowMeAwards(SHOWMEAwards):
            d.closeDoc()
 
            d.showDoc()
-           d.saveAndView('shomerpt.html')
+           #d.saveAndView('shomerpt.html')
         
 class HTMLMoAwards(MOAwards):
     def appMain(self, showme):
@@ -194,5 +308,5 @@ class HTMLMoAwards(MOAwards):
            d.closeDoc()
 
            d.showDoc()
-           d.saveAndView('shomerpt.html')
+           #d.saveAndView('shomerpt.html')
         

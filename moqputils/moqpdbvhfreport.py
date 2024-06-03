@@ -119,6 +119,16 @@ class MOQPDBVhfReport():
     def __init__(self, callsign = None):
         if (callsign):
             self.appMain(callsign)
+            
+    def _fixOps(self, call, ops):
+        """
+        If the callsign(call) == operator list (ops) set ops = ''
+        """
+        if call == ops:
+            return ''
+        else:
+            return ops
+
 
     def showData(self, log):
        csvdata= None
@@ -170,6 +180,8 @@ class MOQPDBVhfReport():
        rank = 1
        rankeddictList = []
        for station in dictList:
+           station['OPERATORS']=self._fixOps(station['CALLSIGN'],
+                                             station['OPERATORS'])
            if rank < maxRank: station[fname] = '%s'%(rank)
            else: station[fname] = ' '
            rankeddictList.append(station)
@@ -230,4 +242,4 @@ class HTML_VHFRpt(MOQPDBVhfReport):
        d.closeDoc()
 
        d.showDoc()
-       d.saveAndView('ttest2.html')
+       #d.saveAndView('ttest2.html')

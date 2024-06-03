@@ -71,6 +71,15 @@ class MOQPDBCatReport():
     def __init__(self, callsign = None):
         if (callsign):
             self.appMain(callsign)
+            
+    def _fixOps(self, call, ops):
+        """
+        If the callsign(call) == operator list (ops) set ops = ''
+        """
+        if call == ops:
+            return ''
+        else:
+            return ops
 
     def exportcsvsumdata(self, log, Headers=True):
        """
@@ -300,7 +309,8 @@ class MOQPHtmlReport(MOQPDBCatReport):
                     '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'\
                     .format(rank,
                         station['CALLSIGN'],
-                        station['OPERATORS'],
+                        self._fixOps(station['CALLSIGN'],
+                                     station['OPERATORS']),
                         station['SCORE'],
                         station['CWQSO'],
                         station['PHQSO'],
@@ -314,7 +324,8 @@ class MOQPHtmlReport(MOQPDBCatReport):
                     '\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'\
                     .format(\
                         station['CALLSIGN'],
-                        station['OPERATORS'],
+                        self._fixOps(station['CALLSIGN'],
+                                     station['OPERATORS']),
                         station['SCORE'],
                         station['CWQSO'],
                         station['PHQSO'],
@@ -332,5 +343,5 @@ class MOQPHtmlReport(MOQPDBCatReport):
        d.closeDoc()
 
        d.showDoc()
-       d.saveAndView('scoresbycat.html')
+       #d.saveAndView('scoresbycat.html')
 
