@@ -6,6 +6,9 @@ Update History:
 * Sat Dec 06 2023 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.1.0 -Updated to take file names from the actual directory where.
 -         the certificate files are located.
+* Wed Jun 12 2024 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.1.1 -If the list file includes award names (4 fields vs 3) use them.
+-         
 """
 
 DESCRIPTION = \
@@ -32,20 +35,30 @@ EPILOG = \
 Running with no parameters will launch the GUI (eventually).
 """
 
-TABLESTART = \
+TABLESTARTS = \
 """
 <table>
 <tr><th>STATION</th><th>OPERATORS</th><th>AWARD DOWNLOAD LINK</th></tr>
 """
 
-TABLEROW = \
+TABLEROWS = \
 """
 <tr><td>{}</td><td>{}</td><td><a href="./{}">{} DOWNLOAD</a></td></tr> 
 """
 
+TABLESTARTC = \
+"""
+<table>
+<tr><th>AWARD</th><th>STATION</th><th>OPERATORS</th><th>AWARD DOWNLOAD LINK</th></tr>
+"""
+
+TABLEROWC = \
+"""
+<tr><td>{}</td><td>{}</td><td>{}</td><td><a href="./{}">{} DOWNLOAD</a></td></tr> 
+"""
 
 import os, sys, argparse
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 ARGS = None
 
 class get_args():
@@ -88,7 +101,7 @@ class get_args():
                     the list calls in the mqplables report.""")
 
         args = parser.parse_args()
-        print(args)
+        #print(args)
         return args
 
 args=get_args()
@@ -119,7 +132,8 @@ with open(args.args.call_list) as f:
 #print(f'len(calls)={len(calls)}')
     
 i=0
-print(TABLESTART)
+firstln=True
+#print(TABLESTART)
    
 for call in calls:
     #print(f'{line}\n{calls[i]}')
@@ -127,16 +141,47 @@ for call in calls:
         callparts = call.split(',')
         #print(fnames[i], callparts)
         if len(callparts)>=3:
-            stacall = callparts[0].strip()
-            opscall = callparts[1].strip()
-            if stacall == opscall:
-                opscall = '' # Only show op calls if they are different
-            print(TABLEROW.format(\
-                stacall, # Call
-                opscall, # Ops
-                fnames[i].strip(), #actual file name
-                callparts[2].strip() #Link text file name 
+            if firstln:
+                if len(callparts)==4:
+                    #Certificates! Include award name field
+                    print(TABLESTARTC)
+                    TABLEROW = TABLEROWC
+                    fourfields = True
+                elif len(callparts)==3:
+                    print(TABLESTARTS)
+                    TABLEROW = TABLEROWS
+                    fourfields = False
+                else:
+                    print("Bad input number of fields {} in list.".format(len(callparts))) 
+                    exit()
+                firstln = False
+            if fourfields:
+                award = callparts[0].strip()
+                stacall = callparts[1].strip()
+                opscall = callparts[2].strip()
+                ltext = callparts[3].strip()
+                if stacall == opscall:
+                    opscall = '' # Only show op calls if they are different
+                print(TABLEROW.format(\
+                    award,   # Award name
+                    stacall, # Call
+                    opscall, # Ops
+                    fnames[i].strip(), #actual file name
+                    ltext #Link text file name 
                 ))
+            else:
+                stacall = callparts[0].strip()
+                opscall = callparts[1].strip()
+                ltext = callparts[2].strip()
+                if stacall == opscall:
+                    opscall = '' # Only show op calls if they are different
+                print(TABLEROW.format(\
+                    stacall, # Call
+                    opscall, # Ops
+                    fnames[i].strip(), #actual file name
+                    ltext #Link text file name 
+                ))
+                
         i += 1
 print('</table>')   
     
