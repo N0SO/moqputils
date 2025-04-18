@@ -7,13 +7,16 @@ MOQPMults    - A collection of utilities to process contest
 Update History:
 * Sat Feb 22 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V.0.0.1 - Just starting out
+* Fri Apr 18 2025 Mike Heitmann, N0SO <n0so@arrl.net>
+- V.0.1.0 - Updated to take data from QSO Summary report (DB table
+-           COUNTIESACTIVE). Greatly improved rendering time! 
 """
 
 from cabrilloutils.contestmults import *
 from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
 
-VERSION = '0.0.2'
+VERSION = '0.1.0'
 
 COUNTYLIST = ['shared/multlists/Countylist.csv']
 
@@ -65,15 +68,30 @@ class MOQPDBCountyCountRpt():
     def processAll(self, mydb):
         Total = 0
         statList =[]
-        query = "SELECT * FROM `mocounties`"
+        query = "SELECT * FROM `COUNTYACTIVE_VIEW` ORDER BY 'TOTAL' DESC"
         cntylist = mydb.read_query(query)
+        if (cntylist == None) or (len(cntylist) == 0):
+            print("No data - run query makeCountySummary() to create COUNTIESACTIVE table.")
+            exit(0)
+
         for cnty in cntylist:
-            result = self.processOne(mydb, cnty['code'])
-            result.CntyID = cnty['ID']
-            result.Name = cnty['name']
-            result.Code = cnty['code']
-            Total += result.qsosum()
+            result = countyStats()
+            result.CntyID = cnty['COUNTYID']
+            result.Name = cnty['NAME']
+            result.Code = cnty['ABR']
+            result.CW = cnty['CWQs']
+            result.PH = cnty['PHQs']
+            result.DI = cnty['RYQs']
+            result.Total = cnty['TOTAL']
             statList.append(result)
+            
+        """
+        Get last update time of the QSO database for report
+        """    
+        tstatus = mydb.read_query("""SHOW TABLE STATUS 
+            FROM {} LIKE 'QSOS';""".format(DBNAME))
+        self.Update_time = tstatus[0]['Update_time']          
+
             
         return statList
             
@@ -148,10 +166,14 @@ class HTML_CountyCntRpt(MOQPDBCountyCountRpt):
         d.openBody()
         d.addTimeTag(prefix='Report Generated On ', 
                             tagType='comment') 
+                            
 
         d.add_unformated_text(\
                 """<h2 align='center'>{} Missouri QSO Party QSOs per County</h2>
                 """.format(YEAR))
+                
+        d.add_unformated_text(\
+            f"""<h3 align='center'>QSO Summary Updated: {self.Update_time}</h3>""")
             
         d.addTable(tdata=d.tsvlines2list(tsvData),
                   header=True,
