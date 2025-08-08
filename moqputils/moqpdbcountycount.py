@@ -10,13 +10,16 @@ Update History:
 * Fri Apr 18 2025 Mike Heitmann, N0SO <n0so@arrl.net>
 - V.0.1.0 - Updated to take data from QSO Summary report (DB table
 -           COUNTIESACTIVE). Greatly improved rendering time! 
+* Fri Apr 19 2025 Mike Heitmann, N0SO <n0so@arrl.net>
+- V.0.1.0 - Updated to take last update time from table
+-           COUNTIESACTIVE instead of  QSOS. 
 """
 
 from cabrilloutils.contestmults import *
 from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 COUNTYLIST = ['shared/multlists/Countylist.csv']
 
@@ -89,7 +92,7 @@ class MOQPDBCountyCountRpt():
         Get last update time of the QSO database for report
         """    
         tstatus = mydb.read_query("""SHOW TABLE STATUS 
-            FROM {} LIKE 'QSOS';""".format(DBNAME))
+            FROM {} LIKE 'COUNTYACTIVE';""".format(DBNAME))
         self.Update_time = tstatus[0]['Update_time']          
 
             
@@ -173,7 +176,7 @@ class HTML_CountyCntRpt(MOQPDBCountyCountRpt):
                 """.format(YEAR))
                 
         d.add_unformated_text(\
-            f"""<h3 align='center'>QSO Summary Updated: {self.Update_time}</h3>""")
+            f"""<h3 align='center'>Active County QSO Summary Updated: {self.Update_time}</h3>""")
             
         d.addTable(tdata=d.tsvlines2list(tsvData),
                   header=True,

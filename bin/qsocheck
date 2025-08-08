@@ -3,14 +3,22 @@ import os.path
 import sys
 import argparse
 import datetime
+from devmodpath.devmodpath import devModPath
 
-VERSION = '0.1.1' 
+VERSION = '0.1.2' 
 
 # If the development module source paths exist, 
 # add them to the python path
-whereami = os.path.split( os.path.realpath(__file__) )
-if os.path.exists(whereami[0] + '/mqpdevpath.py'):
-    from mqpdevpath import *
+
+"""
+ Add necessary dependent module paths. This can also be a file
+ path to a text file containing a list of modules. Note that this
+ should be removed if we ever setup an installer and put the dependant
+ modules in the appropriate location.
+"""
+p = devModPath(pypath = ['/home/pi/Projects/moqputils',
+                         '/home/pi/Projects/moqputils/moqputils'],
+               sharepath = '/home/pi/Projects/moqputils/share')
 
 #print('Python path = %s'%(sys.path))
 
