@@ -169,8 +169,10 @@ class CATEGORYAwards(commonAwards):
 class CATEGORYLabels(CATEGORYAwards):
 
     def processAll(self, mydb, placement):
-        AWARDLIST = mydb.read_query(\
-        """SELECT * FROM FIRSTPLACE_VIEW WHERE 1 ORDER BY callsign;""")
+        AWARDLIST = mydb.read_query("""
+           SELECT * FROM FIRSTPLACE_VIEW 
+               WHERE plaque=1 and recipientid>0 
+               ORDER BY callsign ASC;""")
         #print(AWARDLIST)
         labeldata = self.new_processAll(CATLABELHEADER, 
                                         AWARDLIST)

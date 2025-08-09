@@ -167,6 +167,7 @@ class commonAwards():
         return tsvdata 
 
     def swapData(self, oldData, op, opdata):
+        #print(f'oldData = {oldData}\nopdata={opdata}')
         if ('fname' in opdata) and ('name' in opdata):
             oldData['name']=('{} {}, {}'.format(\
                              opdata['fname'].upper(),
@@ -175,7 +176,7 @@ class commonAwards():
         elif ('attn' in opdata) and ('name' in opdata):
             oldData['name']=('{} ATTN {}'.format(\
                              opdata['name'].upper(),
-                             opdata['att1'].upper()))
+                             opdata['attn'].upper()))
         elif ('name' in opdata):
             oldData['name']=('{}'.format(\
                              opdata['name'].upper()))

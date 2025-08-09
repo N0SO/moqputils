@@ -284,10 +284,9 @@ class STATELabels(STATEAwards):
         return tsvdata
         
     def states(self, mydb, place):
-        awards = mydb.read_query("""SELECT * FROM 
-                                  STATEPROVAWARDS_VIEW 
-                                  WHERE 1
-                                  ORDER BY awardid;""")
+        awards = mydb.read_query("""
+                SELECT * FROM `STATEPROVAWARDS_VIEW` 
+                where recipientid>0 ORDER BY callsign  ASC""" )
 
         labeldata = self.new_processAll(CATLABELHEADER, 
                                             awards)
@@ -344,7 +343,7 @@ class STATELabels(STATEAwards):
         elif ('attn' in opdata) and ('name' in opdata):
             oldData['name']=('{} ATTN {}'.format(\
                              opdata['name'].upper(),
-                             opdata['att1'].upper()))
+                             opdata['attn'].upper()))
         elif ('name' in opdata):
             oldData['name']=('{}'.format(\
                              opdata['name'].upper()))
