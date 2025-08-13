@@ -1,26 +1,13 @@
 #!/usr/bin/env python
 """
-Update History:
-* Sat Apr 23 2022 Mike Heitmann, N0SO <n0so@arrl.net>
-- V0.0.1 -First interation for 2021 MOQP.
-* Sat Dec 06 2023 Mike Heitmann, N0SO <n0so@arrl.net>
-- V0.1.0 -Updated to take file names from the actual directory where.
--         the certificate files are located.
-* Wed Jun 12 2024 Mike Heitmann, N0SO <n0so@arrl.net>
-- V0.1.1 -If the list file includes award names (4 fields vs 3) use them.
--         
-* Mon Aug 11 2025 Mike Heitmann, N0SO <n0so@arrl.net>
-- V0.2.0 -Refactored the code to use pypdf to split the merged .pdf file
--         into individual files. No more need to use a separate utility
--         to split the files. Works with MISSOURI, but SHOWME and the
--         award certs may require a little tweaking.
+Update History - See __init__.py 
 """
 
 DESCRIPTION = \
 """makehtml.py  - Generates an html table of certificate winners with
-                  links to downloadable certificates using the same 
+                  links to downloadable certificate file  using the same 
                   excel sheet used to mailmerge the master combined
-                  .pdf document.
+                  .PDF document.
           Parameters: 
             -c --call_list - A list of callsigns, operators and the 
                              file name desired to appear in the link.
@@ -32,7 +19,8 @@ DESCRIPTION = \
                              generate the certificate files  via a "mail
                              merge" process the ensure the certificate
                              file names align with the file list.
-            -f --file_path - the full path to the actual certificate 
+            -f --file_path - Path to file that holds all of the 
+                             PDF certificates. 
                              files.
           The resulting html table is intended to be copy/pasted
           into a SHOWME or MISSOURI report for the web page.
@@ -65,8 +53,9 @@ TABLEROWC = \
 <tr><td>{}</td><td>{}</td><td>{}</td><td><a href="./{}">{} DOWNLOAD</a></td></tr> 
 """
 from pypdf import PdfReader, PdfWriter
-import os, sys, argparse, csv
-VERSION = '0.2.0'
+from __init__ import VERSION
+import os, sys, csv
+
 ARGS = None
 
 class get_args():
@@ -99,85 +88,91 @@ class get_args():
         #print(args)
         return args
 
-def split_pdf_into_pages(input_pdf_path,
-                         output_fname, 
-                         page_list=[1], 
-                         output_folder="output_pages"):
+
+class htmlCerts():
+
+    def __init__(self):
+        pass
+
     """
     Splits a PDF file into individual pages, saving each page as a new PDF.
 
     Args:
         input_pdf_path (str): The path to the input PDF file.
+        output_fname (str): file name for output PDF file.
+        page_list (list): List of page numbers (1 based) to extract.
         output_folder (str): The folder where the split pages will be saved.
 
     # Example usage:
     # Assuming 'your_document.pdf' is in the same directory as your script
-    #split_pdf_into_pages("missouri-2025-merged.pdf")
+    # split_pdf_into_pages("missouri-2025-merged.pdf")
     """
-    reader = PdfReader(input_pdf_path)
-    num_pages = len(page_list)
+    def split_pdf_into_pages(self,
+			    input_pdf_path,
+                            output_fname, 
+                            page_list=[1], 
+                            output_folder="output_pages"):
+        reader = PdfReader(input_pdf_path)
+        num_pages = len(page_list)
 
-    # Create the output folder if it doesn't exist
-    #import os
-    os.makedirs(output_folder, exist_ok=True)
+        # Create the output folder if it doesn't exist
+        # import os
+        os.makedirs(output_folder, exist_ok=True)
 
-    for i in page_list:
-        writer = PdfWriter()
-        writer.add_page(reader.pages[i-1])
+        for i in page_list:
+            writer = PdfWriter()
+            writer.add_page(reader.pages[i-1])
 
-        output_filename = os.path.join(output_folder, output_fname)
-        with open(output_filename, "wb") as output_pdf:
-            writer.write(output_pdf)
-
-
-def find_pages(pdf_file, search_term):
-    reader = PdfReader(pdf_file)
-    found_pages = []
-
-    for page_num, page in enumerate(reader.pages):
-        text = page.extract_text()
-        if search_term.lower() in text.lower():
-            found_pages.append(page_num + 1) # Page numbers are 1-indexed
-    return found_pages
+            output_filename = os.path.join(output_folder, output_fname)
+            with open(output_filename, "wb") as output_pdf:
+                writer.write(output_pdf)
 
 
+    def find_pages(self, pdf_file, search_term):
+        reader = PdfReader(pdf_file)
+        found_pages = []
 
+        for page_num, page in enumerate(reader.pages):
+            text = page.extract_text()
+            if search_term.lower() in text.lower():
+                found_pages.append(page_num + 1) # Page numbers are 1-indexed
+        return found_pages
 
-args=get_args()
-if (args.args.file_path==None) or (args.args.call_list==None):
-    exit()
-
-print(TABLESTARTS)
-"""
-Open the .csv file that contains list of callsigns
-"""
-with open(args.args.call_list, mode='r', newline='') as fname:
-    csv_reader = csv.DictReader(fname, delimiter='\t')
-    for row in csv_reader:
-        if (row['OPERATORS'] == None or
-                row['OPERATORS'].strip() == '' or
-                len(row['OPERATORS']) == 0 ):
-            #Single-op - look for station call in text
-            search_term = row['CALL']
-        else:
-            """
-            Multi-op - look for op name in text 
-            search for op name.
-            """
-            search_term = row['NAME'].strip()
-        #Extract the one file for this line.
-        pages = find_pages( pdf_file=args.args.file_path, 
+    def Appmain(self, call_list, file_path):
+        print(TABLESTARTS)
+        """
+        Open the .csv file that contains list of callsigns
+        """
+        with open(call_list, mode='r', newline='') as fname:
+            csv_reader = csv.DictReader(fname, delimiter='\t')
+            for row in csv_reader:
+                if (row['OPERATORS'] == None or
+                        row['OPERATORS'].strip() == '' or
+                        len(row['OPERATORS']) == 0 ):
+                    #Single-op - look for station call in text
+                    search_term = row['CALL']
+                else:
+                    """
+                    Multi-op - look for op name in text 
+                    search for op name.
+                    """
+                    search_term = row['NAME'].strip()
+                #Extract the one file for this line.
+                pages = self.find_pages( pdf_file=file_path, 
                             search_term=search_term)
-        if pages:
-            #print(f"Extracting {row['FILE']}, page {pages} for {row['CALL']} op {search_term}") 
-            split_pdf_into_pages(   args.args.file_path, 
+                if pages:
+                    #print(f"Extracting {row['FILE']}, page {pages} for {row['CALL']} op {search_term}") 
+                    self.split_pdf_into_pages(   file_path, 
                                     row['FILE'],
                                     page_list=[pages[0]], 
                                     output_folder='downloads')
-            print(TABLEROWS.format(\
-                    row['CALL'],
-                    row['OPERATORS'],
-                    row['FILE'],
-                    row['FILE']))
+                    print(TABLEROWS.format(\
+                          row['CALL'],
+                          row['OPERATORS'],
+                          row['FILE'],
+                          row['FILE']))
 
-print('</table>') 
+        print('</table>') 
+
+
+

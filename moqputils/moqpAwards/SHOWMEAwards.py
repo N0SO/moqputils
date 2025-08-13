@@ -44,7 +44,7 @@ class SHOWMELabels(SHOWMEAwards):
   
     def getdbData(self, db):
         return db.read_query("""SELECT * FROM SHOWME_VIEW1
-                                  WHERE  QUALIFY=1
+                                  WHERE  QUALIFY=1 
                                   ORDER BY CALLSIGN;""")
 
 

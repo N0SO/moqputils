@@ -331,6 +331,8 @@ class STATELabels(STATEAwards):
                                                opdata)
                     tsvdata.append(self.processOneLine(tempData))
             else: #Single-op
+                if (cat['ops'] == cat['callsign']):
+                    cat['ops'] = '' # Don't show op if same as callsign
                 tsvdata.append(self.processOneLine(cat))
         return tsvdata
 

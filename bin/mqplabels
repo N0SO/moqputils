@@ -96,7 +96,7 @@ if __name__ == '__main__':
        app = MOLabels('MISSOURI')
    elif (args.args.provstate):
        from moqputils.moqpAwards.stateAwards import STATELabels
-       print("Calling STATELabels...")
+       #print("Calling STATELabels...")
        app = STATELabels('2')
    else:
        from gui_reports import labels_ui

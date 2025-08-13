@@ -171,7 +171,7 @@ class CATEGORYLabels(CATEGORYAwards):
     def processAll(self, mydb, placement):
         AWARDLIST = mydb.read_query("""
            SELECT * FROM FIRSTPLACE_VIEW 
-               WHERE plaque=1 and recipientid>0 
+               WHERE certificate=1 and recipientid>0 
                ORDER BY callsign ASC;""")
         #print(AWARDLIST)
         labeldata = self.new_processAll(CATLABELHEADER, 

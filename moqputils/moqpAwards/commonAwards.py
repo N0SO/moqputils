@@ -107,6 +107,8 @@ class commonAwards():
                                                opdata)
                     tsvdata.append(self.processOneLine(tempData))
             else: #Single-op
+                if (cat['operators'] == cat['callsign']):
+                    cat['operators'] = '' # Don't show op if same as callsign
                 tsvdata.append(self.processOneLine(cat))
         return tsvdata
 
