@@ -21,6 +21,8 @@ Update History:
 - V0.2.2 - added (-t --typeAward) option to command line to select the
 -          target type of award the list is for (shome, missouri or 
 -          category.
+- V0.2.3 - Changed download link text to be DOWNLOAD or (for multi-op
+-          stations,) DOWNLOAD <CALLSIGN>.
 """
-VERSION = '0.2.2'
+VERSION = '0.2.3'
 #print(f'Make HTML Certificates Download Page utility V{VERSION}')

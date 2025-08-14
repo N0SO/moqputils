@@ -27,12 +27,13 @@ class htmlCerts():
         self.TABLESTARTS = \
 """
 <table>
+<p>
 <tr><th>STATION</th><th>OPERATORS</th><th>AWARD DOWNLOAD LINK</th></tr>
 """
 
         self.TABLEROWS = \
 """
-<tr><td>{}</td><td>{}</td><td><a href="./downloads/{}">{} DOWNLOAD</a></td></tr> 
+<tr><td>{}</td><td>{}</td><td><a href="./downloads/{}">{}</a></td></tr> 
 """
 
         self.TABLESTARTC = \
@@ -78,41 +79,36 @@ class htmlCerts():
                 found_pages.append(page_num + 1) # Page numbers are 1-indexed
         return found_pages
 
-    def Appmain(self, call_list, file_path):
+    def Appmain(self, call_list, file_path, filename_base = 'showme_'):
         print(self.TABLESTARTS)
         """
-        Open the .csv file that contains list of callsigns
+        Open the .csv file that contains list of callsigns, etc.
         """
         with open(call_list, mode='r', newline='') as fname:
             csv_reader = csv.DictReader(fname, delimiter='\t')
+            certfile = filename_base
+            cf_index = 1
             for row in csv_reader:
-                if (row['OPERATORS'] == None or
-                        row['OPERATORS'].strip() == '' or
-                        len(row['OPERATORS']) == 0 ):
-                    #Single-op - look for station call in text
-                    search_term = row['CALL']
-                else:
-                    """
-                    Multi-op - look for op name in text 
-                    search for op name.
-                    """
-                    search_term = row['NAME'].strip()
-                #Extract the one file for this line.
-                pages = self.find_pages( pdf_file=file_path, 
-                            search_term=search_term)
-                if pages:
-                    #print(f"Extracting {row['FILE']}, page {pages} for {row['CALL']} op {search_term}") 
-                    self.split_pdf_into_pages(   file_path, 
-                                    row['FILE'],
-                                    page_list=[pages[0]], 
+                thisCertfile = f'{certfile}{cf_index}.pdf'
+                self.split_pdf_into_pages(\
+                                    file_path, 
+                                    thisCertfile,
+                                    page_list=[cf_index], 
                                     output_folder='downloads')
-                    print(self.TABLEROWS.format(\
+                
+                if row['OPERATORS'].strip() == '' :
+                    dlText = 'DOWNLOAD'
+                else:
+                    dlText = f"DOWNLOAD {row['FILE']}"
+                    
+                print(self.TABLEROWS.format(\
                           row['CALL'],
                           row['OPERATORS'],
-                          row['FILE'],
-                          row['FILE']))
+                          thisCertfile,
+                          dlText))
+                cf_index += 1
 
-        print('</table>') 
+        print('</table></p>') 
 
 
 class htmlAwards(htmlCerts):
@@ -138,17 +134,24 @@ class htmlAwards(htmlCerts):
 """
 <tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td><a href='downloads./{}'>{}</a></td></tr> 
 """
-    def Appmain(self, call_list, file_path):
+    def Appmain(self, call_list, file_path, filename_base = 'awards_'):
         print(self.TABLESTARTS)
         """
         Open the .csv file that contains list of callsigns
         """
         with open(call_list, mode='r', newline='') as fname:
             csv_reader = csv.DictReader(fname, delimiter='\t')
-            certfile = 'award_'
+            certfile = filename_base
             cf_index = 1
+
             for row in csv_reader:
-                thisCertfile = f'certfile{cf_index}.pdf'
+
+                if row['OPERATORS'].strip() == '' :
+                    dlText = 'DOWNLOAD'
+                else:
+                    dlText = f"DOWNLOAD {row['FILE']}"
+
+                thisCertfile = f'{certfile}{cf_index}.pdf'
                 self.split_pdf_into_pages(\
                                     file_path, 
                                     thisCertfile,
@@ -160,7 +163,7 @@ class htmlAwards(htmlCerts):
                           row['STATION'],
                           row['OPERATORS'],
                           thisCertfile,
-                          row['NAME']))
+                          dlText))
                 cf_index += 1
 
         print('</table>') 

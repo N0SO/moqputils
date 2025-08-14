@@ -92,8 +92,10 @@ if (args.args.typeAward):
         app = htmlCerts()
     elif awType == 'category':
         from makehtml import htmlAwards
-        app = htmlAwards
+        app = htmlAwards()
     else:
         exit()
 
-app.Appmain(args.args.call_list, args.args.file_path)
+app.Appmain(call_list=args.args.call_list, 
+            file_path=args.args.file_path, 
+            filename_base=awType+'_')
