@@ -17,6 +17,10 @@ Update History:
 * Tue Aug 12 2025 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.2.1 -Made code changes from yesterday a class to make it easier to
 -         roll in award certs by creating a child class.
+* Tue Aug 14 2025 Mike Heitmann, N0SO <n0so@arrl.net>
+- V0.2.2 - added (-t --typeAward) option to command line to select the
+-          target type of award the list is for (shome, missouri or 
+-          category.
 """
-VERSION = '0.2.1'
+VERSION = '0.2.2'
 #print(f'Make HTML Certificates Download Page utility V{VERSION}')

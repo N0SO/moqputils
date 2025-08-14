@@ -33,7 +33,6 @@ Running with no parameters will launch the GUI (eventually).
 
 import argparse
 from __init__ import VERSION
-from makehtml import htmlCerts
 ARGS = None
 
 class get_args():
@@ -59,9 +58,22 @@ class get_args():
         parser.add_argument('-f', '--file_path',
             default=None,
             help="""The path to the file containing all of the pdf
-                    certificate files. These should be the files created
-                    by the mail merge using the mqplables report output.""")
+                    certificate merged together. These should be the 
+                    files created by the mail merge using the mqplables 
+                    report output.""")
 
+        parser.add_argument('-t', '--typeAward',
+                                   choices = ['showme', 
+                                              'missouri',
+                                              'category' ],
+                                   default = 'showme',
+            help="""Set the type of certificate for output. Options are: 
+                    showme - For SHOWME certificates.
+                    missouri - For MISSOURI certificates.
+                    category - For 1st and 2nd place awards of the 
+                               various contest categories.
+                    
+                    Default value is showme.""")
         args = parser.parse_args()
         #print(args)
         return args
@@ -70,5 +82,18 @@ args=get_args()
 if (args.args.file_path==None) or (args.args.call_list==None):
     exit()
 
-app = htmlCerts()
+if (args.args.typeAward):
+    awType = args.args.typeAward.lower()
+    if awType == 'showme':
+        from makehtml import htmlCerts
+        app = htmlCerts()
+    elif awType == 'missouri':
+        from makehtml import htmlCerts
+        app = htmlCerts()
+    elif awType == 'category':
+        from makehtml import htmlAwards
+        app = htmlAwards
+    else:
+        exit()
+
 app.Appmain(args.args.call_list, args.args.file_path)
