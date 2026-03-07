@@ -29,20 +29,16 @@ class runLogCheck(MOQPLoadLogs):
         """
         textbuffer=self.widget.get_buffer()
         end_iter = textbuffer.get_end_iter()
-        textbuffer.insert(end_iter, 'LOG HEADER:\n') 
+        textbuffer.insert(end_iter, '===LOG FILE===\n') 
         """
-        Show HEADER
+        Show log file
         """
-        data = self.log['RAWTEXT']
-        k = 0
-        while ( data[k].upper().startswith('QSO:') != True ):
+        for l in self.log['RAWTEXT']:
             end_iter = textbuffer.get_end_iter()
-            line = 'H%s - %s'%(k+1, data[k])
-            textbuffer.insert(end_iter, line) 
-            k+=1
+            textbuffer.insert(end_iter, l) 
+            
         """
         Show QSOs
-        """
         j=1
         end_iter = textbuffer.get_end_iter()
         textbuffer.insert(end_iter, '\nLOG QSOs:\n') 
@@ -53,25 +49,25 @@ class runLogCheck(MOQPLoadLogs):
             k+=1
             j+=1
         """
+        """
         Show errors
         """
         #print('Header Errors: %s'%(log['HEADER']['ERRORS']))
         end_iter = textbuffer.get_end_iter()
-        textbuffer.insert(end_iter, '\nLOG ERRORS:\n') 
+        textbuffer.insert(end_iter, '\n=== LOG ERRORS ===\n') 
         k=1
         for errs in self.log["ERRORS"]:
             line = 'E%s - %s\n'%(k, errs)
             end_iter = textbuffer.get_end_iter()
             textbuffer.insert(end_iter, line) 
             k += 1
-    
-    def processAndDisplay(self, log,):
+
+    def processAndDisplay(self, log):
         result = None
         self.log = None
         #log = self.checkLog(self.logName, self.sw_cabBonus)
         if (log):
             self.log = log
-            #print (log['RAWTEXT'])
             self.displayRawLog()
             fileOnly = os.path.basename(self.logName)
             Result = 'File %s summary displayed'%(fileOnly)

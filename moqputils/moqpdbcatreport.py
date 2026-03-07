@@ -71,6 +71,15 @@ class MOQPDBCatReport():
     def __init__(self, callsign = None):
         if (callsign):
             self.appMain(callsign)
+            
+    def _fixOps(self, call, ops):
+        """
+        If the callsign(call) == operator list (ops) set ops = ''
+        """
+        if call == ops:
+            return ''
+        else:
+            return ops
 
     def exportcsvsumdata(self, log, Headers=True):
        """
@@ -286,10 +295,12 @@ class MOQPHtmlReport(MOQPDBCatReport):
                WHERE SUMMARY.MOQPCAT=%s
                ORDER BY SCORE DESC, LOCATION ASC""",
               [cat])
-
            tableData=['RANK\tCALLSIGN\tOPERATORS\tSCORE\t'+\
                         'CW QSOs\tPH QSOs\tDIG QSOs\tMULTS\t'+\
-                        'W0MA BONUS\tK0GQ BONUS\tCAB BONUS\t']
+                        'W0MA BONUS\tK0GQ BONUS\tCAB BONUS']
+           if (len(sumdata) == 0): #No data
+               tableData.append('\t\t\t\t\tNO ENTRY\t\t\t\t\t')
+                  
            rank = 0
            for station in sumdata:
                rank += 1
@@ -298,7 +309,8 @@ class MOQPHtmlReport(MOQPDBCatReport):
                     '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'\
                     .format(rank,
                         station['CALLSIGN'],
-                        station['OPERATORS'],
+                        self._fixOps(station['CALLSIGN'],
+                                     station['OPERATORS']),
                         station['SCORE'],
                         station['CWQSO'],
                         station['PHQSO'],
@@ -312,7 +324,8 @@ class MOQPHtmlReport(MOQPDBCatReport):
                     '\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'\
                     .format(\
                         station['CALLSIGN'],
-                        station['OPERATORS'],
+                        self._fixOps(station['CALLSIGN'],
+                                     station['OPERATORS']),
                         station['SCORE'],
                         station['CWQSO'],
                         station['PHQSO'],
@@ -330,5 +343,5 @@ class MOQPHtmlReport(MOQPDBCatReport):
        d.closeDoc()
 
        d.showDoc()
-       d.saveAndView('scoresbycat.html')
+       #d.saveAndView('scoresbycat.html')
 

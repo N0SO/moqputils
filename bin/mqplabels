@@ -19,12 +19,16 @@ Update History:
 -         -c, -s,-m, etc.
 * Sun Dec 11 2021 Mike Heitmann, N0SO <n0so@arrl.net>
 -V0.2.0 - Update to support the new DEVMODPATH code.
+* Sat Aug 09, 2025 Mike Heitmann, N0SO <n0so@arrl.net>
+-V0.2.1 - Update to support the better DEVMODPATH code and
+-         updates to queries to build label files. This will omit awards
+-         that had no entry.
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '0.2.0'
+VERSION = '0.2.1'
 ARGS = None
 
 # If the development module source paths exist, 
@@ -92,7 +96,7 @@ if __name__ == '__main__':
        app = MOLabels('MISSOURI')
    elif (args.args.provstate):
        from moqputils.moqpAwards.stateAwards import STATELabels
-       print("Calling STATELabels...")
+       #print("Calling STATELabels...")
        app = STATELabels('2')
    else:
        from gui_reports import labels_ui

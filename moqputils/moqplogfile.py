@@ -11,6 +11,8 @@ Update History:
 -          Added method sortQSOdictList to sort the resulting QSO
 -          list in various ways. Default is by DATETIME in ascending
 -          order. 
+* Thu Apr 05 2023 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.1 - Added log['RAWTEXT'] to log retuned in buildLog() method.
 """
 import sys, os
 from moqputils.moqpqsoutils import MOQPQSOUtils
@@ -118,6 +120,7 @@ class MOQPLogFile(MOQPQSOUtils):
            log = self.getLogdictData(logText)
            dictqsoList = self.buildQSOList(log['QSOLIST'])
            log['QSOLIST'] = dictqsoList
+           log['RAWTEXT'] = logText
            if (Persist):
                self.HEADER = log['HEADER']
                self.QSOLIST = dictqsoList               

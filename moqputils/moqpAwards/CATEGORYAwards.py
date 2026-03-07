@@ -169,9 +169,13 @@ class CATEGORYAwards(commonAwards):
 class CATEGORYLabels(CATEGORYAwards):
 
     def processAll(self, mydb, placement):
-        labeldata = self.Labels_processAll(mydb, 
-                                            CATLABELHEADER, 
-                                            AWARDLIST)
+        AWARDLIST = mydb.read_query("""
+           SELECT * FROM FIRSTPLACE_VIEW 
+               WHERE certificate=1 and recipientid>0 
+               ORDER BY callsign ASC;""")
+        #print(AWARDLIST)
+        labeldata = self.new_processAll(CATLABELHEADER, 
+                                        AWARDLIST)
         return labeldata
         
 class HTMLAwards(CATEGORYAwards):

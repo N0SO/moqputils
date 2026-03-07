@@ -79,6 +79,15 @@ class MOQPDBDigitalReport():
         if (callsign):
             self.appMain(callsign)
 
+    def _fixOps(self, call, ops):
+        """
+        If the callsign(call) == operator list (ops) set ops = ''
+        """
+        if call == ops:
+            return ''
+        else:
+            return ops
+
     def showData(self, log):
        """
        This method processes a single log file passed in filename
@@ -132,6 +141,8 @@ class MOQPDBDigitalReport():
        rank = 1
        rankeddictList = []
        for station in dictList:
+           station['OPERATORS']=self._fixOps(station['CALLSIGN'],
+                                             station['OPERATORS'])
            if rank < maxRank: station[fname] = '%s'%(rank)
            else: station[fname] = ' '
            rankeddictList.append(station)
@@ -197,4 +208,4 @@ class HTML_DigitalRpt(MOQPDBDigitalReport):
        d.closeDoc()
 
        d.showDoc()
-       d.saveAndView('ttest2.html')
+       #d.saveAndView('ttest2.html')
