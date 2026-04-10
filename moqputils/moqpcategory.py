@@ -2,14 +2,13 @@
 """
 moqpcategory  - Determine which Missouri QSO Party Award
                 category a Cabrillo Format log file is in.
-                
-                Based on 2019 MOQP Rules
+
 Update History:
 * Thu Dec 09 2019 Mike Heitmann, N0SO <n0so@arrl.net>
-- V0.2.1 - Start tracking revs.               
+- V0.2.1 - Start tracking revs.
 * Wed Jan 08 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.2.2 - Lots of tweaks while processing 2019 MOQP files:
-- Added code to category processing to handle DIGITAL               
+- Added code to category processing to handle DIGITAL.
 * Thu Jan 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.2.3 - Added frequency band verifiaction to qso_valid method.
 * Fri Jan 24 2020 Mike Heitmann, N0SO <n0so@arrl.net>
@@ -54,8 +53,10 @@ Update History:
 * Fri Jun 02 2023 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.1
 - Added PHONE to the list of modes to check for in _moqpcatmode_().
-
-       
+* Thu Apr 09 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.2
+- Updating method determineMOQPCatstg() to support PORTABLE categories.
+- Updating method _moqpcatsta_() to support PORTABLE categories.
 """
 from moqputils.moqplogfile import MOQPLogFile
 from moqputils.bonusaward import BonusAward
@@ -65,9 +66,10 @@ from moqputils.moqpmults import *
 from moqputils.moqpdefs import *
 import os, re
 
-VERSION = '1.0.1' 
+VERSION = '1.0.2' 
 FILELIST = './'
 ARGS = None
+
 
 class MOQPCategory(MOQPLogFile):
     """
@@ -107,11 +109,11 @@ class MOQPCategory(MOQPLogFile):
       summary['PH'] = 0
       summary['VHF'] = 0
       summary['DG'] = 0
-      
+
       for thisqso in data:
-      
+
          summary['QSOS'] += 1
-                        
+
          try:
              tfreq = thisqso['FREQ']
              freq = float(tfreq)
@@ -119,7 +121,7 @@ class MOQPCategory(MOQPLogFile):
              freq = 0.0
          if ((freq >= 50000.0) or (tfreq in self.VHFFREQ) ):
              summary['VHF'] += 1
-                                   
+
          mode = thisqso['MODE'].upper()
          if ('CW' in mode):
              summary['CW'] += 1
@@ -153,10 +155,9 @@ class MOQPCategory(MOQPLogFile):
              category.append(dg)
              category.append(qso)
              category.append(vhf)
-       
-       return category      
 
-       
+       return category
+
     def processLogdict(self, fname):
        """
        Read the Cabrillo log file and separate log header data
@@ -186,7 +187,7 @@ class MOQPCategory(MOQPLogFile):
           logSummary['ERRORS'] = log['ERRORS']
           logSummary['QSOSUM'] = qsosummary
           logSummary['MULTS'] = log['MULTS']
-          
+
        return logSummary
 
     def _moqpcatloc_(self, log):
@@ -208,10 +209,11 @@ class MOQPCategory(MOQPLogFile):
        if (compstring in STATIONS):
            if (compstring == 'FIXED'):
                moqpcatstg = 'FIXED'
-           elif ( (compstring == 'MOBILE') \
-                     or (compstring == 'ROVER') \
-                     or compstring == 'PORTABLE'):
+           elif (compstring == 'MOBILE'):
                moqpcatstg = 'MOBILE'
+           elif ( (compstring == 'PORTABLE') \
+                     or (compstring == 'ROVER') ):
+               moqpcatstg = 'PORTABLE'
            elif (compstring == 'EXPEDITION'):
                moqpcatstg = 'EXPEDITION'
            elif (compstring == 'SCHOOL'):
@@ -307,9 +309,19 @@ class MOQPCategory(MOQPLogFile):
                    elif (moqpcat['OPERATOR'] == 'SINGLE-OP'):
                        moqpcatstg += (' %s %s'% (moqpcat['POWER'],
                                                  moqpcat['MODE']))
-                                     
+           elif (moqpcat['STATION'] == 'PORTABLE'):
+               moqpcatstg = (f'{moqpcat["LOCATION"]} {moqpcat["STATION"]}')
+
+               if (moqpcat['POWER'] == 'HIGH POWER'):
+                   moqpcatstg += ' UNLIMITED'
+               else:
+                   moqpcatstg += (f' {moqpcat["OPERATOR"]}')
+                   if (moqpcat['OPERATOR'] == 'MULTI-OP'):
+                       pass
+                   elif (moqpcat['OPERATOR'] == 'SINGLE-OP'):
+                       moqpcatstg += (f' {moqpcat["POWER"]}  {moqpcat["MODE"]}')
        return moqpcatstg
-       
+
     def determineMOQPCatdict(self, log):
        moqpcatdict = { 'LOCATION':'',
                        'STATION':'',

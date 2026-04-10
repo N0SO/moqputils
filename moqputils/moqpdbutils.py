@@ -22,10 +22,12 @@ Update History:
 - More tweaks to support date / time as a datetime object.
 - More tweaks to support consolidated log processing code
 * Sun May 15 2022 Mike Heitmmann, N0SO <n0so@arrl.net>
-- V0.1.6 
+- V0.1.6
 - Fix for Issue #20.
-
-
+* Thu Apr 09 2026 Mike Heitmmann, N0SO <n0so@arrl.net>
+- V1.0.0
+- Fix for Issue #2 (Remove LOCATION from SUMMARY table)
+- Also updates for 2026 MOQP
 """
 
 import MySQLdb
@@ -47,7 +49,7 @@ class MOQPDBUtils():
                        user = None, 
                        passwd = None, 
                        database = None):
-       self.VERSION = '0.1.6' 
+       self.VERSION = '0.1.7' 
        if (host):
            #print('Attempting connection to: %s as:%s pw:%s db:%s'%(host, user, passwd, database))
            self.mydb = self.connectDB(host, 
@@ -374,11 +376,10 @@ class MOQPDBUtils():
                     "MOQPCAT, "+\
                     "DIGITAL, "+\
                     "VHF, "+\
-                    "ROOKIE, "+\
-                    "LOCATION) "+\
+                    "ROOKIE) "+\
                     "VALUES "+\
                     "(%s, %s, %s, %s, %s, %s, %s, %s, "+\
-                    "%s, %s, %s, %s, %s, %s, %s, %s)"
+                    "%s, %s, %s, %s, %s, %s, %s)"
             params = (   logID,
                          log['QSOSUM']['CW'],
                          log['QSOSUM']['PH'],
@@ -393,8 +394,7 @@ class MOQPDBUtils():
                          log['MOQPCAT']['MOQPCAT'],
                          digital_log,
                          vhf_log,
-                         rookie_log,
-                         log['HEADER']['LOCATION'] )
+                         rookie_log)
             #print('\n\n\n\nUpdating SUMMARY - query = %s\n%s\n%s,%s,%s'%(query, params,log['SCORE']['W0MA'],log['SCORE']['K0GQ'],log['SCORE']['CABFILE']))
             ures = self.write_pquery(query, params)
         return sumID

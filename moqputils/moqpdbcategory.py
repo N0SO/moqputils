@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """
 moqpdbcategory  - Same features as moqpcategory, except read
-                  all log header and QSO data from an SQL 
+                  all log header and QSO data from an SQL
                   database. The data is printed for display
                   as just as the MOQPCategory data is, but
                   the resulting report is also written to the
                   SUMMARY table in the database.
 
-                  The main dfference from the moqpcategory class 
+                  The main dfference from the moqpcategory class
                   is all of the file read/write methods have been
                   over ridden by same name methods that read
                   data from and SQL database and update records
                   in the same database SUMMARY table.
-                  
+
                   QSO Validation (QSL, time check, etc) should
                   already have been performed on the data.
-                
+
                   Based on 2019 MOQP Rules
 Update History:
 * Fri Jan 24 2020 Mike Heitmann, N0SO <n0so@arrl.net>
@@ -23,8 +23,12 @@ Update History:
 * Sat May 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.2 - Updates for 2020 MOQP changes
 * Tue Feb 23 2021 Mike Heitmann, N0SO <n0so@arrl.net>
-- V0.1.0 
+- V0.1.0
 - Starting Updates for 2021 MOQP changes.
+* Wed Apr 08 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0
+- Starting Updates for 2026 MOQP changes.
+- Adding new portable categories.
 """
 
 from moqputils.moqpcategory import *
@@ -32,7 +36,7 @@ from moqputils.moqpdbutils import *
 from moqputils.bonusaward import BonusAward
 from moqputils.configs.moqpdbconfig import *
 
-VERSION = '0.1.0' 
+VERSION = '1.0.0' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
@@ -84,12 +88,12 @@ class MOQPDBCategory(MOQPCategory):
            csvdata += ('%s\t'%(log['QSOSUM']['DG']))
            csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
            csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
-           csvdata += ('%s\t'%(log['MULTS']))         
-           csvdata += ('%s\t'%(log['SCORE']['SCORE']))         
-           csvdata += ('%s\t'%(log['SCORE']['W0MA']))         
-           csvdata += ('%s\t'%(log['SCORE']['K0GQ']))         
-           csvdata += ('%s\t'%(log['SCORE']['CABRILLO']))         
-           csvdata += ('%s\t'%(log['SCORE']['TOTAL']))         
+           csvdata += ('%s\t'%(log['MULTS']))
+           csvdata += ('%s\t'%(log['SCORE']['SCORE']))
+           csvdata += ('%s\t'%(log['SCORE']['W0MA']))
+           csvdata += ('%s\t'%(log['SCORE']['K0GQ']))
+           csvdata += ('%s\t'%(log['SCORE']['CABRILLO']))
+           csvdata += ('%s\t'%(log['SCORE']['TOTAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
@@ -98,17 +102,17 @@ class MOQPDBCategory(MOQPCategory):
            for err in log['ERRORS']:
                if ( err != [] ):
                    csvdata += err
-       
+
        else:
           csvdata = 'No log data in databas for %s.'%(callsign)
-       return csvdata 
-        
+       return csvdata
+
     def parseLog(self, callsign, Headers=True):
        """
        This method processes a single file passed in filename
        If the Headers option is false, it will skip printing the
        csv header info.
-    
+
        Using dictionary objects
        """
        fullSummary = None
@@ -134,7 +138,7 @@ class MOQPDBCategory(MOQPCategory):
           bonuspoints = { 'W0MA':w0mabonus,
                           'K0GQ':k0gqbonus,
                           'CABRILLO':cabBonus}
-          
+
           fullSummary = dict()
           fullSummary['HEADER'] = logsummary['HEADER']
           fullSummary['QSOSUM'] = logsummary['QSOSUM']
@@ -249,18 +253,44 @@ class MOQPDBCategory(MOQPCategory):
         header['CABBONUS'] = dbheader[0]['CABBONUS']
         return header
 
+    def doesSUMMARYExist(self, mydb):
+        mydb.write_query("""
+CREATE TABLE IF NOT EXISTS `SUMMARY` (
+  `ID` int NOT NULL AUTO_INCREMENT, 
+  `LOGID` int(11) NOT NULL DEFAULT 0,
+  `CWQSO` int(11) NOT NULL DEFAULT 0,
+  `PHQSO` int(11) NOT NULL DEFAULT 0,
+  `RYQSO` int(11) NOT NULL DEFAULT 0,
+  `VHFQSO` int(11) NOT NULL DEFAULT 0,
+  `MULTS` int(11) NOT NULL DEFAULT 0,
+  `QSOSCORE` int(11) NOT NULL DEFAULT 0,
+  `W0MABONUS` int(11) NOT NULL DEFAULT 0,
+  `K0GQBONUS` int(11) NOT NULL DEFAULT 0,
+  `CABBONUS` int(11) NOT NULL DEFAULT 0,
+  `SCORE` int(11) NOT NULL DEFAULT 0,
+  `MOQPCAT` varchar(50) NOT NULL,
+  `DIGITAL` tinyint(1) NOT NULL DEFAULT 0,
+  `VHF` tinyint(1) NOT NULL DEFAULT 0,
+  `ROOKIE` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (ID)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+""")
+        return True
+
     def appMain(self, callsign):
        csvdata = 'Nothing.'
        if (callsign == 'allcalls'):
            mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
            mydb.setCursorDict()
+           """Create SUMMARY table if it does not exist"""
+           self.doesSUMMARYExist(mydb)
            loglist = mydb.fetchLogList()
            #loglist = mydb.read_query( \
            #   "SELECT ID, CALLSIGN FROM logheader WHERE 1")
            Headers = True
            for nextlog in loglist:
                #print('callsign = %s'%(nextlog['CALLSIGN']))
-               csvdata = self.exportcsvfile(nextlog['CALLSIGN'], Headers)        
+               csvdata = self.exportcsvfile(nextlog['CALLSIGN'], Headers)
                Headers = False
                print(csvdata)
        else:
