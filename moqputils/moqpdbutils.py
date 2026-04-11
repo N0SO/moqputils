@@ -49,7 +49,7 @@ class MOQPDBUtils():
                        user = None, 
                        passwd = None, 
                        database = None):
-       self.VERSION = '0.1.7' 
+       self.VERSION = '1.0.0' 
        if (host):
            #print('Attempting connection to: %s as:%s pw:%s db:%s'%(host, user, passwd, database))
            self.mydb = self.connectDB(host, 
@@ -357,8 +357,8 @@ class MOQPDBUtils():
             query = 'UPDATE SUMMARY SET W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, SCORE=%s WHERE ID=%s'% \
                     (log['SCORE']['W0MA'], log['SCORE']['K0GQ'], log['SCORE']['CABRILLO'], log['SCORE']['TOTAL'], sumID)
             ures = self.write_query(query)
-            query = "UPDATE SUMMARY SET MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s, LOCATION='%s' WHERE ID=%s"% \
-                    (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, log['HEADER']['LOCATION'], sumID)
+            query = "UPDATE SUMMARY SET MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s  WHERE ID=%s"% \
+                    (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, sumID)
             ures = self.write_query(query)
         else:
             query = "INSERT INTO SUMMARY ("+\

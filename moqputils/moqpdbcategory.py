@@ -41,7 +41,7 @@ VERSION = '1.0.0'
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tQSO COUNT\tVHF QSO\t' + \
-                'MULTS\tQSO SCORE\tW0MA BONUS\tK0RGQ BONUS\t' + \
+                'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
                 'CABFILE BONUS\tSCORE\tMOQP CATEGORY\t' +\
                 'DIGITAL\tVHF\tROOKIE\n'
 
