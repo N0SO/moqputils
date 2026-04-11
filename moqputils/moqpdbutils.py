@@ -323,8 +323,48 @@ class MOQPDBUtils():
             reportData.append(nextQSL)
         return reportData
 
+    def doesSUMMARYExist(self):
+        res = self.write_query("""
+CREATE TABLE IF NOT EXISTS `SUMMARY` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `LOGID` int(11) NOT NULL DEFAULT 0,
+  `CWQSO` int(11) NOT NULL DEFAULT 0,
+  `PHQSO` int(11) NOT NULL DEFAULT 0,
+  `RYQSO` int(11) NOT NULL DEFAULT 0,
+  `VHFQSO` int(11) NOT NULL DEFAULT 0,
+  `MULTS` int(11) NOT NULL DEFAULT 0,
+  `QSOSCORE` int(11) NOT NULL DEFAULT 0,
+  `W0MABONUS` int(11) NOT NULL DEFAULT 0,
+  `K0GQBONUS` int(11) NOT NULL DEFAULT 0,
+  `CABBONUS` int(11) NOT NULL DEFAULT 0,
+  `SCORE` int(11) NOT NULL DEFAULT 0,
+  `MOQPCAT` varchar(50) NOT NULL,
+  `MOQPCTAB` int(11) NOT NULL DEFAULT 0,
+  `DIGITAL` tinyint(1) NOT NULL DEFAULT 0,
+  `VHF` tinyint(1) NOT NULL DEFAULT 0,
+  `ROOKIE` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (ID)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+""")
+        return res
+
+
     def writeSummary(self, log):
         sumID = None
+
+        # Create SUMMARY table if it does not exist
+        sumres = self.doesSUMMARYExist()
+        print(f'moqpdbutils.writeSummary: {sumres=}')
+
+        if isinstance(log['MOQPCAT']['MOQPCAT'], str):
+            moqpcatstg = log['MOQPCAT']['MOQPCAT']
+            moqpctab = 0
+        elif isinstance(log['MOQPCAT']['MOQPCAT'], list):
+            moqpcatstg = log['MOQPCAT']['MOQPCAT'][0]
+            moqpctab = log['MOQPCAT']['MOQPCAT'][1]
+        else:
+            moqpcatstg = 'UNKNOWN'
+            moqpctab = 0
 
         if (log['MOQPCAT']['DIGITAL'] == 'DIGITAL'):
             digital_log = 1
@@ -357,8 +397,8 @@ class MOQPDBUtils():
             query = 'UPDATE SUMMARY SET W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, SCORE=%s WHERE ID=%s'% \
                     (log['SCORE']['W0MA'], log['SCORE']['K0GQ'], log['SCORE']['CABRILLO'], log['SCORE']['TOTAL'], sumID)
             ures = self.write_query(query)
-            query = "UPDATE SUMMARY SET MOQPCAT='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s  WHERE ID=%s"% \
-                    (log['MOQPCAT']['MOQPCAT'], digital_log, vhf_log, rookie_log, sumID)
+            query = "UPDATE SUMMARY SET MOQPCAT='%s', MOQPCTAB='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s  WHERE ID=%s"% \
+                    (moqpcatstg, moqpctab, digital_log, vhf_log, rookie_log, sumID)
             ures = self.write_query(query)
         else:
             query = "INSERT INTO SUMMARY ("+\
@@ -374,12 +414,13 @@ class MOQPDBUtils():
                     "CABBONUS, "+\
                     "SCORE, "+\
                     "MOQPCAT, "+\
+                    "MOQPCTAB, "+\
                     "DIGITAL, "+\
                     "VHF, "+\
                     "ROOKIE) "+\
                     "VALUES "+\
                     "(%s, %s, %s, %s, %s, %s, %s, %s, "+\
-                    "%s, %s, %s, %s, %s, %s, %s)"
+                    "%s, %s, %s, %s, %s, %s, %s, %s)"
             params = (   logID,
                          log['QSOSUM']['CW'],
                          log['QSOSUM']['PH'],
@@ -391,14 +432,15 @@ class MOQPDBUtils():
                          log['SCORE']['K0GQ'],
                          log['SCORE']['CABRILLO'],
                          log['SCORE']['TOTAL'],
-                         log['MOQPCAT']['MOQPCAT'],
+                         moqpcatstg,
+                         moqpctab,
                          digital_log,
                          vhf_log,
                          rookie_log)
             #print('\n\n\n\nUpdating SUMMARY - query = %s\n%s\n%s,%s,%s'%(query, params,log['SCORE']['W0MA'],log['SCORE']['K0GQ'],log['SCORE']['CABFILE']))
             ures = self.write_pquery(query, params)
         return sumID
-       
+
     def write_header(self, header, cabBonus):
         qutil = QSOUtils()
         logID = None
@@ -418,7 +460,7 @@ class MOQPDBUtils():
           qutil.trimAndEscape(header['ADDRESS-POSTALCODE'], 12)
         header['ADDRESS-COUNTRY'] = \
           qutil.trimAndEscape(header['ADDRESS-COUNTRY'], 25)
-        
+
         if(type(header['ERRORS']) is list):
             qu = QSOUtils()
             header['ERRORS'] = qu.packNote(header['ERRORS'])
