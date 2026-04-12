@@ -354,7 +354,7 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
 
         # Create SUMMARY table if it does not exist
         sumres = self.doesSUMMARYExist()
-        print(f'moqpdbutils.writeSummary: {sumres=}')
+        #print(f'moqpdbutils.writeSummary: {sumres=}')
 
         if isinstance(log['MOQPCAT']['MOQPCAT'], str):
             moqpcatstg = log['MOQPCAT']['MOQPCAT']
