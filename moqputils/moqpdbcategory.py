@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """
 moqpdbcategory  - Same features as moqpcategory, except read
-                  all log header and QSO data from an SQL 
+                  all log header and QSO data from an SQL
                   database. The data is printed for display
                   as just as the MOQPCategory data is, but
                   the resulting report is also written to the
                   SUMMARY table in the database.
 
-                  The main dfference from the moqpcategory class 
+                  The main dfference from the moqpcategory class
                   is all of the file read/write methods have been
                   over ridden by same name methods that read
                   data from and SQL database and update records
                   in the same database SUMMARY table.
-                  
+
                   QSO Validation (QSL, time check, etc) should
                   already have been performed on the data.
-                
+
                   Based on 2019 MOQP Rules
 Update History:
 * Fri Jan 24 2020 Mike Heitmann, N0SO <n0so@arrl.net>
@@ -23,8 +23,17 @@ Update History:
 * Sat May 16 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.2 - Updates for 2020 MOQP changes
 * Tue Feb 23 2021 Mike Heitmann, N0SO <n0so@arrl.net>
-- V0.1.0 
+- V0.1.0
 - Starting Updates for 2021 MOQP changes.
+* Wed Apr 08 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0
+- Starting Updates for 2026 MOQP changes.
+- Adding new portable categories.
+* Sat Apr 11 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.1
+- Moved check for existence of SUMMARY table to moqpdbutils
+- Added db version of determineMOQPCatstg
+- Includes addition of field MOQPCTAB to SUMMARY table
 """
 
 from moqputils.moqpcategory import *
@@ -32,12 +41,12 @@ from moqputils.moqpdbutils import *
 from moqputils.bonusaward import BonusAward
 from moqputils.configs.moqpdbconfig import *
 
-VERSION = '0.1.0' 
+VERSION = '1.0.1' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tQSO COUNT\tVHF QSO\t' + \
-                'MULTS\tQSO SCORE\tW0MA BONUS\tK0RGQ BONUS\t' + \
+                'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
                 'CABFILE BONUS\tSCORE\tMOQP CATEGORY\t' +\
                 'DIGITAL\tVHF\tROOKIE\n'
 
@@ -84,12 +93,12 @@ class MOQPDBCategory(MOQPCategory):
            csvdata += ('%s\t'%(log['QSOSUM']['DG']))
            csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
            csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
-           csvdata += ('%s\t'%(log['MULTS']))         
-           csvdata += ('%s\t'%(log['SCORE']['SCORE']))         
-           csvdata += ('%s\t'%(log['SCORE']['W0MA']))         
-           csvdata += ('%s\t'%(log['SCORE']['K0GQ']))         
-           csvdata += ('%s\t'%(log['SCORE']['CABRILLO']))         
-           csvdata += ('%s\t'%(log['SCORE']['TOTAL']))         
+           csvdata += ('%s\t'%(log['MULTS']))
+           csvdata += ('%s\t'%(log['SCORE']['SCORE']))
+           csvdata += ('%s\t'%(log['SCORE']['W0MA']))
+           csvdata += ('%s\t'%(log['SCORE']['K0GQ']))
+           csvdata += ('%s\t'%(log['SCORE']['CABRILLO']))
+           csvdata += ('%s\t'%(log['SCORE']['TOTAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
@@ -98,17 +107,17 @@ class MOQPDBCategory(MOQPCategory):
            for err in log['ERRORS']:
                if ( err != [] ):
                    csvdata += err
-       
+
        else:
-          csvdata = 'No log data in databas for %s.'%(callsign)
-       return csvdata 
-        
+          csvdata = f'No log data in database for {callsign}.'
+       return csvdata
+
     def parseLog(self, callsign, Headers=True):
        """
        This method processes a single file passed in filename
        If the Headers option is false, it will skip printing the
        csv header info.
-    
+
        Using dictionary objects
        """
        fullSummary = None
@@ -134,7 +143,7 @@ class MOQPDBCategory(MOQPCategory):
           bonuspoints = { 'W0MA':w0mabonus,
                           'K0GQ':k0gqbonus,
                           'CABRILLO':cabBonus}
-          
+
           fullSummary = dict()
           fullSummary['HEADER'] = logsummary['HEADER']
           fullSummary['QSOSUM'] = logsummary['QSOSUM']
@@ -249,6 +258,86 @@ class MOQPDBCategory(MOQPCategory):
         header['CABBONUS'] = dbheader[0]['CABBONUS']
         return header
 
+    def _MOQPCatTable(self, moqpcat):
+        """
+        Adds a table ID from the moqpdatabase table CONTESTCATEGORIES
+        for consistant naming and processing of awards.
+        NOTE: This is hardcoded  - there is probably a better way.
+        """
+        if ( (moqpcat == None) or (moqpcat == '') ):
+            return None
+        if moqpcat == "CHECKLOG": return 25
+        if moqpcat == "DX": return 24
+        if moqpcat == "CANADA": return 19
+        if "US" in moqpcat:
+            if moqpcat == "US SINGLE-OP LOW POWER": return 21
+            if moqpcat == "US SINGLE-OP HIGH POWER": return 20
+            if "US MULTI-OP" in moqpcat: return 23
+            if "US SINGLE-OP QRP" in moqpcat: return 22
+        if "MISSOURI" in moqpcat:
+            if "FIXED" in moqpcat:
+                if "MULTI-OP" in moqpcat: return 1
+                if "SINGLE-OP" in moqpcat:
+                    if "HIGH" in moqpcat: return 2
+                    if "LOW" in moqpcat: return 3
+                    if "QRP" in moqpcat: return 4
+            if "EXPEDITION" in moqpcat:
+                if "MULTI-OP" in moqpcat: return 5
+                if "SINGLE-OP" in moqpcat:
+                    if "HIGH" in moqpcat: return 6
+                    if "LOW" in moqpcat: return 7
+                    if "QRP" in moqpcat: return 8
+            if "MOBILE" in moqpcat:
+                if "UNLIMITED" in moqpcat: return 9
+                if "MULTI-OP" in moqpcat:
+                    if "HIGH" in moqpcat: return 9
+                    if "LOW" in moqpcat:  return 10
+                if "SINGLE-OP" in moqpcat:
+                    if "HIGH" in moqpcat: return 9
+                    if "LOW" in moqpcat:
+                        if "MIXED" in moqpcat: return 11
+                        if "CW" in moqpcat: return 12
+                        if "PHONE" in moqpcat: return 13
+            if "PORTABLE" in moqpcat:
+                if "UNLIMITED" in moqpcat: return 14
+                if "MULTI-OP" in moqpcat:
+                    if "HIGH" in moqpcat: return 14
+                    if "LOW" in moqpcat:  return 15
+                if "SINGLE-OP" in moqpcat:
+                    if "HIGH" in moqpcat: return 14
+                    if "LOW" in moqpcat:
+                        if "MIXED" in moqpcat: return 16
+                        if "CW" in moqpcat: return 17
+                        if "PHONE" in moqpcat: return 18
+
+        return None #If we can't sort it out, return None
+
+    def determineMOQPCatstg(self, moqpcat):
+        """
+        This overides the method in the parent class
+        The parent method returns a string conataining the
+        MOQP contest category. This method adds an ID from
+        the moqpdatabase table CONTESTCATEGORIES. The
+        new method returns both the string and the table ID
+        as a two element list. Returns value None if things
+        go wrong.
+        """
+
+        # Call parent class method to get string value
+        catStg = None
+        tableVal = None
+        catStg = super().determineMOQPCatstg(moqpcat)
+
+        if catStg:
+            # Set value for moqp database category defs table
+            tableVal = self._MOQPCatTable(catStg)
+            if tableVal: 
+                return [catStg, tableVal]
+
+        print(f'*** No MOQP Category Determined *** {catStg=} {tableVal=}')
+        return None
+
+
     def appMain(self, callsign):
        csvdata = 'Nothing.'
        if (callsign == 'allcalls'):
@@ -260,7 +349,7 @@ class MOQPDBCategory(MOQPCategory):
            Headers = True
            for nextlog in loglist:
                #print('callsign = %s'%(nextlog['CALLSIGN']))
-               csvdata = self.exportcsvfile(nextlog['CALLSIGN'], Headers)        
+               csvdata = self.exportcsvfile(nextlog['CALLSIGN'], Headers)
                Headers = False
                print(csvdata)
        else:
