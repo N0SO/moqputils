@@ -45,6 +45,29 @@ CTSTATION = [\
 
 CTPOWER = ['LOW', 'HIGH', 'QRP']
 
+"""
+Band definitions 50 MHz and above
+from World Wide Radio Operators Foundation
+https://wwrof.org/cabrillo/cabrillo-qso-data/
+"""
+HIGHBANDS = ['50',
+             '70',
+             '144',
+             '222',
+             '432',
+             '902',
+             '1.2G',
+             '2.3G',
+             '3.4G',
+             '5.7G',
+             '10G',
+             '24G',
+             '47G',
+             '75G',
+             '122G',
+             '134G',
+             '241G',
+             'LIGHT']
 
 
 OVERLAY = 'ROOKIE'
