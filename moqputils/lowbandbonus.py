@@ -46,16 +46,17 @@ class lowBandBonus():
         
         if callsign and db:
             res = self.compute_bonus(self.callsign, self.db)
-            print(f'{res=}')
+            #print(f'{res=}')
         pass
         
     def getBonus(self, asdict=False):
         if asdict:
-            return {"LOGID": self.lid,
+            return {"CALLSIGN": self.callsign,
+                    "LOGID": self.lid,
                     "BONUS": self.bonus,
                     "QCOUNT": self.qsoCount}
         else:
-            return [self.lid, self.qsoCount, self.bonus]
+            return [self.callsign, self.lid, self.qsoCount, self.bonus]
         
 
     def compute_bonus(self, call, db):
@@ -75,8 +76,8 @@ class lowBandBonus():
             print(f'lowBandBonus: {call=} : Not a callsign or log id!')
         
         if lid > 0:
-            qs = querystg.format(lid, DAY1B, DAY1E, DAY2B, DAY2E)
-            print(f'{qs=}')
+            #qs = querystg.format(lid, DAY1B, DAY1E, DAY2B, DAY2E)
+            #print(f'{qs=}')
             qsos = db.read_query(querystg.format(lid, DAY1B, DAY1E,
                                                  DAY2B, DAY2E))
             if qsos:

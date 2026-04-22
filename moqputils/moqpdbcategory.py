@@ -34,11 +34,15 @@ Update History:
 - Moved check for existence of SUMMARY table to moqpdbutils
 - Added db version of determineMOQPCatstg
 - Includes addition of field MOQPCTAB to SUMMARY table
+* Wed Apr 22 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.2
+- Implementing Issue #66 - Low Band Early Day QSO Bonus
 """
 
 from moqputils.moqpcategory import *
 from moqputils.moqpdbutils import *
-from moqputils.bonusaward import BonusAward
+from moqputils.lowbandbonus  import  lowBandBonus
+from bonusaward import BonusAward
 from moqputils.configs.moqpdbconfig import *
 
 VERSION = '1.0.1' 
@@ -144,6 +148,12 @@ class MOQPDBCategory(MOQPCategory):
                           'K0GQ':k0gqbonus,
                           'CABRILLO':cabBonus}
 
+
+          mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+          mydb.setCursorDict()
+          lbebonus = lowBandBonus(logsummary['HEADER']['CALLSIGN'],  mydb) #new bonus 2026
+          #print (f'{lbebonus.getBonus(asdict=True)=}')
+
           fullSummary = dict()
           fullSummary['HEADER'] = logsummary['HEADER']
           fullSummary['QSOSUM'] = logsummary['QSOSUM']
@@ -167,8 +177,6 @@ class MOQPDBCategory(MOQPCategory):
 					   'K0GQ': 0,
 					   'CABRILLO': 0})
 
-          mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-          mydb.setCursorDict()
           mydb.writeSummary(fullSummary)
        else:
           print('No log in database for call %s.'%(callsign))
