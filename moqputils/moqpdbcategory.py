@@ -45,7 +45,7 @@ from moqputils.lowbandbonus  import  lowBandBonus
 from bonusaward import BonusAward
 from moqputils.configs.moqpdbconfig import *
 
-VERSION = '1.0.1' 
+VERSION = '1.0.2' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
@@ -132,6 +132,7 @@ class MOQPDBCategory(MOQPCategory):
           moqpcat = self.determineMOQPCatdict(logsummary)
           #print(moqpcat)
           ba=logsummary['BONUS']
+          lbebonus=ba['LBEDQSO']
           if (ba['W0MA']):
               w0mabonus = 100
           else:
@@ -144,15 +145,12 @@ class MOQPDBCategory(MOQPCategory):
               cabBonus = 100
           else:
               cabBonus = 0
+              
           bonuspoints = { 'W0MA':w0mabonus,
                           'K0GQ':k0gqbonus,
-                          'CABRILLO':cabBonus}
+                          'CABRILLO':cabBonus,
+                          'LBNDEARLY': lbebonus["QCOUNT"]}
 
-
-          mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-          mydb.setCursorDict()
-          lbebonus = lowBandBonus(logsummary['HEADER']['CALLSIGN'],  mydb) #new bonus 2026
-          #print (f'{lbebonus.getBonus(asdict=True)=}')
 
           fullSummary = dict()
           fullSummary['HEADER'] = logsummary['HEADER']
@@ -164,19 +162,24 @@ class MOQPDBCategory(MOQPCategory):
           fullSummary['ERRORS'] = logsummary['ERRORS']
           fullSummary['SCORE'] = dict()
           fullSummary['SCORE']['TOTAL'] = self.calculate_score(\
-	                                  logsummary['QSOSUM'], 
-                                          logsummary['MULTS'],
-                                          bonuspoints)
+                                            logsummary['QSOSUM'], 
+                                            logsummary['MULTS'],
+                                            bonuspoints,
+                                            lbebonus)
           fullSummary['SCORE']['W0MA'] = bonuspoints['W0MA']
           fullSummary['SCORE']['K0GQ'] = bonuspoints['K0GQ']
           fullSummary['SCORE']['CABRILLO'] = bonuspoints['CABRILLO']
           fullSummary['SCORE']['SCORE'] = self.calculate_score(\
-	                                  logsummary['QSOSUM'], 
-                                          logsummary['MULTS'],
-                                          {'W0MA': 0,
-					   'K0GQ': 0,
-					   'CABRILLO': 0})
+                                            logsummary['QSOSUM'], 
+                                            logsummary['MULTS'],
+                                            {'W0MA': 0,
+                                             'K0GQ': 0,
+                                             'CABRILLO': 0})
+                                             
+          #print(fullSummary)                                   
 
+          mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+          mydb.setCursorDict()
           mydb.writeSummary(fullSummary)
        else:
           print('No log in database for call %s.'%(callsign))
@@ -217,6 +220,7 @@ class MOQPDBCategory(MOQPCategory):
             qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=%s) )"%(logID, 1))
             mults = MOQPMults(qsos)
             Bonus = BonusAward(qsos)
+            lbebonus = lowBandBonus(logID,  mydb) #new bonus 2026
             """
             for qso in qsos:
                 mults.setMult(qso['URQTH'])
@@ -227,7 +231,8 @@ class MOQPDBCategory(MOQPCategory):
             log['MULTS'] = mults.sumMults()
             log['BONUS'] = { 'W0MA': Bonus.Award['W0MA']['INLOG'],
                              'K0GQ':Bonus.Award['K0GQ']['INLOG'],
-                             'CABRILLO' : header['CABBONUS']}
+                             'CABRILLO' : header['CABBONUS'],
+                             'LBEDQSO': lbebonus.getBonus(asdict=True)}
             log['QSOSUM'] = self.processQSOList(qsos)
             log['ERRORS'] = []
         return log

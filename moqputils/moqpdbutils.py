@@ -28,6 +28,9 @@ Update History:
 - V1.0.0
 - Fix for Issue #2 (Remove LOCATION from SUMMARY table)
 - Also updates for 2026 MOQP
+* Wed Apr 22 2026 Mike Heitmmann, N0SO <n0so@arrl.net>
+- V1.0.1
+- Implementing Issue #66 - Low Band Early Day QSO Bonus
 """
 
 import MySQLdb
@@ -334,6 +337,7 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
   `VHFQSO` int(11) NOT NULL DEFAULT 0,
   `MULTS` int(11) NOT NULL DEFAULT 0,
   `QSOSCORE` int(11) NOT NULL DEFAULT 0,
+  `LBNDEARLY` int(11) NOT NULL DEFAULT 0,
   `W0MABONUS` int(11) NOT NULL DEFAULT 0,
   `K0GQBONUS` int(11) NOT NULL DEFAULT 0,
   `CABBONUS` int(11) NOT NULL DEFAULT 0,
@@ -389,9 +393,9 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
             sumID = logsum[0]['ID']
             #print('sumID=%s'%(sumID))
             #update totals and score
-            query = 'UPDATE SUMMARY SET CWQSO=%s, PHQSO=%s, RYQSO=%s, VHFQSO=%s, MULTS=%s, QSOSCORE=%s WHERE ID=%s'% \
+            query = 'UPDATE SUMMARY SET CWQSO=%s, PHQSO=%s, RYQSO=%s, VHFQSO=%s, MULTS=%s, QSOSCORE=%s, LBNDEARLY=%s  WHERE ID=%s'% \
                     (log['QSOSUM']['CW'], log['QSOSUM']['PH'], log['QSOSUM']['DG'], 
-                     log['QSOSUM']['VHF'], log['MULTS'], log['SCORE']['SCORE'], sumID)
+                     log['QSOSUM']['VHF'], log['MULTS'], log['SCORE']['SCORE'], log['BONUS']['LBNDEARLY'], sumID)
             ures = self.write_query(query)
             #update bonus stats
             query = 'UPDATE SUMMARY SET W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, SCORE=%s WHERE ID=%s'% \
@@ -407,6 +411,7 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
                     "PHQSO, "+\
                     "RYQSO, "+\
                     "VHFQSO, "+\
+                    "LBNDEARLY, "+\
                     "MULTS, "+\
                     "QSOSCORE, "+\
                     "W0MABONUS, "+\
@@ -420,12 +425,13 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
                     "ROOKIE) "+\
                     "VALUES "+\
                     "(%s, %s, %s, %s, %s, %s, %s, %s, "+\
-                    "%s, %s, %s, %s, %s, %s, %s, %s)"
+                    "%s, %s, %s, %s, %s, %s, %s, %s, %s)"
             params = (   logID,
                          log['QSOSUM']['CW'],
                          log['QSOSUM']['PH'],
                          log['QSOSUM']['DG'],
                          log['QSOSUM']['VHF'],
+                         log['BONUS']['LBNDEARLY'],
                          log['MULTS'],
                          log['SCORE']['SCORE'],
                          log['SCORE']['W0MA'],

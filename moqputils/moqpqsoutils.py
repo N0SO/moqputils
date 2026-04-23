@@ -22,6 +22,10 @@ Update History:
 - Added more DX entities to DX list in moqpqsoutils.
 - changed type check from isalpha() to isalnum() when
 - checking QSO MYQTH and URQTH.
+* Wed Apr 22 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0
+- Enhancements from Issue #66 - Addition of Low Band Early Day
+- QSO bonus added for 2026.
 """
 
 from cabrilloutils.qsoutils import QSOUtils
@@ -32,7 +36,7 @@ from moqputils.moqpdefs import *
 class MOQPQSOUtils(QSOUtils):
 
     def __init__(self):
-       self.VERSION='0.0.4'
+       self.VERSION='1.0.0'
        pass
 
     def getVersion(self):
@@ -306,7 +310,15 @@ class MOQPQSOUtils(QSOUtils):
 
        return errorData, qsovalid
 
-    def calculate_score(self, qsosum, mults, bonus):
+    def calculate_score(self, qsosum, mults, 
+                              bonus, lowbandEarly = None):
+        #Added for Issue #66 - Low Band Early Day QSO Bonus (added 2026)
+        lb_bonus = 0
+        if lowbandEarly:
+            #print(f'{lowbandEarly=}')
+            lbe_bonus = lowbandEarly['BONUS']
+
+            
         if (bonus['W0MA']):
             w0mabonus = 100
         else:
@@ -322,7 +334,7 @@ class MOQPQSOUtils(QSOUtils):
         Score = 0
         cwpoints = qsosum['CW'] * 2
         digipoints = qsosum['DG'] * 2
-        qsopoints = cwpoints + digipoints + qsosum['PH']
+        qsopoints = cwpoints + digipoints + qsosum['PH'] +lb_bonus
         Score = (qsopoints * mults)  + \
                            w0mabonus + \
                            k0gqbonus + \
