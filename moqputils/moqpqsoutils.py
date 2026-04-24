@@ -313,12 +313,10 @@ class MOQPQSOUtils(QSOUtils):
     def calculate_score(self, qsosum, mults, 
                               bonus, lowbandEarly = None):
         #Added for Issue #66 - Low Band Early Day QSO Bonus (added 2026)
-        lb_bonus = 0
+        lbe_bonus = 0
         if lowbandEarly:
-            #print(f'{lowbandEarly=}')
             lbe_bonus = lowbandEarly['BONUS']
-
-            
+                    
         if (bonus['W0MA']):
             w0mabonus = 100
         else:
@@ -334,11 +332,12 @@ class MOQPQSOUtils(QSOUtils):
         Score = 0
         cwpoints = qsosum['CW'] * 2
         digipoints = qsosum['DG'] * 2
-        qsopoints = cwpoints + digipoints + qsosum['PH'] +lb_bonus
+        qsopoints = cwpoints + digipoints + qsosum['PH'] +lbe_bonus
         Score = (qsopoints * mults)  + \
                            w0mabonus + \
                            k0gqbonus + \
                            cab_bonus
+
         return Score
 
     def getMOQPLog(self, fileName):

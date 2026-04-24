@@ -16,7 +16,7 @@ moqpdbcategory  - Same features as moqpcategory, except read
                   QSO Validation (QSL, time check, etc) should
                   already have been performed on the data.
 
-                  Based on 2019 MOQP Rules
+                  
 Update History:
 * Fri Jan 24 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
@@ -50,7 +50,7 @@ VERSION = '1.0.2'
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tQSO COUNT\tVHF QSO\t' + \
-                'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
+                'LBNDEARLY\tMULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
                 'CABFILE BONUS\tSCORE\tMOQP CATEGORY\t' +\
                 'DIGITAL\tVHF\tROOKIE\n'
 
@@ -97,13 +97,14 @@ class MOQPDBCategory(MOQPCategory):
            csvdata += ('%s\t'%(log['QSOSUM']['DG']))
            csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
            csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
+           csvdata += ('%s\t'%(log['BONUS']['LBNDEARLY']))
            csvdata += ('%s\t'%(log['MULTS']))
-           csvdata += ('%s\t'%(log['SCORE']['SCORE']))
+           csvdata += ('%s\t'%(log['SCORE']['TOTAL']))
            csvdata += ('%s\t'%(log['SCORE']['W0MA']))
            csvdata += ('%s\t'%(log['SCORE']['K0GQ']))
            csvdata += ('%s\t'%(log['SCORE']['CABRILLO']))
-           csvdata += ('%s\t'%(log['SCORE']['TOTAL']))
-           csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT']))
+           csvdata += ('%s\t'%(log['SCORE']['SCORE']))
+           csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT'][0]))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
            csvdata += ('%s'%(log['MOQPCAT']['ROOKIE']))
@@ -161,7 +162,7 @@ class MOQPDBCategory(MOQPCategory):
           fullSummary['QSOLIST'] = logsummary['QSOLIST']
           fullSummary['ERRORS'] = logsummary['ERRORS']
           fullSummary['SCORE'] = dict()
-          fullSummary['SCORE']['TOTAL'] = self.calculate_score(\
+          fullSummary['SCORE']['SCORE'] = self.calculate_score(\
                                             logsummary['QSOSUM'], 
                                             logsummary['MULTS'],
                                             bonuspoints,
@@ -169,15 +170,13 @@ class MOQPDBCategory(MOQPCategory):
           fullSummary['SCORE']['W0MA'] = bonuspoints['W0MA']
           fullSummary['SCORE']['K0GQ'] = bonuspoints['K0GQ']
           fullSummary['SCORE']['CABRILLO'] = bonuspoints['CABRILLO']
-          fullSummary['SCORE']['SCORE'] = self.calculate_score(\
+          fullSummary['SCORE']['TOTAL'] = self.calculate_score(\
                                             logsummary['QSOSUM'], 
                                             logsummary['MULTS'],
                                             {'W0MA': 0,
                                              'K0GQ': 0,
                                              'CABRILLO': 0})
                                              
-          #print(fullSummary)                                   
-
           mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
           mydb.setCursorDict()
           mydb.writeSummary(fullSummary)
@@ -346,9 +345,11 @@ class MOQPDBCategory(MOQPCategory):
             tableVal = self._MOQPCatTable(catStg)
             if tableVal: 
                 return [catStg, tableVal]
+            else:
+                return [catStg, 0]
 
         print(f'*** No MOQP Category Determined *** {catStg=} {tableVal=}')
-        return None
+        return ['**UNKNOWN**', 0]
 
 
     def appMain(self, callsign):

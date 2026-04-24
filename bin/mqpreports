@@ -48,7 +48,8 @@ ARGS = None
 whereami = os.path.split( os.path.realpath(__file__) )
 if os.path.exists(whereami[0] + '/mqpdevpath.py'):
     from mqpdevpath import *
-        
+
+
 DESCRIPTION = \
 """moqpreports  - Generate reports for MOQP
                   from database.

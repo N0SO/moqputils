@@ -11,7 +11,7 @@ moqpdbcatreport - Same features as moqpcategory, except read
                   the SUMMARY row for this log should have been
                   updated before running this report.
                 
-                  Based on 2019 MOQP Rules.
+                
                   
 Update History:
 * Thu Jan 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
@@ -36,6 +36,9 @@ Update History:
 -          for both CSV/TSV and HTML reports.
 * Mon Jul 04 2022 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.1 - Changed RY QSOs to DIG QSOs in HTML reports
+* Wed Apr 22 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.2
+- Implementing Issue #66 - Low Band Early Day QSO Bonus
 """
 
 from moqputils.moqpdbutils import *
@@ -43,11 +46,11 @@ from moqputils.configs.moqpdbconfig import *
 from moqputils.moqpawardefs import AWARDLIST
 
 
-VERSION = '1.0.1' 
+VERSION = '1.0.2' 
 
 COLUMNHEADERS = \
      'CALLSIGN\tOPS\tLOCATION\tMOQP CATEGORY\t'+\
-     'SCORE\tCW QSO\tPH QSO\tRY QSO\tQSO COUNT\t'+\
+     'SCORE\tCW QSO\tPH QSO\tRY QSO\tQSO COUNT\tLBE QSO'+\
      'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t'+\
      'CABFILE BONUS\tVHF QSO\tVHF\tDIGITAL\tROOKIE\t'+\
      'STATION\tOPERATOR\tPOWER\tMODE\tOVERLAY\t'
@@ -60,6 +63,7 @@ HEADERLINE = \
     '<th>CW QSOs</th>\n' +\
     '<th>PH QSOs</th>\n' +\
     '<th>RY QSOs</th>\n' +\
+    '<th>LBE QSOs</th>\n' +\
     '<th>MULTS</th>\n' +\
     '<th>W0MA BONUS</th>\n' +\
     '<th>K0GQ BONUS</th>\n' +\
@@ -116,6 +120,7 @@ class MOQPDBCatReport():
            csvdata += ('%s\t'%(log['RYQSO']))
            csvdata += ('%d\t'%(qsocount))
            csvdata += ('%s\t'%(log['MULTS']))         
+           csvdata += ('%s\t'%(log['LBNDEARLY']))         
            csvdata += ('%s\t'%(log['QSOSCORE']))         
            csvdata += ('%s\t'%(log['W0MABONUS']))         
            csvdata += ('%s\t'%(log['K0GQBONUS']))         
@@ -183,15 +188,28 @@ class MOQPDBCatReport():
     def processSums(self, mydb):
         csvList=[]
         reportList = []
-        sumdata = mydb.read_query('SELECT * FROM SUMMARY '+\
-              'ORDER BY MOQPCAT ASC, SCORE DESC, LOCATION ASC')
+        
+        qr = """
+             SELECT SUMMARY.*, LOGHEADER.LOCATION AS LOCATION, 
+             LOGHEADER.ID AS LID,
+             LOGHEADER.CALLSIGN, LOGHEADER.CATASSISTED,
+             LOGHEADER.CATBAND, LOGHEADER.CATOPERATOR,
+             LOGHEADER.CATOVERLAY, LOGHEADER.CATPOWER,
+             LOGHEADER.CATPOWER, LOGHEADER.CATSTATION,
+             LOGHEADER.CATXMITTER, LOGHEADER.OPERATORS,
+             LOGHEADER.CATMODE 
+             FROM LOGHEADER INNER JOIN SUMMARY ON 
+             LOGHEADER.ID=SUMMARY.LOGID
+             ORDER BY MOQPCTAB ASC, SCORE DESC, LOCATION ASC
+             """
+        sumdata = mydb.read_query(qr)
         if (sumdata):
             csvList.append(COLUMNHEADERS)
             for thisStation in sumdata:
                 #print('ID=%s'%(thisStation['ID']))
-                thisreport = self.parseReport(mydb, thisStation)
-                reportList.append(thisreport)
-                csvdata = self.exportcsvsumdata(thisreport, False)
+                #thisreport = self.parseReport(mydb, thisStation)
+                reportList.append(thisStation)
+                csvdata = self.exportcsvsumdata(thisStation, False)
                 if (csvdata): 
                     csvList.append(csvdata)
         return csvList
@@ -296,8 +314,8 @@ class MOQPHtmlReport(MOQPDBCatReport):
                ORDER BY SCORE DESC, LOCATION ASC""",
               [cat])
            tableData=['RANK\tCALLSIGN\tOPERATORS\tSCORE\t'+\
-                        'CW QSOs\tPH QSOs\tDIG QSOs\tMULTS\t'+\
-                        'W0MA BONUS\tK0GQ BONUS\tCAB BONUS']
+                      'CW QSOs\tPH QSOs\tDIG QSOs\tLBE QSOs\tMULTS\t'+\
+                      'W0MA BONUS\tK0GQ BONUS\tCAB BONUS']
            if (len(sumdata) == 0): #No data
                tableData.append('\t\t\t\t\tNO ENTRY\t\t\t\t\t')
                   
@@ -306,7 +324,7 @@ class MOQPHtmlReport(MOQPDBCatReport):
                rank += 1
                if (rank < 3):
                    tableData.append(\
-                    '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'\
+                    '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'\
                     .format(rank,
                         station['CALLSIGN'],
                         self._fixOps(station['CALLSIGN'],
@@ -315,13 +333,14 @@ class MOQPHtmlReport(MOQPDBCatReport):
                         station['CWQSO'],
                         station['PHQSO'],
                         station['RYQSO'],
+                        station['LBNDEARLY'],
                         station['MULTS'],
                         station['W0MABONUS'],
                         station['K0GQBONUS'],
                         station['CABBONUS']))
                else:
                    tableData.append(\
-                    '\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'\
+                    '\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'\
                     .format(\
                         station['CALLSIGN'],
                         self._fixOps(station['CALLSIGN'],
@@ -330,6 +349,7 @@ class MOQPHtmlReport(MOQPDBCatReport):
                         station['CWQSO'],
                         station['PHQSO'],
                         station['RYQSO'],
+                        station['LBNDEARLY'],
                         station['MULTS'],
                         station['W0MABONUS'],
                         station['K0GQBONUS'],

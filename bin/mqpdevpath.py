@@ -11,10 +11,10 @@ whereami = os.path.split( os.path.realpath(__file__) )
 pathsplit = os.path.split(whereami[0])
 #print("here I am :", whereami, pathsplit)
 
-DEVMODPATH = [pathsplit[0],
-              '/home/pi/Projects/moqputils/moqputils',
-              '/home/pi/Projects/moqputils',
-              '/home/pi/Projects']
+DEVMODPATH = [
+              '/home/pi/Projects',
+              '/home/pi/Projects/moqputils'
+             ]
 #os.chdir(pathsplit[0])
 
 for mypath in DEVMODPATH:
@@ -22,7 +22,7 @@ for mypath in DEVMODPATH:
            (os.path.isfile(mypath) == False)):
               if (mypath not in sys.path):
                   #print(f'Adding {mypath} to sys.path...')
-                  sys.path.insert(0, mypath)
+                  sys.path.insert(1,  mypath)
               #else:
                   #print(f'{mypath} already in sys.path...')
         else:

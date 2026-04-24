@@ -52,7 +52,7 @@ class MOQPDBUtils():
                        user = None, 
                        passwd = None, 
                        database = None):
-       self.VERSION = '1.0.0' 
+       self.VERSION = '1.0.1' 
        if (host):
            #print('Attempting connection to: %s as:%s pw:%s db:%s'%(host, user, passwd, database))
            self.mydb = self.connectDB(host, 
@@ -395,11 +395,11 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
             #update totals and score
             query = 'UPDATE SUMMARY SET CWQSO=%s, PHQSO=%s, RYQSO=%s, VHFQSO=%s, MULTS=%s, QSOSCORE=%s, LBNDEARLY=%s  WHERE ID=%s'% \
                     (log['QSOSUM']['CW'], log['QSOSUM']['PH'], log['QSOSUM']['DG'], 
-                     log['QSOSUM']['VHF'], log['MULTS'], log['SCORE']['SCORE'], log['BONUS']['LBNDEARLY'], sumID)
+                     log['QSOSUM']['VHF'], log['MULTS'], log['SCORE']['TOTAL'], log['BONUS']['LBNDEARLY'], sumID)
             ures = self.write_query(query)
             #update bonus stats
             query = 'UPDATE SUMMARY SET W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, SCORE=%s WHERE ID=%s'% \
-                    (log['SCORE']['W0MA'], log['SCORE']['K0GQ'], log['SCORE']['CABRILLO'], log['SCORE']['TOTAL'], sumID)
+                    (log['SCORE']['W0MA'], log['SCORE']['K0GQ'], log['SCORE']['CABRILLO'], log['SCORE']['SCORE'], sumID)
             ures = self.write_query(query)
             query = "UPDATE SUMMARY SET MOQPCAT='%s', MOQPCTAB='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s  WHERE ID=%s"% \
                     (moqpcatstg, moqpctab, digital_log, vhf_log, rookie_log, sumID)
@@ -433,11 +433,11 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
                          log['QSOSUM']['VHF'],
                          log['BONUS']['LBNDEARLY'],
                          log['MULTS'],
-                         log['SCORE']['SCORE'],
+                         log['SCORE']['TOTAL'],
                          log['SCORE']['W0MA'],
                          log['SCORE']['K0GQ'],
                          log['SCORE']['CABRILLO'],
-                         log['SCORE']['TOTAL'],
+                         log['SCORE']['SCORE'],
                          moqpcatstg,
                          moqpctab,
                          digital_log,
