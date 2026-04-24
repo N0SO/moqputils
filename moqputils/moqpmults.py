@@ -19,11 +19,26 @@ Update History:
 - is reached.
 - Updated to look for contest mult definition files
 - in /usr/local/share/moqputils/multlists
+* Fri Apr 24 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.1
+- Added child class MOQPMults_E to process the new
+- county credit for mobile/portable stations. This
+- will be used to add Enhancemnent Issue #67,
+- 50 County Activation Credit for Mobles and Portable
+- Stations.
 """
 
 from cabrilloutils.contestmults import *
+from moqputils.moqpdefs import MOCOUNTY
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
+THRESHOLD = 50 #Threshold for the This County Activated bonus
+QUERY = """
+        SELECT MYQTH, COUNT(*) AS occurrences
+        FROM QSOS WHERE LOGID={}
+        GROUP BY MYQTH
+        order by occurrences DESC
+        """
 
 MULTFILES = ['/usr/local/share/moqputils/multlists/moqp-counties.csv',
              '/usr/local/share/moqputils/multlists/moqp-us-states.csv',
@@ -36,9 +51,33 @@ class MOQPMults(ContestMults):
        if (qsolist):
            self.sumMultsinQSOList(qsolist)
 
-    def getVersion(self):
+    def __version__(self):
        return VERSION
 
-if __name__ == '__main__':
-    app=MOQPMults()
-    print(f'MOQP Contest Mults (MOQPMults) V{app.getVersion()}')
+    def getVersion(self):
+       return self.__version__()
+
+class MOQPMults_E(MOQPMults):
+       def __init__(self, qsolist= None, logID=None, mydb=None):
+           super().__init__(qsolist)
+           self.logID = logID
+           self.mydb = mydb
+           self.activatedCount50 = 0
+           self.activatedNames = []
+           if logID and mydb:
+               self.countActivations()
+
+       def countActivations(self):
+           #Get counties activated list
+           qsos = self.mydb.read_query(QUERY.format(self.logID))
+           for qso in qsos:
+               if qso['MYQTH'] in MOCOUNTY:
+                   if qso['occurrences'] >= THRESHOLD:
+                       self.setMult(qso['MYQTH'])
+                       self.activatedCount50 += 1
+                   self.activatedNames.append([ qso['MYQTH'],
+                                                qso['occurrences'] ])
+
+       def getActivatedNamesCount(self):
+           return len(self.activatedNames)
+
