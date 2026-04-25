@@ -45,7 +45,7 @@ from moqputils.lowbandbonus  import  lowBandBonus
 from bonusaward import BonusAward
 from moqputils.configs.moqpdbconfig import *
 
-VERSION = '1.0.2' 
+VERSION = '1.0.3' 
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
@@ -216,8 +216,13 @@ class MOQPDBCategory(MOQPCategory):
                 "SELECT * FROM `LOGHEADER` WHERE ID=%d"%(logID))
             #print(dbheader)
             header = self.getLogHeader(dbheader)
+            catstation = dbheader[0]['CATSTATION']
+            catstation = catstation.upper()
             qsos = mydb.read_query("SELECT * FROM QSOS WHERE ( (LOGID=%s) AND (VALID=%s) )"%(logID, 1))
-            mults = MOQPMults(qsos)
+            mults = MOQPMults_E(qsolist=qsos, station=catstation,
+                                              logID=logID, mydb=mydb)
+            #print(f'{mults.activatedCount50=}\n{mults.getActivatedNamesCount()=}')
+            #print(f'{mults.activatedNames=}')
             Bonus = BonusAward(qsos)
             lbebonus = lowBandBonus(logID,  mydb) #new bonus 2026
             """

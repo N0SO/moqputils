@@ -26,13 +26,22 @@ Update History:
 - will be used to add Enhancemnent Issue #67,
 - 50 County Activation Credit for Mobles and Portable
 - Stations.
+* Fri Apr 24 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.2
+- Added code to pass in the CAT-STATION field from the
+- cabrillo header and only apply the activation credit
+- for MOBILE, PORTABLE, ROVER stations.
+
 """
 
 from cabrilloutils.contestmults import *
 from moqputils.moqpdefs import MOCOUNTY
 
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 THRESHOLD = 50 #Threshold for the This County Activated bonus
+CATSTATION = ['MOBILE',
+              'PORTABLE',
+              'ROVER']
 QUERY = """
         SELECT MYQTH, COUNT(*) AS occurrences
         FROM QSOS WHERE LOGID={}
@@ -58,13 +67,18 @@ class MOQPMults(ContestMults):
        return self.__version__()
 
 class MOQPMults_E(MOQPMults):
-       def __init__(self, qsolist= None, logID=None, mydb=None):
+       def __init__(self, 
+                    qsolist=None, 
+                    station=None,
+                    logID=None, 
+                    mydb=None):
            super().__init__(qsolist)
            self.logID = logID
            self.mydb = mydb
+           self.station = station
            self.activatedCount50 = 0
            self.activatedNames = []
-           if logID and mydb:
+           if station in CATSTATION and (logID and mydb):
                self.countActivations()
 
        def countActivations(self):
