@@ -31,6 +31,10 @@ Update History:
 * Wed Apr 22 2026 Mike Heitmmann, N0SO <n0so@arrl.net>
 - V1.0.1
 - Implementing Issue #66 - Low Band Early Day QSO Bonus
+* Wed Apr 24 2026 Mike Heitmmann, N0SO <n0so@arrl.net>
+- V1.0.2
+- Implementing Issue #67 - Add-fifty county activation for
+- mobiles and portables
 """
 
 import MySQLdb
@@ -52,7 +56,7 @@ class MOQPDBUtils():
                        user = None, 
                        passwd = None, 
                        database = None):
-       self.VERSION = '1.0.1' 
+       self.VERSION = '1.0.2' 
        if (host):
            #print('Attempting connection to: %s as:%s pw:%s db:%s'%(host, user, passwd, database))
            self.mydb = self.connectDB(host, 
@@ -338,6 +342,8 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
   `MULTS` int(11) NOT NULL DEFAULT 0,
   `QSOSCORE` int(11) NOT NULL DEFAULT 0,
   `LBNDEARLY` int(11) NOT NULL DEFAULT 0,
+  `ACTIVATED50` int(11) NOT NULL DEFAULT 0,
+  `ACTIVATED` int(11) NOT NULL DEFAULT 0,
   `W0MABONUS` int(11) NOT NULL DEFAULT 0,
   `K0GQBONUS` int(11) NOT NULL DEFAULT 0,
   `CABBONUS` int(11) NOT NULL DEFAULT 0,
@@ -398,8 +404,8 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
                      log['QSOSUM']['VHF'], log['MULTS'], log['SCORE']['TOTAL'], log['BONUS']['LBNDEARLY'], sumID)
             ures = self.write_query(query)
             #update bonus stats
-            query = 'UPDATE SUMMARY SET W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, SCORE=%s WHERE ID=%s'% \
-                    (log['SCORE']['W0MA'], log['SCORE']['K0GQ'], log['SCORE']['CABRILLO'], log['SCORE']['SCORE'], sumID)
+            query = 'UPDATE SUMMARY SET ACTIVATED50=%s, ACTIVATED=%s, W0MABONUS=%s, K0GQBONUS=%s, CABBONUS=%s, SCORE=%s WHERE ID=%s'% \
+                    (log['ACTIVATED50'], log['ACTIVATED'], log['SCORE']['W0MA'], log['SCORE']['K0GQ'], log['SCORE']['CABRILLO'], log['SCORE']['SCORE'], sumID)
             ures = self.write_query(query)
             query = "UPDATE SUMMARY SET MOQPCAT='%s', MOQPCTAB='%s', DIGITAL=%s, VHF=%s, ROOKIE=%s  WHERE ID=%s"% \
                     (moqpcatstg, moqpctab, digital_log, vhf_log, rookie_log, sumID)
@@ -412,6 +418,7 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
                     "RYQSO, "+\
                     "VHFQSO, "+\
                     "LBNDEARLY, "+\
+                    "ACTIVATED50, "+\
                     "MULTS, "+\
                     "QSOSCORE, "+\
                     "W0MABONUS, "+\
@@ -422,9 +429,10 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
                     "MOQPCTAB, "+\
                     "DIGITAL, "+\
                     "VHF, "+\
+                    "ACTIVATED, "+\
                     "ROOKIE) "+\
                     "VALUES "+\
-                    "(%s, %s, %s, %s, %s, %s, %s, %s, "+\
+                    "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "+\
                     "%s, %s, %s, %s, %s, %s, %s, %s, %s)"
             params = (   logID,
                          log['QSOSUM']['CW'],
@@ -432,6 +440,7 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
                          log['QSOSUM']['DG'],
                          log['QSOSUM']['VHF'],
                          log['BONUS']['LBNDEARLY'],
+                         log['ACTIVATED50'],
                          log['MULTS'],
                          log['SCORE']['TOTAL'],
                          log['SCORE']['W0MA'],
@@ -442,6 +451,7 @@ CREATE TABLE IF NOT EXISTS `SUMMARY` (
                          moqpctab,
                          digital_log,
                          vhf_log,
+                         log['ACTIVATED'],
                          rookie_log)
             #print('\n\n\n\nUpdating SUMMARY - query = %s\n%s\n%s,%s,%s'%(query, params,log['SCORE']['W0MA'],log['SCORE']['K0GQ'],log['SCORE']['CABFILE']))
             ures = self.write_pquery(query, params)

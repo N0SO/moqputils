@@ -50,9 +50,9 @@ VERSION = '1.0.3'
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
                 'CW QSO\tPH QSO\tRY QSO\tQSO COUNT\tVHF QSO\t' + \
-                'LBNDEARLY\tMULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
+                'LBNDEARLY\tACTIVATED50\tMULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t' + \
                 'CABFILE BONUS\tSCORE\tMOQP CATEGORY\t' +\
-                'DIGITAL\tVHF\tROOKIE\n'
+                'DIGITAL\tVHF\tACTIVATED\tROOKIE\n'
 
 class MOQPDBCategory(MOQPCategory):
     def __init__(self, callsign = None):
@@ -98,6 +98,7 @@ class MOQPDBCategory(MOQPCategory):
            csvdata += ('%s\t'%(log['QSOSUM']['QSOS']))
            csvdata += ('%s\t'%(log['QSOSUM']['VHF']))
            csvdata += ('%s\t'%(log['BONUS']['LBNDEARLY']))
+           csvdata += ('%s\t'%(log['ACTIVATED50']))
            csvdata += ('%s\t'%(log['MULTS']))
            csvdata += ('%s\t'%(log['SCORE']['TOTAL']))
            csvdata += ('%s\t'%(log['SCORE']['W0MA']))
@@ -107,6 +108,7 @@ class MOQPDBCategory(MOQPCategory):
            csvdata += ('%s\t'%(log['MOQPCAT']['MOQPCAT'][0]))
            csvdata += ('%s\t'%(log['MOQPCAT']['DIGITAL']))
            csvdata += ('%s\t'%(log['MOQPCAT']['VHF']))
+           csvdata += ('%s\t'%(log['ACTIVATED']))
            csvdata += ('%s'%(log['MOQPCAT']['ROOKIE']))
 
            for err in log['ERRORS']:
@@ -150,7 +152,9 @@ class MOQPDBCategory(MOQPCategory):
           bonuspoints = { 'W0MA':w0mabonus,
                           'K0GQ':k0gqbonus,
                           'CABRILLO':cabBonus,
-                          'LBNDEARLY': lbebonus["QCOUNT"]}
+                          'LBNDEARLY': lbebonus["QCOUNT"], 
+                          'ACTIVATED50': ba['ACTIVATED50'],
+                          'ACTIVATED': ba['ACTIVATED']}
 
 
           fullSummary = dict()
@@ -161,6 +165,12 @@ class MOQPDBCategory(MOQPCategory):
           fullSummary['MOQPCAT'] = moqpcat
           fullSummary['QSOLIST'] = logsummary['QSOLIST']
           fullSummary['ERRORS'] = logsummary['ERRORS']
+          """
+          ACTIVATED = the number of MO counties activated
+          ACTIVATED50 = the number of counties activated with 50+ QSOs
+          """
+          fullSummary['ACTIVATED50'] = ba['ACTIVATED50']
+          fullSummary['ACTIVATED'] = ba['ACTIVATED']
           fullSummary['SCORE'] = dict()
           fullSummary['SCORE']['SCORE'] = self.calculate_score(\
                                             logsummary['QSOSUM'], 
@@ -236,7 +246,9 @@ class MOQPDBCategory(MOQPCategory):
             log['BONUS'] = { 'W0MA': Bonus.Award['W0MA']['INLOG'],
                              'K0GQ':Bonus.Award['K0GQ']['INLOG'],
                              'CABRILLO' : header['CABBONUS'],
-                             'LBEDQSO': lbebonus.getBonus(asdict=True)}
+                             'LBEDQSO': lbebonus.getBonus(asdict=True),
+                             'ACTIVATED50': mults.activatedCount50,
+                             'ACTIVATED': mults.getActivatedNamesCount()}
             log['QSOSUM'] = self.processQSOList(qsos)
             log['ERRORS'] = []
         return log
