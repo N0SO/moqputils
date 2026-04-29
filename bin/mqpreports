@@ -35,12 +35,16 @@ Update History:
 * Fri Nov  03 2023 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.2.2 - Added CLUB-SUMMARY to the html club reports to omit the
 -          individual club member scores from the report.
-"""
+* Tue Apr  28 2022 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.0 - Mature enough now to call it version 1.0.0.
+- Changes to several moqputils modules to add PORTABLE/ROVER categories.
+- Added support for moqputils Enhancment Issues 66 and 67.
+-"""
 
 import os.path
 import sys
 import argparse
-VERSION = '0.2.3'
+VERSION = '1.0.0'
 ARGS = None
 
 # If the development module source paths exist, 

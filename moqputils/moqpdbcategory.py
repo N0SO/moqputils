@@ -16,7 +16,6 @@ moqpdbcategory  - Same features as moqpcategory, except read
                   QSO Validation (QSL, time check, etc) should
                   already have been performed on the data.
 
-                  
 Update History:
 * Fri Jan 24 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
@@ -36,8 +35,16 @@ Update History:
 - Includes addition of field MOQPCTAB to SUMMARY table
 * Wed Apr 22 2026 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.2
-- Implementing Issue #66 - Low Band Early Day QSO Bonus
-"""
+- Implementing Enhancement Issue #66 - Low Band Early 
+- Day QSO Bonus
+* Tue Apr 28 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.3
+- Implementing Enhancement Issue #67 - County MULT
+- Credit for Mobile/Portable/Rover stations making 
+- 50 or more QSOs in a Missouri County.
+- Moved contest categories to a database table for
+- consistancy. 
+""""
 
 from moqputils.moqpcategory import *
 from moqputils.moqpdbutils import *
@@ -166,7 +173,7 @@ class MOQPDBCategory(MOQPCategory):
           fullSummary['QSOLIST'] = logsummary['QSOLIST']
           fullSummary['ERRORS'] = logsummary['ERRORS']
           """
-          ACTIVATED = the number of MO counties activated
+          ACTIVATED = the total number of MO counties activated
           ACTIVATED50 = the number of counties activated with 50+ QSOs
           """
           fullSummary['ACTIVATED50'] = ba['ACTIVATED50']

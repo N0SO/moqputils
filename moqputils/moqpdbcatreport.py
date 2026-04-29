@@ -5,14 +5,12 @@ moqpdbcatreport - Same features as moqpcategory, except read
                   header is fetched fron the LOGHEADER table,
                   the SUMMARY is fetched from the SUMMARY table,
                   and a CSV report is created and displayed.
-                  
+
                   QSO Validation (QSL, time check, etc) should
                   already have been performed on the data, and
                   the SUMMARY row for this log should have been
                   updated before running this report.
-                
-                
-                  
+
 Update History:
 * Thu Jan 30 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
@@ -38,20 +36,22 @@ Update History:
 - V1.0.1 - Changed RY QSOs to DIG QSOs in HTML reports
 * Wed Apr 22 2026 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.2
-- Implementing Issue #66 - Low Band Early Day QSO Bonus
+- Implementing Enhancement Issue #66 - Low Band Early Day QSO Bonus
+* Tue Apr 28 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.3
+- Implementing Enhancement Issue #67 - Mobile/Portable/Rover
+- MULT Credit for 50+ QSOs in a Missouri County.
 """
 
 from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
-from moqputils.moqpawardefs import AWARDLIST
 
-
-VERSION = '1.0.2' 
+VERSION = '1.0.3'
 
 COLUMNHEADERS = \
      'CALLSIGN\tOPS\tLOCATION\tMOQP CATEGORY\t'+\
      'SCORE\tCW QSO\tPH QSO\tRY QSO\tQSO COUNT\tLBE QSO'+\
-     'MULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t'+\
+     'ACTIVATE50\tMULTS\tQSO SCORE\tW0MA BONUS\tK0GQ BONUS\t'+\
      'CABFILE BONUS\tVHF QSO\tVHF\tDIGITAL\tROOKIE\t'+\
      'STATION\tOPERATOR\tPOWER\tMODE\tOVERLAY\t'
  
@@ -64,6 +64,7 @@ HEADERLINE = \
     '<th>PH QSOs</th>\n' +\
     '<th>RY QSOs</th>\n' +\
     '<th>LBE QSOs</th>\n' +\
+    '<th>ACTIVATE50</th>\n' +\
     '<th>MULTS</th>\n' +\
     '<th>W0MA BONUS</th>\n' +\
     '<th>K0GQ BONUS</th>\n' +\
@@ -73,9 +74,10 @@ HEADERLINE = \
 
 class MOQPDBCatReport():
     def __init__(self, callsign = None):
+        self.catList = None
         if (callsign):
             self.appMain(callsign)
-            
+
     def _fixOps(self, call, ops):
         """
         If the callsign(call) == operator list (ops) set ops = ''
@@ -85,12 +87,22 @@ class MOQPDBCatReport():
         else:
             return ops
 
+    def getDBCategories(self, mydb):
+        """
+        Get contest categories from category table in database
+        """
+        if self.catList == None:
+            self.catList  = mydb.read_query("""
+                SELECT ID, NAME FROM CONTESTCATEGORIES WHERE 1; """)
+        return self.catList
+
+
     def exportcsvsumdata(self, log, Headers=True):
        """
        This method processes a single log file passed in filename
        and returns the summary ino in .CSV format to be printed
        or saved to a .CSV file.
-    
+
        If the Headers option is false, it will skip printing the
        csv header info.
        """
@@ -98,13 +110,15 @@ class MOQPDBCatReport():
 
        if (log):
            #print(log)
-       
-           if (Headers): 
+
+           if (Headers):
                csvdata = COLUMNHEADERS
-               
+
            else:
                csvdata = ''
-               
+
+           moqpcat = self.catList[log['MOQPCTAB']-1] 
+
            cw = int(log['CWQSO'])
            ph = int(log['PHQSO'])
            ry = int(log['RYQSO'])
@@ -113,18 +127,19 @@ class MOQPDBCatReport():
            csvdata += ('%s\t'%(log['CALLSIGN']))
            csvdata += ('%s\t'%(log['OPERATORS']))
            csvdata += ('%s\t'%(log['LOCATION']))
-           csvdata += ('%s\t'%(log['MOQPCAT']))
-           csvdata += ('%s\t'%(log['SCORE']))         
+           csvdata += ('%s\t'%(moqpcat['NAME'].upper()))
+           csvdata += ('%s\t'%(log['SCORE']))
            csvdata += ('%s\t'%(log['CWQSO']))
            csvdata += ('%s\t'%(log['PHQSO']))
            csvdata += ('%s\t'%(log['RYQSO']))
            csvdata += ('%d\t'%(qsocount))
-           csvdata += ('%s\t'%(log['MULTS']))         
-           csvdata += ('%s\t'%(log['LBNDEARLY']))         
-           csvdata += ('%s\t'%(log['QSOSCORE']))         
-           csvdata += ('%s\t'%(log['W0MABONUS']))         
-           csvdata += ('%s\t'%(log['K0GQBONUS']))         
-           csvdata += ('%s\t'%(log['CABBONUS']))         
+           csvdata += ('%s\t'%(log['LBNDEARLY']))
+           csvdata += ('%s\t'%(log['ACTIVATED']))
+           csvdata += ('%s\t'%(log['MULTS']))
+           csvdata += ('%s\t'%(log['QSOSCORE']))
+           csvdata += ('%s\t'%(log['W0MABONUS']))
+           csvdata += ('%s\t'%(log['K0GQBONUS']))
+           csvdata += ('%s\t'%(log['CABBONUS']))
            csvdata += ('%s\t'%(log['VHFQSO']))
            csvdata += ('%s\t'%(log['VHF']))
            csvdata += ('%s\t'%(log['DIGITAL']))
@@ -174,7 +189,7 @@ class MOQPDBCatReport():
                 print('%s'%(thisSum['CALL']))
                 exit()
         return thisSum
-        
+
     def processOneSum(self, mydb, call):
         csvList = ['No log for %s'%(call)]
         thisStation = mydb.fetchLogSummary(call)
@@ -184,21 +199,23 @@ class MOQPDBCatReport():
             csvList.append(COLUMNHEADERS)
             csvList.append(csvdata)
         return csvList
-            
+
     def processSums(self, mydb):
         csvList=[]
         reportList = []
-        
+
+        catList = self.getDBCategories(mydb)
+
         qr = """
-             SELECT SUMMARY.*, LOGHEADER.LOCATION AS LOCATION, 
+             SELECT SUMMARY.*, LOGHEADER.LOCATION AS LOCATION,
              LOGHEADER.ID AS LID,
              LOGHEADER.CALLSIGN, LOGHEADER.CATASSISTED,
              LOGHEADER.CATBAND, LOGHEADER.CATOPERATOR,
              LOGHEADER.CATOVERLAY, LOGHEADER.CATPOWER,
              LOGHEADER.CATPOWER, LOGHEADER.CATSTATION,
              LOGHEADER.CATXMITTER, LOGHEADER.OPERATORS,
-             LOGHEADER.CATMODE 
-             FROM LOGHEADER INNER JOIN SUMMARY ON 
+             LOGHEADER.CATMODE
+             FROM LOGHEADER INNER JOIN SUMMARY ON
              LOGHEADER.ID=SUMMARY.LOGID
              ORDER BY MOQPCTAB ASC, SCORE DESC, LOCATION ASC
              """
@@ -206,11 +223,9 @@ class MOQPDBCatReport():
         if (sumdata):
             csvList.append(COLUMNHEADERS)
             for thisStation in sumdata:
-                #print('ID=%s'%(thisStation['ID']))
-                #thisreport = self.parseReport(mydb, thisStation)
                 reportList.append(thisStation)
                 csvdata = self.exportcsvsumdata(thisStation, False)
-                if (csvdata): 
+                if (csvdata):
                     csvList.append(csvdata)
         return csvList
 
@@ -219,7 +234,9 @@ class MOQPDBCatReport():
         cat=cati.strip()
         csvList.append(cat)
         sumdata = mydb.read_query(\
-              """SELECT * from SUMMARY 
+              """SELECT SUMMARY.*, LOGHEADER.LOCATION
+                 FROM LOGHEADER INNER JOIN SUMMARY ON
+                 LOGHEADER.ID=SUMMARY.LOGID
                  WHERE MOQPCAT='{}'
                  ORDER BY SCORE DESC, LOCATION ASC""".format(cat))
         if (sumdata):
@@ -232,20 +249,26 @@ class MOQPDBCatReport():
                     csvList.append(csvdata)
         else:
             csvList.append('NO ENTRY')
-            
+
         return csvList
 
-    def processCatSums(self, mydb, catlist=AWARDLIST):
+    def processCatSums(self, mydb):
         csvList = []
-        reportList = [] 
-        for cati in catlist:
-           cat=cati.strip()
+        reportList = []
+
+        catlist = self.getDBCategories(mydb)
+
+        for c in catlist:
+           cat=c['NAME'].upper()
+           cati=c['ID']
 
            csvList.append(cat)
            sumdata = mydb.read_query(\
-              """SELECT * from SUMMARY 
-                 WHERE MOQPCAT='{}'
-                 ORDER BY SCORE DESC, LOCATION ASC""".format(cat))
+              """SELECT SUMMARY.*, LOGHEADER.LOCATION
+                 FROM LOGHEADER INNER JOIN SUMMARY ON
+                 LOGHEADER.ID = SUMMARY.LOGID 
+                 WHERE MOQPCTAB='{}'
+                 ORDER BY SCORE DESC, LOCATION ASC""".format(cati))
            if (sumdata):
                 csvList.append(COLUMNHEADERS)
                 for thisStation in sumdata:
@@ -253,14 +276,13 @@ class MOQPDBCatReport():
                     thisreport = self.parseReport(mydb, thisStation)
                     reportList.append(thisreport)
                     csvdata = self.exportcsvsumdata(thisreport, False)
-                    if (csvdata): 
+                    if (csvdata):
                         csvList.append(csvdata)
            else:
                csvList.append('NO ENTRY')
-            
+
         return csvList
-            
-    
+
     def showReport(self, csvdata):
       if (csvdata):
         for csvLine in csvdata:
@@ -282,43 +304,51 @@ class MOQPDBCatReport():
 class MOQPHtmlReport(MOQPDBCatReport):
 
     def __init__(self, callsign):
+        self.catList = None
         if (callsign):
             self.appCat(callsign)
 
-    def appCat(self, callsign, catList=AWARDLIST):
+    def appCat(self, callsign):
        mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
        mydb.setCursorDict()
 
-       from htmlutils.htmldoc import htmlDoc   
+       """
+       Get contest categories from category table in database
+       """
+       catList  = self.getDBCategories(mydb)
+
+       from htmlutils.htmldoc import htmlDoc
        d = htmlDoc()
        d.openHead('{} Missouri QSO Party Scores by Category'.format(YEAR),
                   './styles.css')
        d.closeHead()
        d.openBody()
-       d.addTimeTag(prefix='Report Generated On ', 
-                    tagType='comment') 
-                         
+       d.addTimeTag(prefix='Report Generated On ',
+                    tagType='comment')
+
        d.add_unformated_text(\
              """<h2 align='center'>{} Missouri QSO Party Scores by Category</h2>
 """.format(YEAR))
 
        for cati in catList:
-           cat=cati.strip()
+           #cat=cati.strip()
+           cat = cati['ID']
+           cat_t = cati['NAME'].upper()
 
            sumdata = mydb.read_pquery(\
             """SELECT LOGHEADER.ID, LOGHEADER.CALLSIGN,
                LOGHEADER.OPERATORS, SUMMARY.*
-               FROM LOGHEADER INNER JOIN SUMMARY ON 
+               FROM LOGHEADER INNER JOIN SUMMARY ON
                LOGHEADER.ID=SUMMARY.LOGID
-               WHERE SUMMARY.MOQPCAT=%s
+               WHERE SUMMARY.MOQPCTAB=%s
                ORDER BY SCORE DESC, LOCATION ASC""",
               [cat])
            tableData=['RANK\tCALLSIGN\tOPERATORS\tSCORE\t'+\
-                      'CW QSOs\tPH QSOs\tDIG QSOs\tLBE QSOs\tMULTS\t'+\
+                      'CW QSOs\tPH QSOs\tDIG QSOs\tLBE QSOs\tACTIVATED50\tMULTS\t'+\
                       'W0MA BONUS\tK0GQ BONUS\tCAB BONUS']
            if (len(sumdata) == 0): #No data
                tableData.append('\t\t\t\t\tNO ENTRY\t\t\t\t\t')
-                  
+
            rank = 0
            for station in sumdata:
                rank += 1
@@ -334,6 +364,7 @@ class MOQPHtmlReport(MOQPDBCatReport):
                         station['PHQSO'],
                         station['RYQSO'],
                         station['LBNDEARLY'],
+                        station['ACTIVATED50'],
                         station['MULTS'],
                         station['W0MABONUS'],
                         station['K0GQBONUS'],
@@ -350,6 +381,7 @@ class MOQPHtmlReport(MOQPDBCatReport):
                         station['PHQSO'],
                         station['RYQSO'],
                         station['LBNDEARLY'],
+                        station['ACTIVATED50'],
                         station['MULTS'],
                         station['W0MABONUS'],
                         station['K0GQBONUS'],
@@ -357,7 +389,7 @@ class MOQPHtmlReport(MOQPDBCatReport):
 
            d.addTable(tdata=d.tsvlines2list(tableData),
                   header=True,
-                  caption='<h3>{}</h3>'.format(cat))
+                  caption='<h3>{}</h3>'.format(cat_t))
 
        d.closeBody()
        d.closeDoc()
