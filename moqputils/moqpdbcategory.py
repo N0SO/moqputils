@@ -306,27 +306,29 @@ class MOQPDBCategory(MOQPCategory):
         if ( (moqpcat == None) or (moqpcat == '') ):
             return None
 
-        if moqpcat['STATION'] == 'CHECKLOG':
+        if moqpcat['OPERATOR'] == 'CHECKLOG':
             return 25
 
         if moqpcat['LOCATION'] in DX:
             return 24
 
-        elif moqpcat['LOCATION'] in CANADA:
+        elif 'CANADA' in moqpcat['LOCATION']:
             return 19
 
-        elif moqpcat['LOCATION'] in US:
+        elif 'US' in moqpcat['LOCATION'] or \
+                 moqpcat['LOCATION'] in US:
             if 'MULTI' in moqpcat['OPERATOR']:
                 return 23
             elif 'SINGLE' in moqpcat['OPERATOR']:
                 if 'HI' in moqpcat['POWER']:
                     return 20
                 elif 'LO' in moqpcat['POWER']:
-                    return 21
+                    return 21  
                 elif 'QRP'in  moqpcat['POWER']:
                     return 22
 
-        elif moqpcat['LOCATION'] in INSTATE: #Missouri
+        elif 'MISSOURI' in moqpcat['LOCATION'] or \
+                moqpcat['LOCATION'] in INSTATE: #Missouri
             if moqpcat['STATION'] == 'SCHOOL':
                 return 26
             elif moqpcat['STATION'] == 'FIXED':
@@ -369,7 +371,7 @@ class MOQPDBCategory(MOQPCategory):
                         elif 'PHONE' in moqpcat['MODE'] or \
                              'SSB' in moqpcat['MODE']: return 18
 
-        print('No match category match for {} {} {} {} {}'.format(\
+        print('**** No match category match for {} {} {} {} {}'.format(\
                                              moqpcat['LOCATION'],
                                              moqpcat['STATION'],
                                              moqpcat['OPERATOR'],
