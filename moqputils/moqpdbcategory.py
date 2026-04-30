@@ -44,15 +44,18 @@ Update History:
 - 50 or more QSOs in a Missouri County.
 - Moved contest categories to a database table for
 - consistancy. 
-""""
-
+* Wed Apr 29 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.4
+- Fix for Issue #63 -the-mqpreports-utility-is-not-including...
+"""
 from moqputils.moqpcategory import *
 from moqputils.moqpdbutils import *
 from moqputils.lowbandbonus  import  lowBandBonus
 from bonusaward import BonusAward
 from moqputils.configs.moqpdbconfig import *
+from moqputils.moqpdefs import DX, CANADA, US, INSTATE
 
-VERSION = '1.0.3' 
+VERSION = '1.0.4'
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\tOVERLAY\t' + \
@@ -71,7 +74,7 @@ class MOQPDBCategory(MOQPCategory):
        This method processes a single log file passed in filename
        and returns the summary ino in .CSV format to be printed
        or saved to a .CSV file.
-    
+
        If the Headers option is false, it will skip printing the
        csv header info.
        """
@@ -84,10 +87,10 @@ class MOQPDBCategory(MOQPCategory):
        print(log['MOQPCAT']['MOQPCAT'])
        """
        if (log):
-       
-           if (Headers): 
+
+           if (Headers):
                csvdata = COLUMNHEADERS
-               
+
            else:
                csvdata = ''
 
@@ -155,7 +158,7 @@ class MOQPDBCategory(MOQPCategory):
               cabBonus = 100
           else:
               cabBonus = 0
-              
+
           bonuspoints = { 'W0MA':w0mabonus,
                           'K0GQ':k0gqbonus,
                           'CABRILLO':cabBonus,
@@ -193,7 +196,7 @@ class MOQPDBCategory(MOQPCategory):
                                             {'W0MA': 0,
                                              'K0GQ': 0,
                                              'CABRILLO': 0})
-                                             
+
           mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
           mydb.setCursorDict()
           mydb.writeSummary(fullSummary)
@@ -296,56 +299,82 @@ class MOQPDBCategory(MOQPCategory):
 
     def _MOQPCatTable(self, moqpcat):
         """
-        Adds a table ID from the moqpdatabase table CONTESTCATEGORIES
+        Adds a table ID for the moqpdatabase table CONTESTCATEGORIES
         for consistant naming and processing of awards.
         NOTE: This is hardcoded  - there is probably a better way.
         """
         if ( (moqpcat == None) or (moqpcat == '') ):
             return None
-        if moqpcat == "CHECKLOG": return 25
-        if moqpcat == "DX": return 24
-        if moqpcat == "CANADA": return 19
-        if "US" in moqpcat:
-            if moqpcat == "US SINGLE-OP LOW POWER": return 21
-            if moqpcat == "US SINGLE-OP HIGH POWER": return 20
-            if "US MULTI-OP" in moqpcat: return 23
-            if "US SINGLE-OP QRP" in moqpcat: return 22
-        if "MISSOURI" in moqpcat:
-            if "FIXED" in moqpcat:
-                if "MULTI-OP" in moqpcat: return 1
-                if "SINGLE-OP" in moqpcat:
-                    if "HIGH" in moqpcat: return 2
-                    if "LOW" in moqpcat: return 3
-                    if "QRP" in moqpcat: return 4
-            if "EXPEDITION" in moqpcat:
-                if "MULTI-OP" in moqpcat: return 5
-                if "SINGLE-OP" in moqpcat:
-                    if "HIGH" in moqpcat: return 6
-                    if "LOW" in moqpcat: return 7
-                    if "QRP" in moqpcat: return 8
-            if "MOBILE" in moqpcat:
-                if "UNLIMITED" in moqpcat: return 9
-                if "MULTI-OP" in moqpcat:
-                    if "HIGH" in moqpcat: return 9
-                    if "LOW" in moqpcat:  return 10
-                if "SINGLE-OP" in moqpcat:
-                    if "HIGH" in moqpcat: return 9
-                    if "LOW" in moqpcat:
-                        if "MIXED" in moqpcat: return 11
-                        if "CW" in moqpcat: return 12
-                        if "PHONE" in moqpcat: return 13
-            if "PORTABLE" in moqpcat:
-                if "UNLIMITED" in moqpcat: return 14
-                if "MULTI-OP" in moqpcat:
-                    if "HIGH" in moqpcat: return 14
-                    if "LOW" in moqpcat:  return 15
-                if "SINGLE-OP" in moqpcat:
-                    if "HIGH" in moqpcat: return 14
-                    if "LOW" in moqpcat:
-                        if "MIXED" in moqpcat: return 16
-                        if "CW" in moqpcat: return 17
-                        if "PHONE" in moqpcat: return 18
 
+        if moqpcat['STATION'] == 'CHECKLOG':
+            return 25
+
+        if moqpcat['LOCATION'] in DX:
+            return 24
+
+        elif moqpcat['LOCATION'] in CANADA:
+            return 19
+
+        elif moqpcat['LOCATION'] in US:
+            if 'MULTI' in moqpcat['OPERATOR']:
+                return 23
+            elif 'SINGLE' in moqpcat['OPERATOR']:
+                if 'HI' in moqpcat['POWER']:
+                    return 20
+                elif 'LO' in moqpcat['POWER']:
+                    return 21
+                elif 'QRP'in  moqpcat['POWER']:
+                    return 22
+
+        elif moqpcat['LOCATION'] in INSTATE: #Missouri
+            if moqpcat['STATION'] == 'SCHOOL':
+                return 26
+            elif moqpcat['STATION'] == 'FIXED':
+                if 'MULTI' in moqpcat['OPERATOR']: 
+                    return 1
+                if 'SINGLE' in moqpcat['OPERATOR']:
+                    if 'HIGH' in moqpcat['POWER']: return 2
+                    if 'LOW' in moqpcat['POWER']: return 3
+                    if 'QRP' in moqpcat['POWER']: return 4
+
+            elif moqpcat['STATION'] == 'EXPEDITION':
+                if 'MULTI' in moqpcat['OPERATOR']:
+                    return 5
+                if 'SINGLE' in moqpcat['OPERATOR']:
+                    if 'HIGH' in moqpcat['POWER']: return 6
+                    if 'LOW' in moqpcat['POWER']: return 7
+                    if 'QRP' in moqpcat['POWER']: return 8
+
+            elif 'MOBILE' in moqpcat['STATION'] :
+                if ('HI' in moqpcat['POWER']) or  \
+                     ('UNLIMITED' in moqpcat['STATION']):
+                    return  9  # Mobile UNLIMITED
+                elif 'LOW' in moqpcat['POWER']:
+                    if 'MULTI' in moqpcat['OPERATOR']:
+                        return 10
+                    elif 'SINGLE' in moqpcat['OPERATOR']:
+                        if 'MIXED' in moqpcat['MODE']: return 11
+                        elif 'CW' in moqpcat['MODE']: return 12
+                        elif 'PHONE' in moqpcat['MODE'] or \
+                             'SSB' in moqpcat['MODE']: return 13
+
+            elif "PORTABLE" in moqpcat['STATION']:
+                if 'HI' in moqpcat['POWER']: return  14  # Portable UNLIMITED
+                elif 'LOW' in moqpcat['POWER']:
+                    if 'MULTI' in moqpcat['OPERATOR']:
+                        return 15
+                    elif 'SINGLE' in moqpcat['OPERATOR']:
+                        if 'MIXED' in moqpcat['MODE']: return 16
+                        elif 'CW' in moqpcat['MODE']: return 17
+                        elif 'PHONE' in moqpcat['MODE'] or \
+                             'SSB' in moqpcat['MODE']: return 18
+
+        print('No match category match for {} {} {} {} {}'.format(\
+                                             moqpcat['LOCATION'],
+                                             moqpcat['STATION'],
+                                             moqpcat['OPERATOR'],
+                                             moqpcat['POWER'],
+                                             moqpcat['MODE']))
         return None #If we can't sort it out, return None
 
     def determineMOQPCatstg(self, moqpcat):
@@ -366,7 +395,7 @@ class MOQPDBCategory(MOQPCategory):
 
         if catStg:
             # Set value for moqp database category defs table
-            tableVal = self._MOQPCatTable(catStg)
+            tableVal = self._MOQPCatTable(moqpcat)
             if tableVal: 
                 return [catStg, tableVal]
             else:

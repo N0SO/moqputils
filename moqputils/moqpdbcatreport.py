@@ -41,12 +41,14 @@ Update History:
 - V1.0.3
 - Implementing Enhancement Issue #67 - Mobile/Portable/Rover
 - MULT Credit for 50+ QSOs in a Missouri County.
-"""
+* Wed Apr 29 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.4
+- Fix for Issue #63 -the-mqpreports-utility-is-not-including..."""
 
 from moqputils.moqpdbutils import *
 from moqputils.configs.moqpdbconfig import *
 
-VERSION = '1.0.3'
+VERSION = '1.0.4'
 
 COLUMNHEADERS = \
      'CALLSIGN\tOPS\tLOCATION\tMOQP CATEGORY\t'+\
@@ -193,6 +195,7 @@ class MOQPDBCatReport():
     def processOneSum(self, mydb, call):
         csvList = ['No log for %s'%(call)]
         thisStation = mydb.fetchLogSummary(call)
+        catList = self.getDBCategories(mydb)
         if (thisStation):
             thisreport = self.parseReport(mydb, thisStation)
             csvdata = self.exportcsvsumdata(thisreport, False)
