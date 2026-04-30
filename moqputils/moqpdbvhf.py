@@ -3,16 +3,15 @@
 moqpdbvhf       - Same features as moqpdbcategory, except read only
                   VHF QSOs for the compare
 
-                  The main dfference from the moqpcategory class 
+                  The main dfference from the moqpcategory class
                   is all of the file read/write methods have been
                   over ridden by same name methods that read
                   data from and SQL database and update records
                   in the same database SUMMARY table.
-                  
+
                   QSO Validation (QSL, time check, etc) should
                   already have been performed on the data.
-                
-                  Based on 2019 MOQP Rules
+
 Update History:
 * Thu Feb 13 2020 Mike Heitmann, N0SO <n0so@arrl.net>
 - V0.0.1 - Start tracking revs.
@@ -38,19 +37,31 @@ Update History:
 -    5. Save only the LOGID and new results in the VHF
 -       table. Delete and recreate the table each time.
 -    6. Remove all report generation code. Use 
-=       moqpdbvhfreports class to display results.
-- Lots of 'extra' code was removed.      
+-       moqpdbvhfreports class to display results.
+- Lots of 'extra' code was removed.
 * Tue May 24 2022 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.0 -  Updated code to fix issue #34.
 * Wed May 25 2022 Mike Heitmann, N0SO <n0so@arrl.net>
 - V1.0.1 -  Updated code to fix issue #34 (missed two lines).
+* Thu Apr 30 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.2 -  Updated code to fix issue #68 (missed microwave  qsos).
+-           Updated code to use HIGHBANDS def for select 
+-           VHF and up QSOs. Had to update the same data
+-           in CabrilloUtils under that repo's Issue #2.
 """
 
 from moqputils.moqpdbcategory import *
 from moqputils.moqpdbutils import *
 from moqputils.bonusaward import BonusAward
+from moqputils.moqpdefs import HIGHBANDS
 
-VERSION = '0.2.0' 
+VHFQs = """
+  SELECT * FROM QSOS WHERE LOGID={} AND
+  VALID=1 AND (FREQ IN ({}) OR FREQ>=50000)
+        """
+HBQDEFS = ", ".join(f"'{item}'" for item in HIGHBANDS)
+
+VERSION = '1.0.2'
 
 COLUMNHEADERS = 'CALLSIGN\tOPS\tSTATION\tOPERATOR\t' + \
                 'POWER\tMODE\tLOCATION\t' + \
@@ -62,7 +73,6 @@ class MOQPDBVhf(MOQPDBCategory):
     def __init__(self, callsign = None):
         if (callsign):
             self.appMain(callsign)
-
 
     def saveResults(self, mydb, vdata):
         dquery ='DROP TABLE IF EXISTS VHF;'
@@ -105,12 +115,8 @@ class MOQPDBVhf(MOQPDBCategory):
                  'ORDER BY VHFQSO DESC')
  
        #Score the digital list
-       Vresult = []       
+       Vresult = []
        for nextEnt in vList:
-           qsoqry = \
-             "SELECT * FROM `QSOS` WHERE LOGID=%s"%(nextEnt['LOGID'])
-           qsoqry += " AND VALID=1 AND (FREQ IN ('50','144','432') OR FREQ>=50000)"
- 
            entry = {'LOGID': nextEnt['LOGID'],
                     'QSOS': 0,
                     'CWQSO': 0,
@@ -121,7 +127,8 @@ class MOQPDBVhf(MOQPDBCategory):
                     'K0GQBONUS': 0,
                     'SCORE': 0 } 
 
-           qsoList = mydb.read_query(qsoqry)
+           #print('*****',VHFQs.format(nextEnt['LOGID'], HBQDEFS))
+           qsoList = mydb.read_query(VHFQs.format(nextEnt['LOGID'], HBQDEFS))
 
            #print(qsoList)
            if (len(qsoList)>0):
@@ -148,3 +155,4 @@ class MOQPDBVhf(MOQPDBCategory):
               Vresult.append(entry)
        self.saveResults(mydb, Vresult)
        print('%d Stations with VHF+ scores summarized database.'%(len(Vresult)))
+
