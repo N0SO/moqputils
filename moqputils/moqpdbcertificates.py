@@ -10,7 +10,8 @@ from moqputils.bothawards import BothAwards
 class MOQPDBCertificates(MOQPCertificates):
 
     def __init__(self, call = None):
-        if (call):
+       if (call):
+            print(f'{call=}')
             self.appMain(call.upper())
 
     def writeSHOWME(self, db, logID, smresult):
@@ -148,7 +149,7 @@ class MOQPDBCertificates(MOQPCertificates):
           logSummary['ERRORS'] = log['ERRORS']
           logSummary['QSOSUM'] = qsosummary
           logSummary['MULTS'] = log['MULTS']
-          
+
        return logSummary
 
     def getLogFile(self, callsign):
@@ -170,13 +171,13 @@ class MOQPDBCertificates(MOQPCertificates):
         log['MULTS'] = mults.sumMults()
         log['ERRORS'] = []
         return log
- 
+
     def parseLog(self, callsign, Headers=True):
        """
        This method processes a single file passed in filename
        If the Headers option is false, it will skip printing the
        csv header info.
-    
+
        Using dictionary objects
        """
        fullSummary = None
@@ -242,7 +243,7 @@ class MOQPDBCertificates(MOQPCertificates):
                           result['MO']['WILDCARD'],
                           result['BONUS']['W0MA'],
                           result['BONUS']['K0GQ']))
-                          
+
                 mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
                 mydb.setCursorDict()
                 logID = mydb.CallinLogDB(log['HEADER']['CALLSIGN'])
@@ -261,23 +262,62 @@ class MOQPDBCertificates(MOQPCertificates):
                 %(pathname))
         return tsvdata
 
+    def doesTableExist(self, dbu, Tname):
+        if (Tname == 'SHOWME') or (Tname == 'BOTH'):
+            res = dbu.write_query("""
+                                  CREATE TABLE IF NOT EXISTS `SHOWME` (
+                                  `ID` int NOT NULL AUTO_INCREMENT,
+                                  `LOGID` int(11) NOT NULL,
+                                  `S` varchar(15) NOT NULL DEFAULT '',
+                                  `H` varchar(15) NOT NULL DEFAULT '',
+                                  `O` varchar(15) NOT NULL DEFAULT '',
+                                  `W` varchar(15) NOT NULL DEFAULT '',
+                                  `M` varchar(15) NOT NULL DEFAULT '',
+                                  `E` varchar(15) NOT NULL DEFAULT '',
+                                  `WC` varchar(6) NOT NULL DEFAULT '',
+                                  `QUALIFY` tinyint(1) NOT NULL DEFAULT 0,
+                                  PRIMARY KEY (ID)
+                                  ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+                                  """)
+
+        if (Tname == 'MISSOURI') or (Tname == 'BOTH'):
+            res = dbu.write_query("""
+CREATE TABLE IF NOT EXISTS `MISSOURI` (
+  `ID` int NOT NULL AUTO_INCREMENT,
+  `LOGID` int(11) NOT NULL DEFAULT 0,
+  `M` varchar(6) NOT NULL DEFAULT '',
+  `I_1` varchar(6) DEFAULT '',
+  `S_1` varchar(6) NOT NULL DEFAULT '',
+  `S_2` varchar(6) NOT NULL DEFAULT '',
+  `O` varchar(6) NOT NULL DEFAULT '',
+  `U` varchar(6) NOT NULL DEFAULT '',
+  `R` varchar(6) NOT NULL DEFAULT '',
+  `I_2` varchar(6) NOT NULL DEFAULT '',
+  `WC` varchar(6) NOT NULL DEFAULT '',
+  `QUALIFY` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (ID)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+""")
+        return None
+
     def appMain(self, call):
+       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+       mydb.setCursorDict()
        csvdata = 'Nothing.'
        query = 'SELECT ID, CALLSIGN FROM LOGHEADER WHERE '
        if (call == 'ALLCALLS'):
            query += '1;'
+           self.doesTableExist(mydb, "BOTH")
        else:
            query += 'CALLSIGN = "%s";'%(call)
-           
-       mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
-       mydb.setCursorDict()
+
        loglist = mydb.read_query(query)
        if (loglist):
            HEADER = True
            for nextlog in loglist:
                #print('callsign = %s'%(nextlog['CALLSIGN']))
                csvdata = self.scoreLog(nextlog['CALLSIGN'], HEADER)
-               HEADER=False     
+               HEADER=False
                print(csvdata)
        else:
            print('No %s found in database.'%(call))
