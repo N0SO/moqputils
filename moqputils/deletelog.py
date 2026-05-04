@@ -9,9 +9,9 @@ Update History:
 
 VERSION = '0.0.1' 
 
-from moqpdbutils import *
+from moqputils.moqpdbutils import *
 #from CabrilloUtils import CabrilloUtils
-from moqpdbconfig import *
+from moqputils.configs.moqpdbconfig import *
 
 class deleteLog():
 
