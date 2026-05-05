@@ -254,7 +254,7 @@ class CATEGORYPlaques(commonAwards):
             #print(p)
             if (p['CAT_ID']==0) and (p['MULTI']==1): 
                 #Multicategory award, build list
-                aname = ''
+                #aname = ''
                 plstg = ''
                 plcats = mydb.read_query(f"""SELECT CAT_ID FROM 
                         MULTIAWARD WHERE AWARD_ID = {p['ID']}""")
@@ -270,12 +270,12 @@ class CATEGORYPlaques(commonAwards):
                             SUMMARY.LOGID = LOGHEADER.ID
                             WHERE SUMMARY.MOQPCTAB in ({plstg})
                             ORDER BY SCORE DESC LIMIT 2;"""
-                    aname = p['NAME'].upper()
+                    #aname = p['NAME'].upper()
                 else:
                     print('*** Error finding category names for award.')
                     print(f'Category data:\n{p}')
                     print(f'MULTIAWARD data:\n{plstg=}\n{plcats=}')
-                    print(f'{aname=}')
+                    #print(f'{aname=}')
                     print(f'{plquery=}')
             else: #Single category award
                 plquery = f"""SELECT SUMMARY.*, LOGHEADER.ID AS LID,
@@ -286,9 +286,8 @@ class CATEGORYPlaques(commonAwards):
                         SUMMARY.LOGID = LOGHEADER.ID
                     WHERE SUMMARY.MOQPCTAB = {p['CAT_ID']}
                     ORDER BY SCORE DESC LIMIT 2;"""
-                aname = p['CNAME']
+                #aname = p['CNAME']
                     
- 
             """
             First Place
             """
@@ -341,27 +340,34 @@ class CATEGORYPlaques(commonAwards):
             return s
             
     def _oneLine(self, place, dat):
+        print(f'{dat=}')
         retdat = ''
         placestg ='oops...'
         if place =='1':
             placestg = 'FIRST PLACE'
         if place =='2':
             placestg = 'SECOND PLACE'
-        if (dat['recipientid'] == 0) or (dat['recipientid'] == None):
+        if (dat['RECIPIENT'] == 0) or (dat['RECIPIENT'] == None):
             name = 'NO ENTRY'
             call = ''
             ops = ''
+            award = ''
         else:
-            name = dat['name']
-            call = dat['callsign']
-            if dat['operators'] == dat['callsign']:
+            call = dat['CALLSIGN']
+            if dat['OPERATORS'] == dat['CALLSIGN']:
                 ops = ''
             else:
-                ops = dat['operators']            
-            
+                ops = dat['OPERATORS']            
+
+            award = 'Oops'
+            name = ''
+            if dat['CNAME'] != None:
+                award = dat['CNAME'] # Use name from CONTESTCATEGORIES
+            elif dat['PNAME'] != None:
+                award = dat['PNAME'] # Use name from PLAQUES
         return '{}\t{}\t{}\t{}\t{}'.format(\
                                        placestg,
-                                       dat['award'],
+                                       award,
                                        name,
                                        call,
                                        ops)
@@ -370,10 +376,29 @@ class CATEGORYPlaques(commonAwards):
     def _getDBAwardList(self, mydb, placement):
        if placement == '1':
            placestg = 'FIRST PLACE'
-           AListq = """SELECT * FROM FIRSTPLACE_VIEW WHERE 
-                    plaque = 1 and
-                    place = 1
-                    order by awardid;"""
+                    
+           AListq = """SELECT FIRSTPLACE.ID as ID,
+                       FIRSTPLACE.recipientid as RECIPIENT,
+                       FIRSTPLACE.awardid,
+                       PLAQUES.ID as PID,
+                       PLAQUES.CAT_ID as PCID,
+                       PLAQUES.NAME as PNAME,
+                       CONTESTCATEGORIES.ID as CID,
+                       CONTESTCATEGORIES.NAME as CNAME,                       
+                       SUMMARY.ID as SID,
+                       SUMMARY.LOGID as LOGID,
+                       SUMMARY.SCORE as SCORE,
+                       SUMMARY.MOQPCTAB as CTAB,
+                       LOGHEADER.CALLSIGN as CALLSIGN,
+                       LOGHEADER.OPERATORS as OPERATORS,
+                       LOGHEADER.LOCATION as LOCATION
+                FROM FIRSTPLACE LEFT JOIN PLAQUES ON FIRSTPLACE.awardid = PLAQUES.ID
+                       LEFT JOIN SUMMARY on FIRSTPLACE.recipientid = SUMMARY.ID
+                       LEFT JOIN CONTESTCATEGORIES ON
+                           CONTESTCATEGORIES.ID = PLAQUES.CAT_ID  
+                       LEFT JOIN LOGHEADER ON LOGHEADER.ID = SUMMARY.LOGID
+                WHERE FIRSTPLACE.place=1 """
+                    
        else:
            placestg = 'SECOND PLACE'
            AListq = """SELECT * FROM FIRSTPLACE_VIEW WHERE 
