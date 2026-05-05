@@ -3,9 +3,8 @@ from  moqputils.moqpdbutils import *
 from  moqputils.configs.moqpdbconfig import *
 from  moqputils.moqpawardefs import *
 from  moqputils.moqpAwards.commonAwards import commonAwards
-           
+
 class CATEGORYPlaques(commonAwards):
-    
     def __init__(self, placement = '1'):
         self.AwardList=[]
         if (placement):
@@ -239,41 +238,61 @@ class CATEGORYPlaques(commonAwards):
         """
         awlist = None
         awlist = mydb.read_query(\
-                 """SELECT PLAQUES.* ,CONTESTCATEGORIES.* FROM PLAQUES
-                    LEFT JOIN CONTESTCATEGORIES ON PLAQUES.CAT_ID = CONTESTCATEGORIES.ID""")
+                 """SELECT PLAQUES.*, CONTESTCATEGORIES.ID as CID,
+                    CONTESTCATEGORIES.NAME as CNAME 
+                    FROM PLAQUES LEFT JOIN CONTESTCATEGORIES ON
+                    CONTESTCATEGORIES.ID = PLAQUES.CAT_ID""")
         #print(awlist)
         if (awlist):
-            result = mydb.read_query("SHOW TABLES LIKE 'PLAQUESLIST'")
-            if (len(result) > 0):
-                mydb.write_query(dquery) #and create new, empty table
-            mydb.write_query(query1)
-            
+            result = mydb.read_query("SHOW TABLES LIKE 'FIRSTPLACE'")
+            if (len(result) > 0): #If FIRSTPLACE table exists...
+                mydb.write_query(dquery) #Delete it
+            mydb.write_query(query1) #and create new, empty table
+
+        # Walk thru award list and find winners in SUMMARY table
         for p in awlist:
             #print(p)
-            picklist = mydb.read_query(\
-                 """SELECT * FROM PLAQUESLIST 
-                    WHERE included={}""".format(p['id']))
-            ptext = ''
-            first = True      
-            for p1 in picklist:
-                if first:
-                    ptext += ('"{}"'.format(p1['award']))
-                    first = False
+            if (p['CAT_ID']==0) and (p['MULTI']==1): 
+                #Multicategory award, build list
+                aname = ''
+                plstg = ''
+                plcats = mydb.read_query(f"""SELECT CAT_ID FROM 
+                        MULTIAWARD WHERE AWARD_ID = {p['ID']}""")
+                if (len(plcats)) > 0:
+                    plstg = ", ".join(\
+                      str(v) for d in plcats for v in d.values())
+                    print('{plstg=}')
+                    plquery = f"""SELECT SUMMARY.*, LOGHEADER.ID AS LID,
+                                LOGHEADER.CALLSIGN AS CALLSIGN,
+                                LOGHEADER.OPERATORS AS OPERATORS,
+                                LOGHEADER.LOCATION AS LOCATION
+                            from SUMMARY LEFT JOIN LOGHEADER ON
+                            SUMMARY.LOGID = LOGHEADER.ID
+                            WHERE SUMMARY.MOQPCTAB in ({plstg})
+                            ORDER BY SCORE DESC LIMIT 2;"""
+                    aname = p['NAME'].upper()
                 else:
-                    ptext += (', "{}"'.format(p1['award']))
+                    print('*** Error finding category names for award.')
+                    print(f'Category data:\n{p}')
+                    print(f'MULTIAWARD data:\n{plstg=}\n{plcats=}')
+                    print(f'{aname=}')
+                    print(f'{plquery=}')
+            else: #Single category award
+                plquery = f"""SELECT SUMMARY.*, LOGHEADER.ID AS LID,
+                        LOGHEADER.CALLSIGN AS CALLSIGN,
+                        LOGHEADER.OPERATORS AS OPERATORS,
+                        LOGHEADER.LOCATION AS LOCATION
+                    from SUMMARY LEFT JOIN LOGHEADER ON
+                        SUMMARY.LOGID = LOGHEADER.ID
+                    WHERE SUMMARY.MOQPCTAB = {p['CAT_ID']}
+                    ORDER BY SCORE DESC LIMIT 2;"""
+                aname = p['CNAME']
                     
-                
-            cati = [p['award']]
-            if ptext:
-                cati.append(ptext)
-            else:
-                cati.append('"{}"'.format(p['award']))
-                
-            #print(cati)    
-            sumlist = self.get_awardquery(mydb, cati)
+ 
             """
             First Place
             """
+            sumlist = mydb.read_query(plquery) # Get summary data
             if (len(sumlist) >= 1):
                 sumData = sumlist[0]
                 #print(sumData)
@@ -281,12 +300,12 @@ class CATEGORYPlaques(commonAwards):
                 awardid = mydb.write_pquery(\
                    """INSERT INTO FIRSTPLACE (awardid, recipientid, place)
                                   VALUES (%s, %s, %s)""",
-                                         [p['id'], sumData['ID'], 1])
+                                         [p['ID'], sumData['ID'], 1])
             else: # No recipeint for this award
                 awardid = mydb.write_pquery(\
                    """INSERT INTO FIRSTPLACE (awardid, place)
                                   VALUES (%s, %s)""",
-                                         [p['id'], 1])
+                                         [p['ID'], 1])
             """
             2nd Place
             """                             
@@ -295,14 +314,14 @@ class CATEGORYPlaques(commonAwards):
                 awardid = mydb.write_pquery(\
                    """INSERT INTO FIRSTPLACE (awardid, recipientid, place)
                                   VALUES (%s, %s, %s)""",
-                                         [p['id'], sumData['ID'], 2])
+                                         [p['ID'], sumData['ID'], 2])
             else: # No recipeint for this award
                 awardid = mydb.write_pquery(\
                    """INSERT INTO FIRSTPLACE (awardid, place)
                                   VALUES (%s, %s)""",
-                                         [p['id'], 2])
+                                         [p['ID'], 2])
                                          
-        self._genCerts(mydb)
+        #self._genCerts(mydb)
                                    
         return True
         
