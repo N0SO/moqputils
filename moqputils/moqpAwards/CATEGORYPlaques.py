@@ -239,7 +239,8 @@ class CATEGORYPlaques(commonAwards):
         """
         awlist = None
         awlist = mydb.read_query(\
-                 """SELECT * FROM PLAQUESLIST WHERE plaque = 1""")
+                 """SELECT PLAQUES.* ,CONTESTCATEGORIES.* FROM PLAQUES
+                    LEFT JOIN CONTESTCATEGORIES ON PLAQUES.CAT_ID = CONTESTCATEGORIES.ID""")
         #print(awlist)
         if (awlist):
             result = mydb.read_query("SHOW TABLES LIKE 'PLAQUESLIST'")
