@@ -261,7 +261,7 @@ class CATEGORYPlaques(commonAwards):
                 if (len(plcats)) > 0:
                     plstg = ", ".join(\
                       str(v) for d in plcats for v in d.values())
-                    print('{plstg=}')
+                    #print('{plstg=}')
                     plquery = f"""SELECT SUMMARY.*, LOGHEADER.ID AS LID,
                                 LOGHEADER.CALLSIGN AS CALLSIGN,
                                 LOGHEADER.OPERATORS AS OPERATORS,
@@ -270,12 +270,10 @@ class CATEGORYPlaques(commonAwards):
                             SUMMARY.LOGID = LOGHEADER.ID
                             WHERE SUMMARY.MOQPCTAB in ({plstg})
                             ORDER BY SCORE DESC LIMIT 2;"""
-                    #aname = p['NAME'].upper()
                 else:
                     print('*** Error finding category names for award.')
                     print(f'Category data:\n{p}')
                     print(f'MULTIAWARD data:\n{plstg=}\n{plcats=}')
-                    #print(f'{aname=}')
                     print(f'{plquery=}')
             else: #Single category award
                 plquery = f"""SELECT SUMMARY.*, LOGHEADER.ID AS LID,
@@ -340,7 +338,7 @@ class CATEGORYPlaques(commonAwards):
             return s
             
     def _oneLine(self, place, dat):
-        print(f'{dat=}')
+        #print(f'{dat=}')
         retdat = ''
         placestg ='oops...'
         if place =='1':
@@ -351,7 +349,10 @@ class CATEGORYPlaques(commonAwards):
             name = 'NO ENTRY'
             call = ''
             ops = ''
-            award = ''
+            if dat['CNAME'] != None:
+                award = dat['CNAME'].upper() # Use name from CONTESTCATEGORIES
+            elif dat['PNAME'] != None:
+                award = dat['PNAME'].upper() # Use name from PLAQUES
         else:
             call = dat['CALLSIGN']
             if dat['OPERATORS'] == dat['CALLSIGN']:
@@ -362,9 +363,9 @@ class CATEGORYPlaques(commonAwards):
             award = 'Oops'
             name = ''
             if dat['CNAME'] != None:
-                award = dat['CNAME'] # Use name from CONTESTCATEGORIES
+                award = dat['CNAME'].upper() # Use name from CONTESTCATEGORIES
             elif dat['PNAME'] != None:
-                award = dat['PNAME'] # Use name from PLAQUES
+                award = dat['PNAME'].upper() # Use name from PLAQUES
         return '{}\t{}\t{}\t{}\t{}'.format(\
                                        placestg,
                                        award,
@@ -374,10 +375,7 @@ class CATEGORYPlaques(commonAwards):
             
         
     def _getDBAwardList(self, mydb, placement):
-       if placement == '1':
-           placestg = 'FIRST PLACE'
-                    
-           AListq = """SELECT FIRSTPLACE.ID as ID,
+       AListq = """SELECT FIRSTPLACE.ID as ID,
                        FIRSTPLACE.recipientid as RECIPIENT,
                        FIRSTPLACE.awardid,
                        PLAQUES.ID as PID,
@@ -396,20 +394,22 @@ class CATEGORYPlaques(commonAwards):
                        LEFT JOIN SUMMARY on FIRSTPLACE.recipientid = SUMMARY.ID
                        LEFT JOIN CONTESTCATEGORIES ON
                            CONTESTCATEGORIES.ID = PLAQUES.CAT_ID  
-                       LEFT JOIN LOGHEADER ON LOGHEADER.ID = SUMMARY.LOGID
-                WHERE FIRSTPLACE.place=1 """
+                       LEFT JOIN LOGHEADER ON LOGHEADER.ID = SUMMARY.LOGID"""
+
+       if placement == '1':
+           placestg = 'FIRST PLACE'
+
+           AListq += " WHERE FIRSTPLACE.place=1; "
                     
        else:
            placestg = 'SECOND PLACE'
-           AListq = """SELECT * FROM FIRSTPLACE_VIEW WHERE 
-                    place = 2 and
-                    plaque = 1
-                    order by awardid;"""
+           AListq += " WHERE FIRSTPLACE.place=2; "
                     
        DBPLAQUELIST = mydb.read_query(AListq)
                     
        self.AwardList=['PLACE\tAWARD\tRECIPIENT\tCALL\tOPERATORS']
        for plaque in DBPLAQUELIST:
+           #print(f'{plaque=}')
            self.AwardList.append(self._oneLine(placement, plaque))
            """
            self.AwardList.append('{}\t{}\t{}\t{}\t{}'.format(\
@@ -427,16 +427,8 @@ class CATEGORYPlaques(commonAwards):
                     place = 2 and
                     certificate = 1
                     order by awardid;""")
-           for cert in DBCERTLIST:
-               self.AwardList.append(self._oneLine(placement, cert))
-               """
-               self.AwardList.append('{}\t{}\t{}\t{}\t{}'.\
-                           format(placestg,
-                                  cert['award'],
-                                  self._fixNone(cert['name']),
-                                  self._fixNone(cert['callsign']),
-                                  self._fixNone(cert['operators'])))
-               """
+           #for cert in DBCERTLIST:
+           #    self.AwardList.append(self._oneLine(placement, cert))
 
 
        else:
@@ -455,16 +447,8 @@ class CATEGORYPlaques(commonAwards):
                     certificate = 1
                     order by awardid;""")
                     
-           for cert in DBCERTLIST:
-               AwardList2.append(self._oneLine(placement, cert))
-               """
-               AwardList2.append('{}\t{}\t{}\t{}\t{}'.\
-                           format(placestg,
-                                  cert['award'],
-                                  self._fixNone(cert['name']),
-                                  self._fixNone(cert['callsign']),
-                                  self._fixNone(cert['operators'])))
-               """ 
+           #for cert in DBCERTLIST:
+           #    AwardList2.append(self._oneLine(placement, cert))
        return [self.AwardList, AwardList2]
 
     def appMain(self, placement):
