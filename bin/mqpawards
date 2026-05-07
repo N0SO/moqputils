@@ -59,18 +59,24 @@ class get_args():
         parser.add_argument('-a', '--award',
                                    choices=['1', '2', 'create-table'],
                                    default=None,
-            help="Create a list of the 1st place award (plaque) "+\
-                  "winners in each MOQPCATEGORY. ")
+            help="""Create or display a list of the plaque winners for 
+                    the the MOQP.
+                    mqoawards -a 1 = Display Plaque List,
+                    mqoawards -a 2 = Display SECOND PLACE Plaque List.
+                    mqpqwards -a create-table = create or update the 
+                                               table in the database""")
         parser.add_argument('-c', '--category',
                                    default=None,
-                                   choices = ['1', '2'],
-            help="""Create a list of the 1st or 2nd place winners in 
-                    each MOQPCATEGORY.
-                    mqoawards -c 1 = FIRST PLACE List,
-                    mqoawards -c 2 = SECOND PLACE List.""")
+                                   choices = ['1', '2', 'create-table'],
+            help="""Create a list of the 1st or 2nd place certificate
+                    winners for the MOQP. 
+                    mqoawards -c 1 = Show FIRST PLACE List,
+                    mqoawards -c 2 = Show SECOND PLACE List.
+                    mqpqwards -c create-table = create or update the 
+                                               table in the database""")
         parser.add_argument('-s', '--showme', 
                                    action='store_true',
-                                   default=None,
+                                default=None,
             help="Create a list of the SHOWME certificate winners.")
         parser.add_argument('-m', '--missouri', 
                                    action='store_true',

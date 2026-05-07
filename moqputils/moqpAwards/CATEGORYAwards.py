@@ -6,10 +6,14 @@ from moqputils.moqpAwards.commonAwards import commonAwards
        
 class CATEGORYAwards(commonAwards):
            
-    def __init__(self, callsign = None):
+    def __init__(self, placement = None):
         self.AwardList=[]
-        if (callsign):
-            self.appMain(callsign)
+        if (placement):
+            if placement.lower() == 'create-table':
+                self._genCerts()
+                exit()
+
+            self.appMain(placement)
 
     def get_awardquery(self, mydb, cat):
        sumlist = None
@@ -130,8 +134,233 @@ class CATEGORYAwards(commonAwards):
                ORDER BY (SCORE) DESC
                LIMIT 5""",[cat])
        return sumlist
+       
+       
+    def _genCerts(self, mydb=None):
+        # Define database queries
+        dquery ='DROP TABLE IF EXISTS AWARDS;'
 
-    def processOne(self, mydb, cati, placement):
+        cquery = """CREATE TABLE AWARDS (
+          id int NOT NULL AUTO_INCREMENT,
+          awardid int NULL,
+          recipientid int NULL,
+          place int NULL,
+          PRIMARY KEY (id));"""
+          
+        # Read certificate names list
+        rquery = """SELECT CERTIFICATES.*,
+           CONTESTCATEGORIES.ID AS CID,
+           CONTESTCATEGORIES.NAME AS CNAME
+           FROM CERTIFICATES LEFT JOIN CONTESTCATEGORIES ON
+           CERTIFICATES.CAT_ID = CONTESTCATEGORIES.ID;"""          
+
+        # Read SUMMARY table for certs in CONTESTCATEGORIES
+        awardq =\
+        """SELECT CERTIFICATES.*,
+            CONTESTCATEGORIES.ID AS CID,
+            CONTESTCATEGORIES.NAME AS CNAME,
+            SUMMARY.LOGID AS LOGID,
+            SUMMARY.SCORE AS SCORE,
+            LOGHEADER.CALLSIGN AS CALLSIGN,
+            LOGHEADER.OPERATORS AS OPS,
+            LOGHEADER.NAME AS NAME
+            FROM CERTIFICATES LEFT JOIN CONTESTCATEGORIES ON
+            CERTIFICATES.CAT_ID = CONTESTCATEGORIES.ID
+            LEFT JOIN SUMMARY ON 
+            SUMMARY.MOQPCTAB=CERTIFICATES.CAT_ID
+            LEFT JOIN LOGHEADER ON LOGHEADER.ID=SUMMARY.LOGID
+            WHERE CAT_ID={}
+            ORDER BY SCORE DESC LIMIT 2"""
+
+        if(mydb == None):
+            mydb = MOQPDBUtils(HOSTNAME, USER, PW, DBNAME)
+            mydb.setCursorDict()
+
+        print(\
+         'Generating 1st and 2nd place certificate recipients table...')
+        
+        """
+        Delete the old table if it exists,
+        then create a new one
+        """
+        mydb.read_query(dquery)
+        mydb.read_query(cquery)
+        
+        """
+        Read award names from database
+        """
+        awlist = mydb.read_query(rquery)
+
+        if (len(awlist)==0) or (awlist == None):
+            print('***Unable to read database table CERTIFICATES.')
+            exit()
+        else:
+            awl_len = len(awlist)    
+
+            """    
+            Award names are in the CONTESTCATEGORIES table, except for 
+            the 'special' awards that are not categories (rookie, 
+            digital, vhf, most counties...) copy the 'CONTESTCATEGORIES'
+            name if the 'CERTIFICATES' name is blank or null
+            """
+            for aw in awlist:
+                if (aw['CAT_ID'] == aw['CID']) and \
+                   ((aw['NAME'] == None) or (aw['NAME'] == '')):
+                    aw['NAME'] = aw['CNAME']
+                    
+            # Show updated table to me for debug
+            #print(f'updated {awlist=}')
+                
+        #ptext = ''
+        #first = True      
+        for aw in awlist:
+            
+            if aw['CAT_ID'] > 0: #CATEGORY Award
+                awq = awardq.format(aw['CAT_ID'])
+            else: # Extra awards (ROOKIE, DIGITAL, MOST COUNTIES...
+                if aw['ID'] == 25: #ROOKIE
+                    awq = """SELECT SUMMARY.*,
+                                LOGHEADER.ID AS LID,
+                                LOGHEADER.CALLSIGN AS CALLSIGN,
+                                LOGHEADER.OPERATORS AS OPS,
+                                LOGHEADER.LOCATION AS LOCATION
+                                from SUMMARY LEFT JOIN LOGHEADER ON
+                                SUMMARY.LOGID = LOGHEADER.ID
+                                WHERE (SUMMARY.ROOKIE=1) and
+                                      (LOGHEADER.LOCATION LIKE 'MO')
+                                ORDER BY SCORE DESC LIMIT 2;"""
+                elif aw['ID'] == 27: #CLUB score
+                    awq = None
+                    pass
+                elif aw['ID'] == 28: #Missouri digital
+                    awq = """SELECT DIGITAL.ID AS ID, 
+                                DIGITAL.LOGID AS LOGID, 
+                                DIGITAL.QSOS AS QSOS ,
+                                DIGITAL.SCORE as SCORE,
+                                LOGHEADER.ID AS LID,
+                                LOGHEADER.CALLSIGN AS CALLSIGN,
+                                LOGHEADER.OPERATORS AS OPS,
+                                LOGHEADER.LOCATION AS LOCATION
+                                from DIGITAL LEFT JOIN LOGHEADER ON
+                                LOGID = LOGHEADER.ID
+                                WHERE LOGHEADER.LOCATION = 'MO'
+                                ORDER BY SCORE DESC LIMIT 2"""
+                elif aw['ID'] == 29: #Non-Missouri digital
+                    awq = """SELECT DIGITAL.ID AS ID, 
+                                DIGITAL.LOGID AS LOGID, 
+                                DIGITAL.QSOS AS QSOS ,
+                                DIGITAL.SCORE as SCORE,
+                                LOGHEADER.ID AS LID,
+                                LOGHEADER.CALLSIGN AS CALLSIGN,
+                                LOGHEADER.OPERATORS AS OPS,
+                                LOGHEADER.LOCATION AS LOCATION
+                                from DIGITAL LEFT JOIN LOGHEADER ON
+                                LOGID = LOGHEADER.ID
+                                WHERE LOGHEADER.LOCATION != 'MO'
+                                ORDER BY SCORE DESC LIMIT 2;"""
+                elif aw['ID'] == 30: #Missouri VHF
+                    awq = """SELECT VHF.ID AS ID, 
+                                VHF.LOGID AS LOGID, 
+                                VHF.QSOS AS QSOS ,
+                                VHF.SCORE as SCORE,
+                                LOGHEADER.ID AS LID,
+                                LOGHEADER.CALLSIGN AS CALLSIGN,
+                                LOGHEADER.OPERATORS AS OPS,
+                                LOGHEADER.LOCATION AS LOCATION
+                                from VHF LEFT JOIN LOGHEADER ON
+                                VHF.LOGID = LOGHEADER.ID
+                                WHERE LOGHEADER.LOCATION = 'MO'
+                                ORDER BY SCORE DESC LIMIT 2;"""
+                elif aw['ID'] == 31: # Non-Missouri VHF
+                    awq = """SELECT VHF.ID AS ID, 
+                                VHF.LOGID AS LOGID, 
+                                VHF.QSOS AS QSOS ,
+                                VHF.SCORE as SCORE,
+                                LOGHEADER.ID AS LID,
+                                LOGHEADER.CALLSIGN AS CALLSIGN,
+                                LOGHEADER.OPERATORS AS OPS,
+                                LOGHEADER.LOCATION AS LOCATION
+                                from VHF LEFT JOIN LOGHEADER ON
+                                VHF.LOGID = LOGHEADER.ID
+                                WHERE LOGHEADER.LOCATION = 'MO'
+                                ORDER BY SCORE DESC LIMIT 2;"""
+                elif aw['ID'] == 32: # Highest number of counties
+                    awq = """SELECT COUNTY.ID AS ID, 
+                                COUNTY.LOGID AS LOGID, 
+                                COUNTY.COUNT AS SCORE,
+                                LOGHEADER.ID AS LID,
+                                LOGHEADER.CALLSIGN AS CALLSIGN,
+                                LOGHEADER.OPERATORS AS OPERATORS,
+                                LOGHEADER.LOCATION AS LOCATION
+                                from COUNTY LEFT JOIN LOGHEADER ON
+                                LOGID = LOGHEADER.ID
+                                ORDER BY SCORE DESC LIMIT 2;"""
+                else: # No query
+                    awq = None
+            if awq:
+                sumlist = mydb.read_query(awq)
+            else:
+                sumlist = None
+            
+            if sumlist:
+                """
+                First Place
+                """
+                #print(f"Writing 1st Place {aw['NAME']}")
+                if (len(sumlist) >= 1):
+                    sumData = sumlist[0]
+                    #print(sumData)
+                    #print ('{} {}'.format(p1['id'], sumData['ID']))
+                
+                    awardid = mydb.write_pquery(\
+                       """INSERT INTO AWARDS (awardid, recipientid, place)
+                                  VALUES (%s, %s, %s)""",
+                                         [aw['ID'], sumData['LOGID'], 1])
+                else: # No recipeint for this award
+                    awardid = mydb.write_pquery(\
+                       """INSERT INTO AWARDS (awardid, place)
+                                  VALUES (%s, %s)""",
+                                         [aw['ID'], 1])
+                """
+                2nd Place
+                """                             
+                #print(f"Writing 2nd Place {aw['NAME']}")
+                if (len(sumlist) >=2 ):
+                    sumData = sumlist[1]    
+                    awardid = mydb.write_pquery(\
+                       """INSERT INTO AWARDS (awardid, recipientid, place)
+                                      VALUES (%s, %s, %s)""",
+                                             [aw['ID'], sumData['LOGID'], 2])
+                else: # No recipeint for this award
+                    awardid = mydb.write_pquery(\
+                       """INSERT INTO AWARDS (awardid, place)
+                                      VALUES (%s, %s)""",
+                                             [aw['ID'], 2])
+            else: #No query or no summary data
+                print(f'*** No data for award {aw["ID"]=}, {aw["NAME"]=}')
+                print(f'\t{awq=}\n\t{sumlist=}')
+                awardid = mydb.write_pquery(\
+                       """INSERT INTO AWARDS (awardid, place)
+                                      VALUES (%s, %s)""",
+                                             [aw['ID'], 1])
+                awardid = mydb.write_pquery(\
+                       """INSERT INTO AWARDS (awardid, place)
+                                      VALUES (%s, %s)""",
+                                             [aw['ID'], 2])
+        return True
+        
+
+    def processOne(self, mydb, cati, placement, awq):
+       if cati['CAT_ID'] > 0:
+           aw2 = aw1 +\
+            f"""LEFT JOIN SUMMARY ON SUMMARY.MOQPCTAB=CERTIFICATES.CAT_ID
+            LEFT JOIN LOGHEADER ON LOGHEADER.ID=SUMMARY.LOGID
+            WHERE CAT_ID={cati['CAT_ID']}
+            ORDER BY SCORE DESC LIMIT 2 """
+       
+       else: #The special awards (Rookie, digital, vhf, most counties)
+           pass
+
        tsvdata = None
        sumlist = None
        #print('Placement=%s'%(placement))
@@ -153,9 +382,18 @@ class CATEGORYAwards(commonAwards):
        return tsvdata
 
     def processAll(self, mydb, placement):
+        awq = """SELECT CERTIFICATES.*,
+                    CONTESTCATEGORIES.ID AS CID,
+                    CONTESTCATEGORIES.NAME AS CNAME
+                    FROM CERTIFICATES LEFT JOIN CONTESTCATEGORIES ON
+                    CERTIFICATES.CAT_ID = CONTESTCATEGORIES.ID """
+        awlist = mydb.read_query(awq + ';')
+        if (len(awlist)==0) or (awlist == None):
+            print('***Unable to read database table CERTIFICATES.')
+            exit()
         tsvdata = ['AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
-        for CAT in AWARDLIST:          
-           tsvline = self.processOne(mydb, CAT, placement)
+        for CAT in awlist:          
+           tsvline = self.processOne(mydb, CAT, placement, awq)
            if (tsvline):
                tsvdata.append(tsvline)
         return tsvdata
