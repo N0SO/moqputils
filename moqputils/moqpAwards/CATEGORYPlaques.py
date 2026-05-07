@@ -252,29 +252,67 @@ class CATEGORYPlaques(commonAwards):
         # Walk thru award list and find winners in SUMMARY table
         for p in awlist:
             #print(p)
-            if (p['CAT_ID']==0) and (p['MULTI']==1): 
-                #Multicategory award, build list
-                #aname = ''
-                plstg = ''
-                plcats = mydb.read_query(f"""SELECT CAT_ID FROM 
-                        MULTIAWARD WHERE AWARD_ID = {p['ID']}""")
-                if (len(plcats)) > 0:
-                    plstg = ", ".join(\
-                      str(v) for d in plcats for v in d.values())
-                    #print('{plstg=}')
-                    plquery = f"""SELECT SUMMARY.*, LOGHEADER.ID AS LID,
+            if (p['CAT_ID']==0):
+                if (p['MULTI']==1): 
+                    #Multicategory award, build list
+                    #aname = ''
+                    plstg = ''
+                    plcats = mydb.read_query(f"""SELECT CAT_ID FROM 
+                            MULTIAWARD WHERE AWARD_ID = {p['ID']}""")
+                    if (len(plcats)) > 0:
+                        plstg = ", ".join(\
+                        str(v) for d in plcats for v in d.values())
+                        #print('{plstg=}')
+                        plquery = f"""SELECT SUMMARY.*,
+                                LOGHEADER.ID AS LID,
                                 LOGHEADER.CALLSIGN AS CALLSIGN,
                                 LOGHEADER.OPERATORS AS OPERATORS,
                                 LOGHEADER.LOCATION AS LOCATION
-                            from SUMMARY LEFT JOIN LOGHEADER ON
-                            SUMMARY.LOGID = LOGHEADER.ID
-                            WHERE SUMMARY.MOQPCTAB in ({plstg})
-                            ORDER BY SCORE DESC LIMIT 2;"""
-                else:
-                    print('*** Error finding category names for award.')
-                    print(f'Category data:\n{p}')
-                    print(f'MULTIAWARD data:\n{plstg=}\n{plcats=}')
-                    print(f'{plquery=}')
+                                from SUMMARY LEFT JOIN LOGHEADER ON
+                                SUMMARY.LOGID = LOGHEADER.ID
+                                WHERE SUMMARY.MOQPCTAB in ({plstg})
+                                ORDER BY SCORE DESC LIMIT 2;"""
+                else: # Special plaques like ROOKIE, DIGITAL, MOST COUNTIES
+                    if p['ID'] == 21: # Missouri Rookie
+                        plquery = f"""SELECT SUMMARY.*,
+                                LOGHEADER.ID AS LID,
+                                LOGHEADER.CALLSIGN AS CALLSIGN,
+                                LOGHEADER.OPERATORS AS OPERATORS,
+                                LOGHEADER.LOCATION AS LOCATION
+                                from SUMMARY LEFT JOIN LOGHEADER ON
+                                SUMMARY.LOGID = LOGHEADER.ID
+                                WHERE (SUMMARY.ROOKIE=1) and
+                                      (LOGHEADER.LOCATION LIKE 'MO')
+                                ORDER BY SCORE DESC LIMIT 2;"""
+                    elif p['ID'] == 23: # Highest Digital
+                           plquery = f"""SELECT DIGITAL.ID AS ID, 
+                                DIGITAL.LOGID AS LOGID, 
+                                DIGITAL.QSOS AS QSOS ,
+                                DIGITAL.SCORE as SCORE,
+                                LOGHEADER.ID AS LID,
+                                LOGHEADER.CALLSIGN AS CALLSIGN,
+                                LOGHEADER.OPERATORS AS OPERATORS,
+                                LOGHEADER.LOCATION AS LOCATION
+                                from DIGITAL LEFT JOIN LOGHEADER ON
+                                LOGID = LOGHEADER.ID
+                                ORDER BY SCORE DESC LIMIT 2"""
+                          
+                    elif p['ID'] == 24: # Most Counties
+                           plquery = f"""SELECT COUNTY.ID AS ID, 
+                                COUNTY.LOGID AS LOGID, 
+                                COUNTY.COUNT AS SCORE,
+                                LOGHEADER.ID AS LID,
+                                LOGHEADER.CALLSIGN AS CALLSIGN,
+                                LOGHEADER.OPERATORS AS OPERATORS,
+                                LOGHEADER.LOCATION AS LOCATION
+                                from COUNTY LEFT JOIN LOGHEADER ON
+                                LOGID = LOGHEADER.ID
+                                ORDER BY SCORE DESC LIMIT 2;"""
+                    else:
+                        print('*** Error finding category names for award.')
+                        print(f'Category data:\n{p}')
+                        print(f'MULTIAWARD data:\n{plstg=}\n{plcats=}')
+                        print(f'{plquery=}')
             else: #Single category award
                 plquery = f"""SELECT SUMMARY.*, LOGHEADER.ID AS LID,
                         LOGHEADER.CALLSIGN AS CALLSIGN,
@@ -292,12 +330,11 @@ class CATEGORYPlaques(commonAwards):
             sumlist = mydb.read_query(plquery) # Get summary data
             if (len(sumlist) >= 1):
                 sumData = sumlist[0]
-                #print(sumData)
                 #print ('{} {}'.format(p['id'], sumData['ID'])) 
                 awardid = mydb.write_pquery(\
                    """INSERT INTO FIRSTPLACE (awardid, recipientid, place)
                                   VALUES (%s, %s, %s)""",
-                                         [p['ID'], sumData['ID'], 1])
+                                         [p['ID'], sumData['LID'], 1])
             else: # No recipeint for this award
                 awardid = mydb.write_pquery(\
                    """INSERT INTO FIRSTPLACE (awardid, place)
@@ -311,7 +348,7 @@ class CATEGORYPlaques(commonAwards):
                 awardid = mydb.write_pquery(\
                    """INSERT INTO FIRSTPLACE (awardid, recipientid, place)
                                   VALUES (%s, %s, %s)""",
-                                         [p['ID'], sumData['ID'], 2])
+                                         [p['ID'], sumData['LID'], 2])
             else: # No recipeint for this award
                 awardid = mydb.write_pquery(\
                    """INSERT INTO FIRSTPLACE (awardid, place)
@@ -391,7 +428,7 @@ class CATEGORYPlaques(commonAwards):
                        LOGHEADER.OPERATORS as OPERATORS,
                        LOGHEADER.LOCATION as LOCATION
                 FROM FIRSTPLACE LEFT JOIN PLAQUES ON FIRSTPLACE.awardid = PLAQUES.ID
-                       LEFT JOIN SUMMARY on FIRSTPLACE.recipientid = SUMMARY.ID
+                       LEFT JOIN SUMMARY on FIRSTPLACE.recipientid = SUMMARY.LOGID
                        LEFT JOIN CONTESTCATEGORIES ON
                            CONTESTCATEGORIES.ID = PLAQUES.CAT_ID  
                        LEFT JOIN LOGHEADER ON LOGHEADER.ID = SUMMARY.LOGID"""
@@ -399,11 +436,11 @@ class CATEGORYPlaques(commonAwards):
        if placement == '1':
            placestg = 'FIRST PLACE'
 
-           AListq += " WHERE FIRSTPLACE.place=1; "
+           AListq += " WHERE FIRSTPLACE.place=1 ORDER BY PID ASC; "
                     
        else:
            placestg = 'SECOND PLACE'
-           AListq += " WHERE FIRSTPLACE.place=2; "
+           AListq += " WHERE FIRSTPLACE.place=2 ORDER BY PID ASC; "
                     
        DBPLAQUELIST = mydb.read_query(AListq)
                     
