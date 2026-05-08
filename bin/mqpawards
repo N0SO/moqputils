@@ -26,12 +26,31 @@ Update History:
 -        -the -a option is selected. Writes output to DB table if -a
 -        -create-table is entered. -a 1 or -a 2 builds award lists from
 -        -the new table (FIRSTPLACE). 
+* Thu Apr 07 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+- V1.0.2 - Refactored code in moqpAwards.CATEGORYPlaques and CATEGORYAwards
+-          modules. The awards are structures like the MOQP Rules now
+-          in tables:
+-          CONTESTCATEGORIES - Just like in the contest rules.
+
+-          PLAQUES - The specific list of plaques from the rules, linked
+-                    back to CONTESTCATEGORIES, taking into account some
+-                    plaques cover multiple categories.
+-
+-          CERTIFICATES - The specific list of cerfificates defined in
+-                         the rules, linked back to CONTESTCATEGORIES.
+- 
+-          In most cases, the award or certificate name will be taken 
+-          from CONTESTCATEGORIES for consistency. The module CATEGORYPlaques
+-          generates table FIRSTPLACE and populates it with the plaque
+-          recipients. It also generates reports from that table in
+-          .csv or html format. The module CATEFORY Awards does the same
+-          for 1st and 2nd place certificates.                      
 """
 
 import os.path
 import sys
 import argparse
-VERSION = '1.0.1'
+VERSION = '1.0.2'
 ARGS = None
 
 whereami = os.path.split( os.path.realpath(__file__) )

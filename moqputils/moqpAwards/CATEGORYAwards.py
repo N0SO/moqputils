@@ -211,8 +211,6 @@ class CATEGORYAwards(commonAwards):
             # Show updated table to me for debug
             #print(f'updated {awlist=}')
                 
-        #ptext = ''
-        #first = True      
         for aw in awlist:
             
             if aw['CAT_ID'] > 0: #CATEGORY Award
@@ -282,7 +280,7 @@ class CATEGORYAwards(commonAwards):
                                 LOGHEADER.LOCATION AS LOCATION
                                 from VHF LEFT JOIN LOGHEADER ON
                                 VHF.LOGID = LOGHEADER.ID
-                                WHERE LOGHEADER.LOCATION = 'MO'
+                                WHERE LOGHEADER.LOCATION <> 'MO'
                                 ORDER BY SCORE DESC LIMIT 2;"""
                 elif aw['ID'] == 32: # Highest number of counties
                     awq = """SELECT COUNTY.ID AS ID, 
@@ -336,9 +334,11 @@ class CATEGORYAwards(commonAwards):
                        """INSERT INTO AWARDS (awardid, place)
                                       VALUES (%s, %s)""",
                                              [aw['ID'], 2])
+
             else: #No query or no summary data
                 print(f'*** No data for award {aw["ID"]=}, {aw["NAME"]=}')
-                print(f'\t{awq=}\n\t{sumlist=}')
+                print(f'\t{awq=}')
+                #print(f'\t{sumlist=}')
                 awardid = mydb.write_pquery(\
                        """INSERT INTO AWARDS (awardid, place)
                                       VALUES (%s, %s)""",
@@ -350,50 +350,73 @@ class CATEGORYAwards(commonAwards):
         return True
         
 
-    def processOne(self, mydb, cati, placement, awq):
-       if cati['CAT_ID'] > 0:
-           aw2 = aw1 +\
-            f"""LEFT JOIN SUMMARY ON SUMMARY.MOQPCTAB=CERTIFICATES.CAT_ID
-            LEFT JOIN LOGHEADER ON LOGHEADER.ID=SUMMARY.LOGID
-            WHERE CAT_ID={cati['CAT_ID']}
-            ORDER BY SCORE DESC LIMIT 2 """
-       
-       else: #The special awards (Rookie, digital, vhf, most counties)
-           pass
-
+    def processOne(self, aw, placement):
+       #print(f'{aw=}')
        tsvdata = None
-       sumlist = None
-       #print('Placement=%s'%(placement))
-       if (isinstance(cati, list)):
-           cat = cati[0].upper()
-           catlist = cati[1].upper()
+       
+       if placement == '1':
+           placestg = 'FIRST PLACE'
        else:
-           cat = cati.upper()
-           catlist = cat
-       #print(cat, catlist)
-       sumlist = self.get_awardquery(mydb, catlist)
-       placestg, catdata = self.setPlacement(placement, sumlist)
-       #print(catdata)
-       tsvdata = self.processHeader(mydb, 
-                                    placestg, 
-                                    cat, 
-                                    catdata )
-       #print(tsvdata)
+           placestg = 'SECOND PLACE'
+           
+       if aw['recipientid'] == None: # No entry 
+           tsvdata = '{}\t{}\tNO ENTRY\t\t'.format(\
+                    placestg,
+                    aw['NAME'])
+                    
+       else:
+       
+           tsvdata = '{}\t{}\t{}\t{}\t{}'.format(\
+                    placestg,
+                    aw['NAME'],
+                    aw['OPNAME'],
+                    aw['CALLSIGN'],
+                    aw['OPS'])
        return tsvdata
 
     def processAll(self, mydb, placement):
-        awq = """SELECT CERTIFICATES.*,
-                    CONTESTCATEGORIES.ID AS CID,
-                    CONTESTCATEGORIES.NAME AS CNAME
-                    FROM CERTIFICATES LEFT JOIN CONTESTCATEGORIES ON
-                    CERTIFICATES.CAT_ID = CONTESTCATEGORIES.ID """
-        awlist = mydb.read_query(awq + ';')
+        awq ="""SELECT AWARDS.*, 
+          CERTIFICATES.CAT_ID as CAT_ID,
+          CERTIFICATES.NAME AS NAME,
+          CONTESTCATEGORIES.NAME AS CNAME,
+          LOGHEADER.ID AS LID,
+          LOGHEADER.CALLSIGN,
+          LOGHEADER.OPERATORS AS OPS,
+          LOGHEADER.NAME as OPNAME,
+          LOGHEADER.LOCATION AS LOCATIONS
+          FROM AWARDS 
+          LEFT JOIN CERTIFICATES ON AWARDS.awardid = CERTIFICATES.ID
+          LEFT JOIN CONTESTCATEGORIES ON 
+              CERTIFICATES.CAT_ID = CONTESTCATEGORIES.ID
+          LEFT JOIN LOGHEADER ON AWARDS.recipientid = LOGHEADER.ID
+          WHERE AWARDS.PLACE = {}
+          ORDER BY AWARDS.id;""" 
+
+        # Read list of award certificates from database
+        awlist = mydb.read_query(awq.format(placement))
         if (len(awlist)==0) or (awlist == None):
-            print('***Unable to read database table CERTIFICATES.')
+            print('***Unable to read database table AWARDS.')
             exit()
+        else:
+            awl_len = len(awlist)    
+
+            """    
+            Award names are in the CONTESTCATEGORIES table, except for 
+            the 'special' awards that are not categories (rookie, 
+            digital, vhf, most counties...) copy the 'CONTESTCATEGORIES'
+            name if the 'CERTIFICATES' name is blank or null
+            """
+            for aw in awlist:
+                if ((aw['NAME'] == None) or (aw['NAME'] == '')):
+                    aw['NAME'] = aw['CNAME']
+
+            # Show updated table to me for debug
+            #print(f'updated {awlist=}')
+            #exit()
+
         tsvdata = ['AWARD\tCATEGORY\tRECIPIENT\tCALL\tOPERATORS']
-        for CAT in awlist:          
-           tsvline = self.processOne(mydb, CAT, placement, awq)
+        for aw in awlist:          
+           tsvline = self.processOne(aw, placement)
            if (tsvline):
                tsvdata.append(tsvline)
         return tsvdata
