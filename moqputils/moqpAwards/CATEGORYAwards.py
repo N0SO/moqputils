@@ -431,9 +431,37 @@ class CATEGORYLabels(CATEGORYAwards):
 
     def processAll(self, mydb, placement):
         AWARDLIST = mydb.read_query("""
-           SELECT * FROM FIRSTPLACE_VIEW 
-               WHERE certificate=1 and recipientid>0 
-               ORDER BY callsign ASC;""")
+          select AWARDS.id, AWARDS.recipientid,AWARDS.place,
+               CERTIFICATES.NAME as cname, CERTIFICATES.CAT_ID,
+               CONTESTCATEGORIES.NAME as award,
+               LOGHEADER.NAME as name,
+               LOGHEADER.CALLSIGN as callsign,
+               LOGHEADER.OPERATORS as operators,
+               SUMMARY.SCORE as score,
+               LOGHEADER.ADDRESS as address,
+               LOGHEADER.CITY as city,
+               LOGHEADER.STATEPROV as state,
+               LOGHEADER.ZIPCODE as zip,
+               LOGHEADER.COUNTRY as country,
+               LOGHEADER.EMAIL as email
+          from AWARDS left join CERTIFICATES on 
+                                 (AWARDS.awardid = CERTIFICATES.ID)
+             left join CONTESTCATEGORIES on 
+                       (CERTIFICATES.CAT_ID = CONTESTCATEGORIES.ID)
+             left join LOGHEADER on (AWARDS.recipientid = LOGHEADER.ID)
+             left join SUMMARY on (SUMMARY.LOGID = AWARDS.recipientid)
+          ORDER BY callsign ASC;""")  
+             
+        for a in AWARDLIST:
+            if a['recipientid']:
+                if (a['award'] == None) or (a['award']=='') :
+                    a['award'] = a['cname']
+                    
+                    #print(f"{a['awardname']=}, {a['cname']=}")
+        #print(f'{AWARDLIST=}')
+        
+    
+               
         #print(AWARDLIST)
         labeldata = self.new_processAll(CATLABELHEADER, 
                                         AWARDLIST)

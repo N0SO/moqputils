@@ -56,6 +56,7 @@ class commonAwards():
         formatStg = \
              '{} PLACE\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}'
         placestg=''
+        #print(f'{cat=}')
         if cat['place']==1:
             placestg='FIRST'
         if cat['place']==2:
@@ -72,8 +73,8 @@ class commonAwards():
                       cat['state'],
                       cat['zip'],
                       cat['country'],
-                      cat['email'],
-                      cat['plaque']))
+                      cat['email'], 0))
+                      #cat['plaque']))
         return tsvdata
  
     def new_processAll(self, HEADERSTG, CATLIST):
