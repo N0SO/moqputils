@@ -285,8 +285,29 @@ class STATELabels(STATEAwards):
         
     def states(self, mydb, place):
         awards = mydb.read_query("""
-                SELECT * FROM `STATEPROVAWARDS_VIEW` 
-                where recipientid>0 ORDER BY callsign  ASC""" )
+            select `STATEPROVAWARDS`.`id` AS `id`,
+             `STATEPROVAWARDS`.`awardid` AS `awardid`,
+             `STATELIST`.`name` AS `awardname`,
+             `LOGHEADER`.`NAME` AS `name`,
+             `LOGHEADER`.`CALLSIGN` AS `callsign`,
+             `LOGHEADER`.`OPERATORS` AS `ops`,
+             `SUMMARY`.`SCORE` AS `score`,
+             `STATEPROVAWARDS`.`recipientid` AS `recipientid`,
+             `STATEPROVAWARDS`.`place` AS `place`,
+             `LOGHEADER`.`ADDRESS` AS `address`,
+             `LOGHEADER`.`CITY` AS `city`,
+             `LOGHEADER`.`STATEPROV` AS `state`,
+             `LOGHEADER`.`ZIPCODE` AS `zip`,
+             `LOGHEADER`.`COUNTRY` AS `country`,
+             `LOGHEADER`.`EMAIL` AS `email` 
+            from (((`STATEPROVAWARDS` 
+              left join `STATELIST` on
+                  (`STATEPROVAWARDS`.`awardid` = `STATELIST`.`id`)) 
+              left join `LOGHEADER` on
+                  (`LOGHEADER`.`ID` = `STATEPROVAWARDS`.`recipientid`)) 
+              left join `SUMMARY` on
+                  (`SUMMARY`.`LOGID` = `STATEPROVAWARDS`.`recipientid`))
+            """ )
 
         labeldata = self.new_processAll(CATLABELHEADER, 
                                             awards)
