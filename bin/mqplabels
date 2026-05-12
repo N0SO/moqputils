@@ -23,6 +23,15 @@ Update History:
 -V0.2.1 - Update to support the better DEVMODPATH code and
 -         updates to queries to build label files. This will omit awards
 -         that had no entry.
+* Sat Aug 09, 2025 Mike Heitmann, N0SO <n0so@arrl.net>
+-V0.2.1 - Update to support the better DEVMODPATH code and
+-         updates to queries to build label files. This will omit awards
+-         that had no entry.
+* Mon May 11, 2026 Mike Heitmann, N0SO <n0so@arrl.net>
+-V1.0.0 - Time for a real release.
+-         Changed queries used for certificate and label processing to
+-         use a direct query instead of a view query. See Enhancement
+-         Issue #69.
 """
 
 import os.path
@@ -41,7 +50,7 @@ DESCRIPTION = \
 """moqpreports  - Generate reports for MOQP
                   from database.
                 
-                  Based on 2019 MOQP Rules
+                  
 """
 
 EPILOG = \

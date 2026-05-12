@@ -452,8 +452,11 @@ class CATEGORYLabels(CATEGORYAwards):
              left join SUMMARY on (SUMMARY.LOGID = AWARDS.recipientid)
           ORDER BY callsign ASC;""")  
              
+        """
+        Fill-in the names not found in CONTESTCATEGORIES.
+        """
         for a in AWARDLIST:
-            if a['recipientid']:
+            #if a['recipientid']:
                 if (a['award'] == None) or (a['award']=='') :
                     a['award'] = a['cname']
                     

@@ -43,10 +43,30 @@ class SHOWMEAwards(commonAwards):
 class SHOWMELabels(SHOWMEAwards):
   
     def getdbData(self, db):
-        return db.read_query("""SELECT * FROM SHOWME_VIEW1
-                                  WHERE  QUALIFY=1 
-                                  ORDER BY CALLSIGN;""")
-
+        return db.read_query("""
+select 
+    `LOGHEADER`.`CALLSIGN` AS `CALLSIGN`,
+    `SHOWME`.`ID` AS `ID`,`SHOWME`.`LOGID` AS `LOGID`,
+    `SHOWME`.`S` AS `S`,
+    `SHOWME`.`H` AS `H`,
+    `SHOWME`.`O` AS `O`,
+    `SHOWME`.`W` AS `W`,
+    `SHOWME`.`M` AS `M`,
+    `SHOWME`.`E` AS `E`,
+    `SHOWME`.`WC` AS `WC`,
+    `SHOWME`.`QUALIFY` AS `QUALIFY`,
+    `LOGHEADER`.`OPERATORS` AS `ops`,
+    `LOGHEADER`.`NAME` AS `name`,
+    `LOGHEADER`.`ADDRESS` AS `address`,
+    `LOGHEADER`.`CITY` AS `city`,
+    `LOGHEADER`.`STATEPROV` AS `state`,
+    `LOGHEADER`.`ZIPCODE` AS `zip`,
+    `LOGHEADER`.`COUNTRY` AS `country`,
+    `LOGHEADER`.`EMAIL` AS `email` 
+from (`LOGHEADER` join `SHOWME` on
+    (`SHOWME`.`LOGID` = `LOGHEADER`.`ID`)) 
+where `SHOWME`.`QUALIFY` = 1
+order by CALLSIGN;""")     
 
     def addWC(self, st):
         """
@@ -90,45 +110,7 @@ class SHOWMELabels(SHOWMEAwards):
         return tsvdata
 
     def export_to_csv(self, dblist, award):
-        from qrzutils.qrz.qrzlookup import QRZLookup
-        qrz=QRZLookup('/home/pi/Projects/moqputils/moqputils/configs/qrzsettings.cfg')
-        if award=='SHOWME':
-            tsvlines =['CALL\tOPERATORS\tNAME\tADDRESS\tCITY\t'+\
-                    'STATE\tZIP\tCOUNTRY\tE-MAIL\tFILE\t'+\
-                    'S\tH\tO\tW\tM\tE\tWC']
-        elif award=='MISSOURI':
-            tsvlines =['CALL\tOPERATORS\tNAME\tADDRESS\tCITY\t'+\
-                    'STATE\tZIP\tCOUNTRY\tE-MAIL\tFILE\t'+\
-                    'M\tI\tS\tS\tO\tU\tR\tI\tWC']
-            
-        for station in dblist:
-            if len(station['ops']) > 0:
-                ops = station['ops'].split(' ')
-                if len(ops) > 1: #Multi-op station
-                    tempData = station
-                    for op in ops:
-                        try:
-                            opdata = qrz.callsign(op.strip())
-                            qrzdata=True
-                        except:
-                            qrzdata=False
-                            tempData['name']=\
-                               'NO QRZ FOR {} - {}'.format(op,len(op))
-                       
-                        if qrzdata:
-                            #print(opdata)
-                            tempData = self.swapData(\
-                                   station, 
-                                   op, 
-                                   opdata)
-                        tsvlines.append(self.processLabel(tempData, op))
-                    
-                else: #Single-op station
-                    if station['CALLSIGN'] == station['ops']:
-                        station['ops'] = ''
-                    tsvlines.append(self.processLabel(station))
-        return tsvlines            
-
+        return MOLabels.export_to_csv(self, dblist, award)
 
 class MOAwards(SHOWMEAwards):
     
@@ -155,10 +137,28 @@ class MOAwards(SHOWMEAwards):
 
 class MOLabels(MOAwards):
     def getdbData(self, db):
-        return db.read_query("""SELECT * FROM MISSOURI_VIEW
-                                  WHERE  QUALIFY=1
-                                  ORDER BY CALLSIGN;""")
-
+        return db.read_query("""
+select 
+    `LOGHEADER`.`CALLSIGN` AS `CALLSIGN`,`MISSOURI`.`ID` AS `ID`,
+    `MISSOURI`.`LOGID` AS `LOGID`,`MISSOURI`.`M` AS `M`,
+    `MISSOURI`.`I_1` AS `I_1`,
+    `MISSOURI`.`S_1` AS `S_1`,
+    `MISSOURI`.`S_2` AS `S_2`,
+    `MISSOURI`.`O` AS `O`,
+    `MISSOURI`.`U` AS `U`,
+    `MISSOURI`.`R` AS `R`,
+    `MISSOURI`.`I_2` AS `I_2`,
+    `MISSOURI`.`WC` AS `WC`,
+    `MISSOURI`.`QUALIFY` AS `QUALIFY`,
+    `LOGHEADER`.`OPERATORS` AS `ops`,`LOGHEADER`.`NAME` AS `name`,
+    `LOGHEADER`.`ADDRESS` AS `address`,`LOGHEADER`.`CITY` AS `city`,
+    `LOGHEADER`.`STATEPROV` AS `state`,`LOGHEADER`.`ZIPCODE` AS `zip`,
+    `LOGHEADER`.`COUNTRY` AS `country`,`LOGHEADER`.`EMAIL` AS `email` 
+from (`MISSOURI` join `LOGHEADER` on
+                (`LOGHEADER`.`ID` = `MISSOURI`.`LOGID`)) 
+where QUALIFY=1
+order by CALLSIGN;""")
+        
     def addWC(self, st):
         """
         If the WILDCARD station is in the log.
@@ -184,33 +184,38 @@ class MOLabels(MOAwards):
                     'M\tI\tS\tS\tO\tU\tR\tI\tWC']
             
         for station in dblist:
-            if len(station['ops']) > 0:
+            mop = False
+            if (station['ops'] != None) and (station['ops'] != '') :
                 ops = station['ops'].split(' ')
+                
                 if len(ops) > 1: #Multi-op station
-                    tempData = station
-                    for op in ops:
-                        try:
-                            opdata = qrz.callsign(op.strip())
-                            qrzdata=True
-                        except:
-                            qrzdata=False
-                            tempData['name']=\
-                               'NO QRZ FOR {} - {}'.format(op,len(op))
-                       
-                        if qrzdata:
-                            #print(opdata)
-                            tempData = self.swapData(\
-                                   station, 
-                                   op, 
-                                   opdata)
-                        tsvlines.append(self.processLabel(tempData, op))
+                    mop = True
+            if mop:       
+                tempData = station
+                for op in ops:
+                    try:
+                        opdata = qrz.callsign(op.strip())
+                        qrzdata=True
+                    except:
+                        qrzdata=False
+                        tempData['name']=\
+                           'NO QRZ FOR {} - {}'.format(op,len(op))
+                   
+                    if qrzdata:
+                        #print(opdata)
+                        tempData = self.swapData(\
+                               station, 
+                               op, 
+                               opdata)
+                    tsvlines.append(self.processLabel(tempData, op))
                     
-                else: #Single-op station
+            else: #Single-op station
                     if station['CALLSIGN'] == station['ops']:
                         station['ops'] = ''
                     tsvlines.append(self.processLabel(station))
+            #print(f'{station["CALLSIGN"]=}, {station["ops"]=}')
         return tsvlines            
-
+        
     def processLabel(self, sumitem, op=None):
         if op:
             op = ('-{}.pdf'.format(op))
