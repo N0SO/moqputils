@@ -2,6 +2,14 @@
 """ Defines contest period in UTC. 
      This will be imported by QSOUtils to set 
      contest start/stop times.
+    NOTE: This is a sample file, edit with your
+          dates and re-name as:
+              contestdates.py
+
+          Recommended: Rename to:
+               contestyear_contestdates.py then
+          then create a symlink from that file
+          to contestdates.py 
 """
 from datetime import datetime
 DAY1START = datetime.strptime('2026-04-11 14:00', '%Y-%m-%d %H:%M')
